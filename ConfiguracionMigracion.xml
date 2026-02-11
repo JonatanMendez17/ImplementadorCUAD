@@ -1,0 +1,8 @@
+﻿<Configuracion>
+	<Archivo nombre="Categorias">
+		<Columnas>
+			<Columna nombre="NombreCategoria" tipo="texto" largoMaximo="50" />
+			<Columna nombre="Codigo" tipo="int" largoMaximo="10" />
+		</Columnas>
+	</Archivo>
+</Configuracion>

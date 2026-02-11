@@ -4,6 +4,11 @@ using System.Windows;
 using System.Windows.Input;
 using MigradorCUAD.Models;
 using Microsoft.Win32;
+using System.IO;
+using MigradorCUAD.Services;
+using System.Globalization;
+
+
 
 
 namespace MigradorCUAD.ViewModels
@@ -207,9 +212,90 @@ namespace MigradorCUAD.ViewModels
 
             if (Logs.Count == 0)
             {
-                Logs.Add("✅ Validación estructural correcta.");
+                ValidarArchivoCategorias();
             }
         }
 
+        private void ValidarArchivoCategorias()
+        {
+            try
+            {
+                var configService = new ConfiguracionService();
+                var columnasConfig = configService.ObtenerColumnas("Categorias");
+
+                var lineas = File.ReadAllLines(ArchivoCategorias!);
+
+                if (lineas.Length == 0)
+                {
+                    Logs.Add("❌ Archivo vacío.");
+                    return;
+                }
+
+                var encabezado = lineas[0].Split(',');
+
+                // Validar columnas
+                if (encabezado.Length != columnasConfig.Count)
+                {
+                    Logs.Add("❌ Cantidad de columnas incorrecta.");
+                    return;
+                }
+
+                for (int i = 0; i < encabezado.Length; i++)
+                {
+                    if (encabezado[i] != columnasConfig[i].Nombre)
+                    {
+                        Logs.Add($"❌ Nombre de columna incorrecto: {encabezado[i]}");
+                        return;
+                    }
+                }
+
+                // Validar registros
+                for (int i = 1; i < lineas.Length; i++)
+                {
+                    var valores = lineas[i].Split(',');
+
+                    for (int j = 0; j < columnasConfig.Count; j++)
+                    {
+                        var valor = valores[j];
+                        var config = columnasConfig[j];
+
+                        if (!ValidarTipoDato(valor, config))
+                        {
+                            Logs.Add($"❌ Error en fila {i + 1}, columna {config.Nombre}");
+                        }
+                    }
+                }
+
+                Logs.Add("✅ Archivo Categorías validado correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Logs.Add($"❌ Error: {ex.Message}");
+            }
+        }
+
+        private bool ValidarTipoDato(string valor, ColumnaConfiguracion config)
+        {
+            if (valor.Length > config.LargoMaximo)
+                return false;
+
+            switch (config.TipoDato.ToLower())
+            {
+                case "int":
+                    return int.TryParse(valor, out _);
+
+                case "decimal":
+                    return decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
+
+                case "fecha":
+                    return DateTime.TryParse(valor, out _);
+
+                case "texto":
+                    return !string.IsNullOrWhiteSpace(valor);
+
+                default:
+                    return false;
+            }
+        }
     }
 }
