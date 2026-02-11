@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\" />
     <Folder Include="Infrastructure\" />
-    <Folder Include="Common\" />
+    <Folder Include="Commands\" />
     <Folder Include="Services\" />
+    <Folder Include="Views\" />
   </ItemGroup>
 
 </Project>
