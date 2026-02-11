@@ -88,6 +88,18 @@
 
             <ListBox ItemsSource="{Binding Logs}"
                      Height="150" />
+
+            <ProgressBar 
+                    Height="20"
+                    Minimum="0"
+                    Maximum="100"
+                    Value="{Binding Progreso}"
+                    Margin="0,10,0,0"/>
+
+            <Button Content="Copiar a Base"
+                    Command="{Binding CopiarCommand}" />
+
+
         </StackPanel>
     </Grid>
 </Window>

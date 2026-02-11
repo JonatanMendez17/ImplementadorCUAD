@@ -1,12 +1,14 @@
+using Microsoft.Win32;
 using MigradorCUAD.Commands;
 using MigradorCUAD.Models;
 using MigradorCUAD.Services;
-using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
+using TuProyecto.Data;
+using TuProyecto.Models;
 namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
@@ -100,6 +102,8 @@ namespace MigradorCUAD.ViewModels
 
         // Progreso
         private int _progreso;
+        private bool _estaProcesando;
+
         public int Progreso
         {
             get => _progreso;
@@ -109,6 +113,19 @@ namespace MigradorCUAD.ViewModels
                 OnPropertyChanged();
             }
         }
+        public bool EstaProcesando
+        {
+            get => _estaProcesando;
+            set
+            {
+                _estaProcesando = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        private List<Dictionary<string, string>> _datosValidados = new();
+
 
         private bool _validacionFinalizada;
         public bool ValidacionFinalizada
@@ -136,6 +153,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand SeleccionarServiciosCommand { get; }
         public ICommand ValidarCommand { get; }
         public ICommand CopiarABaseCommand {  get; }
+        public ICommand CopiarCommand { get; }
 
         // Constructor
         public MainViewModel()
@@ -164,6 +182,22 @@ namespace MigradorCUAD.ViewModels
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
 
             CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
+
+            using (var db = new AppDbContext())
+            {
+                var registro = new DatosPadron
+                {
+                    Cuit = "20123456789",
+                    RazonSocial = "Empresa Test",
+                    FechaAlta = DateTime.Now,
+                    Importe = 1500
+                };
+
+                db.DatosPadron.Add(registro);
+                db.SaveChanges();
+            }
+
+            CopiarCommand = new AsyncRelayCommand(CopiarABaseAsync);
 
         }
 
@@ -246,6 +280,9 @@ namespace MigradorCUAD.ViewModels
                     datosConsumosDetalle != null &&
                     datosServicios != null)
                 {
+                    // Guardar datos validados de padrón para la copia a base
+                    _datosValidados = datosPadron;
+
                     // Mapear a modelos fuertemente tipados
                     var socios = GenericMapper.MapToList<Socio>(datosPadron);
                     var consumos = GenericMapper.MapToList<Consumo>(datosConsumos);
@@ -457,5 +494,45 @@ namespace MigradorCUAD.ViewModels
             Logs.Add("💾 Iniciando proceso de copia a base de datos...");
         }
 
+        private async Task CopiarABaseAsync()
+        {
+            EstaProcesando = true;
+            Progreso = 0;
+
+            var lista = _datosValidados; // tu lista validada de padrón
+            int total = lista.Count;
+            int procesados = 0;
+
+            await Task.Run(() =>
+            {
+                using (var db = new AppDbContext())
+                {
+                    foreach (var item in lista)
+                    {
+                        var entidad = new DatosPadron
+                        {
+                            // Ajusta las claves según los nombres reales de columnas en tu archivo
+                            Cuit = item.ContainsKey("Cuit") ? item["Cuit"] : null,
+                            RazonSocial = item.ContainsKey("RazonSocial") ? item["RazonSocial"] : null,
+                            FechaAlta = item.ContainsKey("FechaAlta")
+                                ? DateTime.Parse(item["FechaAlta"])
+                                : DateTime.Now,
+                            Importe = item.ContainsKey("Importe")
+                                ? decimal.Parse(item["Importe"], NumberStyles.Any, CultureInfo.InvariantCulture)
+                                : 0m
+                        };
+
+                        db.DatosPadron.Add(entidad);
+                        procesados++;
+
+                        Progreso = (procesados * 100) / total;
+                    }
+
+                    db.SaveChanges();
+                }
+            });
+
+            EstaProcesando = false;
+        }
     }
 }
