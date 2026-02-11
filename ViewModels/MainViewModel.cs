@@ -110,6 +110,17 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        private bool _validacionFinalizada;
+        public bool ValidacionFinalizada
+        {
+            get => _validacionFinalizada;
+            set
+            {
+                _validacionFinalizada = value;
+                OnPropertyChanged();
+            }
+        }
+
         // Logs
         public ObservableCollection<string> Logs { get; set; }
 
@@ -124,6 +135,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand SeleccionarConsumosDetalleCommand { get; }
         public ICommand SeleccionarServiciosCommand { get; }
         public ICommand ValidarCommand { get; }
+        public ICommand CopiarABaseCommand {  get; }
 
         // Constructor
         public MainViewModel()
@@ -150,6 +162,9 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
+
+            CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
+
         }
 
         // Métodos de selección de archivos
@@ -259,6 +274,8 @@ namespace MigradorCUAD.ViewModels
                     }
                 }
             }
+
+            ValidacionFinalizada = true;
 
         }
 
@@ -430,6 +447,15 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        private bool PuedeCopiarABase(object? parameter)
+        {
+            return ValidacionFinalizada;
+        }
+
+        private void CopiarABase(object? parameter)
+        {
+            Logs.Add("💾 Iniciando proceso de copia a base de datos...");
+        }
 
     }
 }
