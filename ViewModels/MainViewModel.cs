@@ -1,11 +1,11 @@
-using Microsoft.Win32;
 using MigradorCUAD.Commands;
-using MigradorCUAD.Data;
 using MigradorCUAD.Models;
 using MigradorCUAD.Services;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows.Input;
 namespace MigradorCUAD.ViewModels
 {
@@ -98,10 +98,6 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
-        // Data
-        private readonly IDataRepository _repository;
-
-
         // Progreso
         private int _progreso;
         public int Progreso
@@ -154,8 +150,6 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
-
-            _repository = new SqlDataRepository();
         }
 
         // Métodos de selección de archivos
@@ -223,15 +217,46 @@ namespace MigradorCUAD.ViewModels
 
             if (Logs.Count == 0)
             {
-                bool okCategorias = ValidarArchivo("Categorias", ArchivoCategorias);
-                bool okPadron = ValidarArchivo("Padron", ArchivoPadron);
-                bool okConsumos = ValidarArchivo("Consumos", ArchivoConsumos);
-                bool okConsumosDetalle = ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
-                bool okServicios = ValidarArchivo("Servicios", ArchivoServicios);
+                // Validación estructural de todos los archivos
+                var datosCategorias = ValidarArchivo("Categorias", ArchivoCategorias);
+                var datosPadron = ValidarArchivo("Padron", ArchivoPadron);
+                var datosConsumos = ValidarArchivo("Consumos", ArchivoConsumos);
+                var datosConsumosDetalle = ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
+                var datosServicios = ValidarArchivo("Servicios", ArchivoServicios);
 
-                if (okCategorias && okPadron && okConsumos && okConsumosDetalle && okServicios)
+                // Si todos devolvieron registros válidos, se realiza la validación cruzada
+                if (datosCategorias != null &&
+                    datosPadron != null &&
+                    datosConsumos != null &&
+                    datosConsumosDetalle != null &&
+                    datosServicios != null)
                 {
-                    Logs.Add("🎉 Todos los archivos fueron validados correctamente.");
+                    // Mapear a modelos fuertemente tipados
+                    var socios = GenericMapper.MapToList<Socio>(datosPadron);
+                    var consumos = GenericMapper.MapToList<Consumo>(datosConsumos);
+                    var detalles = GenericMapper.MapToList<ConsumoDetalle>(datosConsumosDetalle);
+                    var servicios = GenericMapper.MapToList<Servicio>(datosServicios);
+
+                    // Validación cruzada entre archivos
+                    var erroresCruzados = CrossValidator.Validate(
+                        socios,
+                        consumos,
+                        detalles,
+                        servicios);
+
+                    foreach (var error in erroresCruzados)
+                    {
+                        Logs.Add($"❌ {error}");
+                    }
+
+                    if (!erroresCruzados.Any())
+                    {
+                        Logs.Add("✅ Validación cruzada exitosa. Lista para copiar a base.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ Validación cruzada finalizada con errores.");
+                    }
                 }
             }
 
@@ -321,20 +346,14 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
-        private bool ValidarArchivo(string nombreLogico, string? rutaArchivo)
+        private List<Dictionary<string, string>>? ValidarArchivo(string nombreLogico, string? rutaArchivo)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(rutaArchivo))
+                if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
                 {
-                    Logs.Add($"❌ Ruta no válida para {nombreLogico}");
-                    return false;
-                }
-
-                if (!File.Exists(rutaArchivo))
-                {
-                    Logs.Add($"❌ El archivo {nombreLogico} no existe.");
-                    return false;
+                    Logs.Add($"❌ Archivo inválido: {nombreLogico}");
+                    return null;
                 }
 
                 var configService = new ConfiguracionService();
@@ -343,7 +362,7 @@ namespace MigradorCUAD.ViewModels
                 if (columnasConfig.Count == 0)
                 {
                     Logs.Add($"❌ No existe configuración XML para {nombreLogico}");
-                    return false;
+                    return null;
                 }
 
                 var lineas = File.ReadAllLines(rutaArchivo);
@@ -351,7 +370,7 @@ namespace MigradorCUAD.ViewModels
                 if (lineas.Length == 0)
                 {
                     Logs.Add($"❌ Archivo {nombreLogico} vacío.");
-                    return false;
+                    return null;
                 }
 
                 var encabezado = lineas[0].Split(',');
@@ -359,7 +378,7 @@ namespace MigradorCUAD.ViewModels
                 if (encabezado.Length != columnasConfig.Count)
                 {
                     Logs.Add($"❌ Cantidad de columnas incorrecta en {nombreLogico}");
-                    return false;
+                    return null;
                 }
 
                 for (int i = 0; i < encabezado.Length; i++)
@@ -367,20 +386,23 @@ namespace MigradorCUAD.ViewModels
                     if (encabezado[i] != columnasConfig[i].Nombre)
                     {
                         Logs.Add($"❌ Columna incorrecta en {nombreLogico}: {encabezado[i]}");
-                        return false;
+                        return null;
                     }
                 }
 
-                // Validar registros
+                var registros = new List<Dictionary<string, string>>();
+
                 for (int i = 1; i < lineas.Length; i++)
                 {
                     var valores = lineas[i].Split(',');
 
                     if (valores.Length != columnasConfig.Count)
                     {
-                        Logs.Add($"❌ Fila {i + 1} con cantidad de columnas incorrecta en {nombreLogico}");
+                        Logs.Add($"❌ Fila {i + 1} con columnas incorrectas en {nombreLogico}");
                         continue;
                     }
+
+                    var fila = new Dictionary<string, string>();
 
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
@@ -392,56 +414,22 @@ namespace MigradorCUAD.ViewModels
                             Logs.Add($"❌ Error en {nombreLogico} - Fila {i + 1}, Columna {config.Nombre}");
                         }
 
-
-                        //Temporal --------------
-
-                        _numerosSocioPadron.Clear();
-                        _numerosConsumo.Clear();
-                        _categorias.Clear();
-
-                        if (nombreLogico == "Padron")
-                        {
-                            int numeroSocio = int.Parse(valores[0]);
-                            string categoria = valores[2];
-
-                            if (!_numerosSocioPadron.Add(numeroSocio))
-                                Logs.Add($"❌ Número de socio duplicado en Padrón: {numeroSocio}");
-
-                            _categorias.Add(categoria);
-                        }
-
-                        if (nombreLogico == "Consumos")
-                        {
-                            int numeroConsumo = int.Parse(valores[0]);
-                            int numeroSocio = int.Parse(valores[1]);
-
-                            if (!_numerosConsumo.Add(numeroConsumo))
-                                Logs.Add($"❌ Número de consumo duplicado: {numeroConsumo}");
-
-                            if (!_numerosSocioPadron.Contains(numeroSocio))
-                                Logs.Add($"❌ Socio {numeroSocio} no existe en Padrón");
-                        }
-
-                        if (nombreLogico == "ConsumosDetalle")
-                        {
-                            int numeroConsumo = int.Parse(valores[0]);
-
-                            if (!_numerosConsumo.Contains(numeroConsumo))
-                                Logs.Add($"❌ Consumo {numeroConsumo} no existe para detalle");
-                        }
-
+                        fila.Add(config.Nombre, valor);
                     }
+
+                    registros.Add(fila);
                 }
 
-                Logs.Add($"✅ {nombreLogico} validado correctamente.");
-                return true;
+                Logs.Add($"✅ {nombreLogico} validado estructuralmente.");
+                return registros;
             }
             catch (Exception ex)
             {
                 Logs.Add($"❌ Error validando {nombreLogico}: {ex.Message}");
-                return false;
+                return null;
             }
         }
+
 
     }
 }
