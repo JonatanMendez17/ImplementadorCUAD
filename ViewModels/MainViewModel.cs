@@ -154,6 +154,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand ValidarCommand { get; }
         public ICommand CopiarABaseCommand {  get; }
         public ICommand CopiarCommand { get; }
+        public ICommand ExportarLogCommand { get; }
 
         // Constructor
         public MainViewModel()
@@ -183,6 +184,8 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
+
+            ExportarLogCommand = new RelayCommand(_ => ExportarLog());
 
             CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
 
@@ -495,6 +498,35 @@ namespace MigradorCUAD.ViewModels
         private void CopiarABase(object? parameter)
         {
             Logs.Add("💾 Iniciando proceso de copia a base de datos...");
+        }
+
+        private void ExportarLog()
+        {
+            if (Logs == null || Logs.Count == 0)
+            {
+                Logs.Add("⚠️ No hay mensajes de log para exportar.");
+                return;
+            }
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Guardar log de validación",
+                Filter = "Archivo de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
+                FileName = "LogMigracion.txt"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    File.WriteAllLines(dialog.FileName, Logs);
+                    Logs.Add($"✅ Log exportado a: {dialog.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"❌ Error al exportar el log: {ex.Message}");
+                }
+            }
         }
 
         private async Task CopiarABaseAsync()

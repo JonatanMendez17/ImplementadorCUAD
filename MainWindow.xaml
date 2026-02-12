@@ -4,102 +4,322 @@
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="av"
-        Title="MigradorCUAD"
-        Height="300"
-        Width="500">
+        Title="Migrador CUAD"
+        Height="620"
+        Width="920"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF101010">
 
-    <Grid Margin="20">
-        <StackPanel Width="400"
-                    HorizontalAlignment="Left">
-            <!-- Selección de Empleador -->
-            <TextBlock Text="Empleador"
-                       FontWeight="Bold"
-                       Margin="0,0,0,5" />
+    <Window.Resources>
+        <!-- Tipografía y colores base -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF3B82F6" />
+        <SolidColorBrush x:Key="AccentBrushLight" Color="#FF60A5FA" />
+        <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF1F2933" />
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#FF374151" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF9FAFB" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF9CA3AF" />
 
-            <ComboBox ItemsSource="{Binding Empleador}"
-                      SelectedItem="{Binding EmpleadorSeleccionado}"
-                      DisplayMemberPath="Nombre"
-                      Height="30"
-                      Margin="0,0,0,20" />
+        <!-- Estilo general para botones -->
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentBrushLight}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <!-- Selección de Entidad -->
-            <TextBlock Text="Entidad"
-                       FontWeight="Bold"
-                       Margin="0,0,0,5" />
+        <!-- Estilo para ComboBox -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="#FF111827" />
+            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Style.Triggers>
+                <!-- Resalta suavemente el borde al pasar el mouse -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter Property="Background" Value="#FF111B2F" />
+                </Trigger>
+                <!-- Resalta cuando tiene el foco de teclado -->
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
+                </Trigger>
+                <!-- Apariencia atenuada cuando está deshabilitado -->
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.6" />
+                    <Setter Property="Cursor" Value="Arrow" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-            <ComboBox ItemsSource="{Binding Entidades}"
-                      SelectedItem="{Binding EntidadSeleccionada}"
-                      DisplayMemberPath="Nombre"
-                      Height="30" />
+        <!-- Estilo para los ítems del ComboBox -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="6,3" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="#FF111B2F" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Foreground"
+                                        Value="{StaticResource TextPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <Separator Margin="0,20,0,10" />
+        <!-- Estilo para TextBlock de título de sección -->
+        <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
 
-            <!-- Selección de archivos -->
-            <TextBlock Text="Archivos de Migración"
-                       FontWeight="Bold"
-                       Margin="0,0,0,10" />
+        <!-- Estilo para etiquetas secundarias -->
+        <Style x:Key="CaptionTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+    </Window.Resources>
 
-            <Button Content="Seleccionar Categorías"
-                    Command="{Binding SeleccionarCategoriasCommand}"
-                    Margin="0,5" />
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <TextBlock Text="{Binding ArchivoCategorias}"
-                       FontSize="11" />
+        <!-- Encabezado -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                <TextBlock Text="Migrador CUAD"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Text="Cargar los archivos, validá y copiá a base de datos"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+            </StackPanel>
+        </DockPanel>
 
-            <Button Content="Seleccionar Padrón"
-                    Command="{Binding SeleccionarPadronCommand}"
-                    Margin="0,5" />
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*" />
+                <ColumnDefinition Width="2.8*" />
+            </Grid.ColumnDefinitions>
 
-            <TextBlock Text="{Binding ArchivoPadron}"
-                       FontSize="11" />
+            <!-- Columna izquierda: selección de empleador, entidad y archivos -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="16"
+                    Margin="0,0,10,0">
+                <StackPanel>
+                    <!-- Selección de Empleador y Entidad -->
+                    <TextBlock Text="Contexto de Migración"
+                               Style="{StaticResource SectionTitleTextBlockStyle}" />
 
-            <Button Content="Seleccionar Consumos"
-                    Command="{Binding SeleccionarConsumosCommand}"
-                    Margin="0,5" />
+                    <Grid Margin="0,4,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-            <TextBlock Text="{Binding ArchivoConsumos}"
-                       FontSize="11" />
+                        <!-- Entidad (izquierda) -->
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Entidad"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Entidades}"
+                                      SelectedItem="{Binding EntidadSeleccionada}"
+                                      DisplayMemberPath="Nombre" />
+                        </StackPanel>
 
-            <Button Content="Seleccionar Consumos Detalle"
-                    Command="{Binding SeleccionarConsumosDetalleCommand}"
-                    Margin="0,5" />
+                        <!-- Empleador (derecha) -->
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="Empleador"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Empleador}"
+                                      SelectedItem="{Binding EmpleadorSeleccionado}"
+                                      DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                    </Grid>
 
-            <TextBlock Text="{Binding ArchivoConsumosDetalle}"
-                       FontSize="11" />
+                    <Separator Margin="0,4,0,12" />
 
-            <Button Content="Seleccionar Servicios"
-                    Command="{Binding SeleccionarServiciosCommand}"
-                    Margin="0,5" />
+                    <!-- Selección de archivos -->
+                    <TextBlock Text="Archivos de Migración"
+                               Style="{StaticResource SectionTitleTextBlockStyle}" />
 
-            <TextBlock Text="{Binding ArchivoServicios}"
-                       FontSize="11" />
+                    <StackPanel Margin="0,4,0,0">
+                        <!-- Categorías -->
+                        <StackPanel Margin="0,4,0,6">
+                            <Button Content="Seleccionar Categorías"
+                                    Command="{Binding SeleccionarCategoriasCommand}" />
+                            <TextBlock Text="{Binding ArchivoCategorias}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
 
-            <Separator Margin="0,20,0,10" />
+                        <!-- Padrón -->
+                        <StackPanel Margin="0,4,0,6">
+                            <Button Content="Seleccionar Padrón de Socios"
+                                    Command="{Binding SeleccionarPadronCommand}" />
+                            <TextBlock Text="{Binding ArchivoPadron}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
 
-            <!-- Validación y logs -->
-            <Button Content="Validar Archivos"
-                    Command="{Binding ValidarCommand}"
-                    Height="35"
-                    Margin="0,5" />
+                        <!-- Consumos -->
+                        <StackPanel Margin="0,4,0,6">
+                            <Button Content="Seleccionar Consumos"
+                                    Command="{Binding SeleccionarConsumosCommand}" />
+                            <TextBlock Text="{Binding ArchivoConsumos}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
 
-            <TextBlock Text="Log de Validación"
-                       FontWeight="Bold"
-                       Margin="0,15,0,5" />
+                        <!-- Consumos Detalle -->
+                        <StackPanel Margin="0,4,0,6">
+                            <Button Content="Seleccionar Consumos Detalle"
+                                    Command="{Binding SeleccionarConsumosDetalleCommand}" />
+                            <TextBlock Text="{Binding ArchivoConsumosDetalle}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
 
-            <ListBox ItemsSource="{Binding Logs}"
-                     Height="150" />
+                        <!-- Servicios -->
+                        <StackPanel Margin="0,4,0,0">
+                            <Button Content="Seleccionar Servicios"
+                                    Command="{Binding SeleccionarServiciosCommand}" />
+                            <TextBlock Text="{Binding ArchivoServicios}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-            <ProgressBar 
-                    Height="20"
-                    Minimum="0"
-                    Maximum="100"
-                    Value="{Binding Progreso}"
-                    Margin="0,10,0,0"/>
+            <!-- Columna derecha: validación, logs y progreso -->
+            <Border Grid.Column="1"
+                    Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="16"
+                    Margin="10,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-            <Button Content="Copiar a Base"
-                    Command="{Binding CopiarCommand}" />
+                    <!-- Acciones -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Validar archivos"
+                                Command="{Binding ValidarCommand}"
+                                Width="150" Click="Button_Click" Height="30" />
+                        <Button Content="Migrar datos"
+                                Command="{Binding CopiarCommand}"
+                                Width="150"
+                                Margin="8,0,0,0" Height="30" />
+                        <Button Content="Exportar log"
+                                Command="{Binding ExportarLogCommand}"
+                                Width="150"
+                                Margin="8,0,0,0" Height="30" />
+                    </StackPanel>
 
+                    <!-- Logs -->
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="Log de validación"
+                                   Style="{StaticResource SectionTitleTextBlockStyle}" />
+                        <Border BorderBrush="{StaticResource CardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Background="#FF020617"
+                                Padding="4"
+                                Margin="0,4,0,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Logs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
 
-        </StackPanel>
+                    <!-- Progreso -->
+                    <StackPanel Grid.Row="2" Margin="0,10,0,0">
+                        <TextBlock Text="Progreso de migración"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,0,0,4" />
+                        <ProgressBar Height="18"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{Binding Progreso}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
