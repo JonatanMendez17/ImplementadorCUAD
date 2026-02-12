@@ -183,19 +183,19 @@ namespace MigradorCUAD.ViewModels
 
             CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
 
-            using (var db = new AppDbContext())
-            {
-                var registro = new DatosPadron
-                {
-                    Cuit = "20123456789",
-                    RazonSocial = "Empresa Test",
-                    FechaAlta = DateTime.Now,
-                    Importe = 1500
-                };
+            //using (var db = new AppDbContext())
+            //{
+            //    var registro = new DatosPadron
+            //    {
+            //        Cuit = "20123456789",
+            //        RazonSocial = "Empresa Test",
+            //        FechaAlta = DateTime.Now,
+            //        Importe = 1500
+            //    };
 
-                db.DatosPadron.Add(registro);
-                db.SaveChanges();
-            }
+            //    db.DatosPadron.Add(registro);
+            //    db.SaveChanges();
+            //}
 
             CopiarCommand = new AsyncRelayCommand(CopiarABaseAsync);
 
