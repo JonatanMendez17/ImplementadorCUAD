@@ -18,8 +18,8 @@ namespace TuProyecto.Data
 
             var empleadoresIniciales = new[]
             {
-                new Empleador { Nombre = "Liquidador Tierra del Fuego", Cuit = null, RazonSocial = null },
-                new Empleador { Nombre = "Liquidador Santa Fe", Cuit = null, RazonSocial = null }
+                new Empleador { Nombre = "Empleador 1" },
+                new Empleador { Nombre = "Empleador 2" }
             };
 
             var entidadesIniciales = new[]

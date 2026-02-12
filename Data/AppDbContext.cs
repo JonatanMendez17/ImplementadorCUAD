@@ -41,10 +41,6 @@ namespace TuProyecto.Data
                 .Property(e => e.Nombre)
                 .HasMaxLength(150);
 
-            modelBuilder.Entity<Empleador>()
-                .Property(e => e.Cuit)
-                .HasMaxLength(20);
-
             // Configuración opcional para Entidad
             modelBuilder.Entity<Entidad>()
                 .Property(e => e.Nombre)

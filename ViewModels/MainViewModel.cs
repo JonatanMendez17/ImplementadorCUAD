@@ -155,6 +155,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand CopiarABaseCommand {  get; }
         public ICommand CopiarCommand { get; }
         public ICommand ExportarLogCommand { get; }
+        public ICommand LimpiarPantallaCommand { get; }
 
         // Constructor
         public MainViewModel()
@@ -185,8 +186,6 @@ namespace MigradorCUAD.ViewModels
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
 
-            ExportarLogCommand = new RelayCommand(_ => ExportarLog());
-
             CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
 
             //using (var db = new AppDbContext())
@@ -204,6 +203,8 @@ namespace MigradorCUAD.ViewModels
             //}
 
             CopiarCommand = new AsyncRelayCommand(CopiarABaseAsync);
+
+            LimpiarPantallaCommand = new RelayCommand(_ => LimpiarPantalla());
 
         }
 
@@ -498,6 +499,32 @@ namespace MigradorCUAD.ViewModels
         private void CopiarABase(object? parameter)
         {
             Logs.Add("💾 Iniciando proceso de copia a base de datos...");
+        }
+
+        private void LimpiarPantalla()
+        {
+            // Limpiar selecciones
+            EmpleadorSeleccionado = null;
+            EntidadSeleccionada = null;
+
+            // Limpiar rutas de archivos
+            ArchivoCategorias = null;
+            ArchivoPadron = null;
+            ArchivoConsumos = null;
+            ArchivoConsumosDetalle = null;
+            ArchivoServicios = null;
+
+            // Limpiar logs y estado
+            Logs.Clear();
+            Progreso = 0;
+            EstaProcesando = false;
+            ValidacionFinalizada = false;
+
+            // Limpiar datos temporales
+            _datosValidados.Clear();
+            _numerosSocioPadron.Clear();
+            _numerosConsumo.Clear();
+            _categorias.Clear();
         }
 
         private void ExportarLog()
