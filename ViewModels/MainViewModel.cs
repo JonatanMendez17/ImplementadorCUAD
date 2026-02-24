@@ -160,7 +160,7 @@ namespace MigradorCUAD.ViewModels
             //    db.SaveChanges();
             //}
 
-            CopiarCommand = new AsyncRelayCommand(CopiarABaseAsync);
+            CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
 
             LimpiarPantallaCommand = new RelayCommand(_ => LimpiarPantalla());
 

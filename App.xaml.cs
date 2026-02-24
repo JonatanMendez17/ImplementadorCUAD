@@ -15,8 +15,6 @@ namespace MigradorCUAD
                 // Para entorno de desarrollo: crear si no existe
                 db.Database.EnsureCreated();
 
-                // Seed controlado: solo inserta datos base si las tablas están vacías
-                DbInitializer.Seed(db);
             }
         }
     }
