@@ -123,13 +123,9 @@ namespace MigradorCUAD.ViewModels
             // Cargar datos de Empleadores y Entidades desde la base de datos
             using (var db = new AppDbContext())
             {
-                var empleadorDb = db.Empleador
-                    .OrderBy(e => e.Nombre)
-                    .ToList();
+                var empleadorDb = db.GetEmpleadores();
 
-                var entidadesDb = db.Entidades
-                    .OrderBy(e => e.Nombre)
-                    .ToList();
+                var entidadesDb = db.GetEntidades();
 
                 Empleador = new ObservableCollection<Empleador>(empleadorDb);
                 Entidades = new ObservableCollection<Entidad>(entidadesDb);
@@ -145,20 +141,6 @@ namespace MigradorCUAD.ViewModels
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
 
             CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
-
-            //using (var db = new AppDbContext())
-            //{
-            //    var registro = new DatosPadron
-            //    {
-            //        Cuit = "20123456789",
-            //        RazonSocial = "Empresa Test",
-            //        FechaAlta = DateTime.Now,
-            //        Importe = 1500
-            //    };
-
-            //    db.DatosPadron.Add(registro);
-            //    db.SaveChanges();
-            //}
 
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
 
@@ -866,20 +848,11 @@ namespace MigradorCUAD.ViewModels
                 {
                     // Insertar padrón de socios en Padron_socios
                     var padronSocios = MapearPadronSocios();
-                    int totalPadron = padronSocios.Count;
-                    int procesadosPadron = 0;
-
                     if (padronSocios.Any())
                     {
-                        foreach (var socio in padronSocios)
-                        {
-                            db.PadronSocios.Add(socio);
-                            procesadosPadron++;
-                            Progreso = (procesadosPadron * 100) / Math.Max(totalPadron, 1);
-                        }
-
-                        db.SaveChanges();
-                        Logs.Add($"✅ Padrón de socios insertado correctamente en Padron_socios ({totalPadron} registros).");
+                        db.InsertPadronSocios(padronSocios);
+                        Progreso = 20;
+                        Logs.Add($"✅ Padrón de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
                     }
                     else
                     {
@@ -892,8 +865,8 @@ namespace MigradorCUAD.ViewModels
                     if (categorias.Any())
                     {
                         Logs.Add($"💾 Insertando {categorias.Count} categorías en Categorias_Socio...");
-                        db.CategoriasSocio.AddRange(categorias);
-                        db.SaveChanges();
+                        db.InsertCategoriasSocio(categorias);
+                        Progreso = 40;
                         Logs.Add("✅ Categorías insertadas correctamente en Categorias_Socio.");
                     }
                     else
@@ -907,8 +880,8 @@ namespace MigradorCUAD.ViewModels
                     if (consumosDetalleImport.Any())
                     {
                         Logs.Add($"💾 Insertando {consumosDetalleImport.Count} registros en Importar_Consumos_Detalle...");
-                        db.ImportarConsumosDetalle.AddRange(consumosDetalleImport);
-                        db.SaveChanges();
+                        db.InsertImportarConsumosDetalle(consumosDetalleImport);
+                        Progreso = 60;
                         Logs.Add("✅ Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
                     }
                     else
@@ -922,8 +895,8 @@ namespace MigradorCUAD.ViewModels
                     if (catalogoServicios.Any())
                     {
                         Logs.Add($"💾 Insertando {catalogoServicios.Count} registros en Catalogo_Servicios...");
-                        db.CatalogoServicios.AddRange(catalogoServicios);
-                        db.SaveChanges();
+                        db.InsertCatalogoServicios(catalogoServicios);
+                        Progreso = 75;
                         Logs.Add("✅ Catálogo de servicios insertado correctamente en Catalogo_Servicios.");
                     }
                     else
@@ -937,8 +910,8 @@ namespace MigradorCUAD.ViewModels
                     if (consumosServicios.Any())
                     {
                         Logs.Add($"💾 Insertando {consumosServicios.Count} registros en Consumos_Servicios...");
-                        db.ConsumosServicios.AddRange(consumosServicios);
-                        db.SaveChanges();
+                        db.InsertConsumosServicios(consumosServicios);
+                        Progreso = 90;
                         Logs.Add("✅ Servicios insertados correctamente en Consumos_Servicios.");
                     }
                     else
@@ -952,8 +925,8 @@ namespace MigradorCUAD.ViewModels
                     if (consumosImportados.Any())
                     {
                         Logs.Add($"💾 Insertando {consumosImportados.Count} registros en Consumo...");
-                        db.ConsumosImportados.AddRange(consumosImportados);
-                        db.SaveChanges();
+                        db.InsertConsumosImportados(consumosImportados);
+                        Progreso = 100;
                         Logs.Add("✅ Consumos insertados correctamente en tabla Consumo.");
                     }
                     else
@@ -967,3 +940,4 @@ namespace MigradorCUAD.ViewModels
         }
     }
 }
+
