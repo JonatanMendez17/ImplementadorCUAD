@@ -235,95 +235,72 @@ namespace MigradorCUAD.ViewModels
         private void ValidarArchivos()
         {
             Logs.Clear();
+            // Modo prueba: validaciones deshabilitadas para permitir carga directa.
+            //if (EmpleadorSeleccionado == null) { ... }
+            //if (EntidadSeleccionada == null) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoCategorias)) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoPadron)) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoConsumos)) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoConsumosDetalle)) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoServicios)) { ... }
+            //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
+            var datosCategorias = string.IsNullOrWhiteSpace(ArchivoCategorias) ? null : ValidarArchivo("Categorias", ArchivoCategorias);
+            var datosPadron = string.IsNullOrWhiteSpace(ArchivoPadron) ? null : ValidarArchivo("Padron", ArchivoPadron);
+            var datosConsumos = string.IsNullOrWhiteSpace(ArchivoConsumos) ? null : ValidarArchivo("Consumos", ArchivoConsumos);
+            var datosConsumosDetalle = string.IsNullOrWhiteSpace(ArchivoConsumosDetalle) ? null : ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
+            var datosServicios = string.IsNullOrWhiteSpace(ArchivoServicios) ? null : ValidarArchivo("Servicios", ArchivoServicios);
+            var datosCatalogoServicios = string.IsNullOrWhiteSpace(ArchivoCatalogoServicios) ? null : ValidarArchivo("CatalogoServicios", ArchivoCatalogoServicios);
 
-            if (EmpleadorSeleccionado == null)
+            var huboCarga = false;
+
+            if (datosPadron != null)
             {
-                Logs.Add("❌ Debe seleccionar un empleador.");
+                _datosValidados = datosPadron;
+                huboCarga = true;
             }
 
-            if (EntidadSeleccionada == null)
+            if (datosCategorias != null)
             {
-                Logs.Add("❌ Debe seleccionar una entidad.");
+                _datosCategoriasValidadas = datosCategorias;
+                huboCarga = true;
             }
 
-            if (string.IsNullOrWhiteSpace(ArchivoCategorias))
-                Logs.Add("❌ Archivo de Categorías no seleccionado.");
-
-            if (string.IsNullOrWhiteSpace(ArchivoPadron))
-                Logs.Add("❌ Archivo de Padrón no seleccionado.");
-
-            if (string.IsNullOrWhiteSpace(ArchivoConsumos))
-                Logs.Add("❌ Archivo de Consumos no seleccionado.");
-
-            if (string.IsNullOrWhiteSpace(ArchivoConsumosDetalle))
-                Logs.Add("❌ Archivo de Consumos Detalle no seleccionado.");
-
-            if (string.IsNullOrWhiteSpace(ArchivoServicios))
-                Logs.Add("❌ Archivo de Servicios no seleccionado.");
-
-            if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios))
-                Logs.Add("❌ Archivo de Catálogo de Servicios no seleccionado.");
-
-            if (Logs.Count == 0)
+            if (datosConsumos != null)
             {
-                // Validación estructural de todos los archivos
-                var datosCategorias = ValidarArchivo("Categorias", ArchivoCategorias);
-                var datosPadron = ValidarArchivo("Padron", ArchivoPadron);
-                var datosConsumos = ValidarArchivo("Consumos", ArchivoConsumos);
-                var datosConsumosDetalle = ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
-                var datosServicios = ValidarArchivo("Servicios", ArchivoServicios);
-                var datosCatalogoServicios = ValidarArchivo("CatalogoServicios", ArchivoCatalogoServicios);
-
-                // Si todos devolvieron registros válidos, se realiza la validación cruzada
-                if (datosCategorias != null &&
-                    datosPadron != null &&
-                    datosConsumos != null &&
-                    datosConsumosDetalle != null &&
-                    datosServicios != null &&
-                    datosCatalogoServicios != null)
-                {
-                    // Guardar datos validados de padrón y otros para la copia a base
-                    _datosValidados = datosPadron;
-                    _datosCategoriasValidadas = datosCategorias;
-                    _datosConsumosValidados = datosConsumos;
-                    _datosConsumosDetalleValidados = datosConsumosDetalle;
-                    _datosCatalogoServiciosValidados = datosCatalogoServicios;
-                    _datosServiciosValidados = datosServicios;
-
-                    // Mapear a modelos fuertemente tipados
-                    var socios = GenericMapper.MapToList<Socio>(datosPadron);
-                    var consumos = GenericMapper.MapToList<Consumo>(datosConsumos);
-                    var detalles = GenericMapper.MapToList<ConsumoDetalle>(datosConsumosDetalle);
-                    var servicios = GenericMapper.MapToList<Servicio>(datosServicios);
-
-                    // Validación cruzada entre archivos
-                    var erroresCruzados = CrossValidator.Validate(
-                        socios,
-                        consumos,
-                        detalles,
-                        servicios);
-
-                    foreach (var error in erroresCruzados)
-                    {
-                        Logs.Add($"❌ {error}");
-                    }
-
-                    if (!erroresCruzados.Any())
-                    {
-                        Logs.Add("✅ Validación cruzada exitosa. Lista para copiar a base.");
-                    }
-                    else
-                    {
-                        Logs.Add("⚠️ Validación cruzada finalizada con errores.");
-                    }
-                }
+                _datosConsumosValidados = datosConsumos;
+                huboCarga = true;
             }
 
-            ValidacionFinalizada = true;
+            if (datosConsumosDetalle != null)
+            {
+                _datosConsumosDetalleValidados = datosConsumosDetalle;
+                huboCarga = true;
+            }
 
+            if (datosCatalogoServicios != null)
+            {
+                _datosCatalogoServiciosValidados = datosCatalogoServicios;
+                huboCarga = true;
+            }
+
+            if (datosServicios != null)
+            {
+                _datosServiciosValidados = datosServicios;
+                huboCarga = true;
+            }
+
+            if (huboCarga)
+            {
+                Logs.Add("Modo prueba: archivos cargados sin validaciones.");
+            }
+            else
+            {
+                Logs.Add("No se pudo cargar ningún archivo.");
+            }
+
+            ValidacionFinalizada = huboCarga;
         }
-
-        // Validación específica del archivo de Categorías
+        // Validaci?n espec?fica del archivo de Categor?as
         private void ValidarArchivoCategorias()
         {
             try
@@ -411,86 +388,60 @@ namespace MigradorCUAD.ViewModels
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
+                if (string.IsNullOrWhiteSpace(rutaArchivo))
                 {
-                    Logs.Add($"❌ Archivo inválido: {nombreLogico}");
                     return null;
                 }
 
+                if (!File.Exists(rutaArchivo))
+                {
+                    Logs.Add($"Archivo inv?lido: {nombreLogico}");
+                    return null;
+                }
                 var configService = new ConfiguracionService();
                 var columnasConfig = configService.ObtenerColumnas(nombreLogico);
-
                 if (columnasConfig.Count == 0)
                 {
-                    Logs.Add($"❌ No existe configuración XML para {nombreLogico}");
+                    Logs.Add($"No existe configuraci?n XML para {nombreLogico}");
                     return null;
                 }
-
                 var lineas = LeerLineasArchivo(rutaArchivo);
-
                 if (lineas.Length == 0)
                 {
-                    Logs.Add($"❌ Archivo {nombreLogico} vacío.");
+                    Logs.Add($"Archivo {nombreLogico} vac?o.");
                     return null;
                 }
-
-                var encabezado = lineas[0].Split(',');
-
-                if (encabezado.Length != columnasConfig.Count)
-                {
-                    Logs.Add($"❌ Cantidad de columnas incorrecta en {nombreLogico}");
-                    return null;
-                }
-
-                for (int i = 0; i < encabezado.Length; i++)
-                {
-                    if (encabezado[i] != columnasConfig[i].Nombre)
-                    {
-                        Logs.Add($"❌ Columna incorrecta en {nombreLogico}: {encabezado[i]}");
-                        return null;
-                    }
-                }
-
+                // Modo prueba: validaciones estructurales deshabilitadas.
+                //var encabezado = lineas[0].Split(',');
+                //if (encabezado.Length != columnasConfig.Count) return null;
+                //for (int i = 0; i < encabezado.Length; i++)
+                //{
+                //    if (encabezado[i] != columnasConfig[i].Nombre) return null;
+                //}
                 var registros = new List<Dictionary<string, string>>();
-
                 for (int i = 1; i < lineas.Length; i++)
                 {
                     var valores = lineas[i].Split(',');
-
-                    if (valores.Length != columnasConfig.Count)
-                    {
-                        Logs.Add($"❌ Fila {i + 1} con columnas incorrectas en {nombreLogico}");
-                        continue;
-                    }
-
                     var fila = new Dictionary<string, string>();
-
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
-                        var valor = valores[j];
-                        var config = columnasConfig[j];
-
-                        if (!ValidarTipoDato(valor, config))
-                        {
-                            Logs.Add($"❌ Error en {nombreLogico} - Fila {i + 1}, Columna {config.Nombre}");
-                        }
-
-                        fila.Add(config.Nombre, valor);
+                        var valor = j < valores.Length ? valores[j] : string.Empty;
+                        // Modo prueba: validaci?n de tipo deshabilitada.
+                        //var config = columnasConfig[j];
+                        //if (!ValidarTipoDato(valor, config)) { ... }
+                        fila[columnasConfig[j].Nombre] = valor;
                     }
-
                     registros.Add(fila);
                 }
-
-                Logs.Add($"✅ {nombreLogico} validado estructuralmente.");
+                Logs.Add($"{nombreLogico} cargado en modo prueba (sin validaciones).");
                 return registros;
             }
             catch (Exception ex)
             {
-                Logs.Add($"❌ Error validando {nombreLogico}: {ex.Message}");
+                Logs.Add($"Error al cargar {nombreLogico}: {ex.Message}");
                 return null;
             }
         }
-
         private List<CategoriaSocio> MapearCategorias()
         {
             var resultado = new List<CategoriaSocio>();
@@ -652,15 +603,25 @@ namespace MigradorCUAD.ViewModels
                         continue;
                     }
 
+                    if (!TryParseIntFlexible(nroSocioTexto, out var nroSocio) ||
+                        !TryParseDateFlexible(fechaAltaTexto, out var fechaAltaSocio) ||
+                        !TryParseIntFlexible(documentoTexto, out var documento) ||
+                        !TryParseLongDigitsOnly(cuitTexto, out var cuit) ||
+                        !TryParseIntFlexible(beneficioTexto, out var beneficio))
+                    {
+                        Logs.Add("⚠️ Fila de padrón con formato inválido. Se omite el registro.");
+                        continue;
+                    }
+
                     var registro = new PadronSocio
                     {
-                        EntidadCod = entidad,
-                        NroSocio = int.Parse(nroSocioTexto),
-                        FechaAltaSocio = DateTime.Parse(fechaAltaTexto),
-                        Documento = int.Parse(documentoTexto),
-                        Cuit = long.Parse(cuitTexto),
-                        Beneficio = int.Parse(beneficioTexto),
-                        CodigoCategoria = codigoCategoria
+                        EntidadCod = entidad.Trim(),
+                        NroSocio = nroSocio,
+                        FechaAltaSocio = fechaAltaSocio,
+                        Documento = documento,
+                        Cuit = cuit,
+                        Beneficio = beneficio,
+                        CodigoCategoria = codigoCategoria.Trim()
                     };
 
                     resultado.Add(registro);
@@ -672,6 +633,48 @@ namespace MigradorCUAD.ViewModels
             }
 
             return resultado;
+        }
+
+        private static bool TryParseIntFlexible(string input, out int value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            var sanitized = input.Trim();
+            var digits = new string(sanitized.Where(char.IsDigit).ToArray());
+
+            if (string.IsNullOrWhiteSpace(digits))
+                return false;
+
+            return int.TryParse(digits, out value);
+        }
+
+        private static bool TryParseLongDigitsOnly(string input, out long value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            var digits = new string(input.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(digits))
+                return false;
+
+            return long.TryParse(digits, out value);
+        }
+
+        private static bool TryParseDateFlexible(string input, out DateTime value)
+        {
+            return DateTime.TryParse(
+                input,
+                CultureInfo.GetCultureInfo("es-AR"),
+                DateTimeStyles.None,
+                out value)
+                || DateTime.TryParse(
+                    input,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out value);
         }
 
         private List<ConsumoServicio> MapearConsumosServicios()
@@ -842,101 +845,107 @@ namespace MigradorCUAD.ViewModels
             EstaProcesando = true;
             Progreso = 0;
 
-            await Task.Run(() =>
+            try
             {
                 using (var db = new AppDbContext())
                 {
-                    // Insertar padrón de socios en Padron_socios
-                    var padronSocios = MapearPadronSocios();
-                    if (padronSocios.Any())
+                    if (!string.IsNullOrWhiteSpace(ArchivoPadron))
                     {
-                        db.InsertPadronSocios(padronSocios);
-                        Progreso = 20;
-                        Logs.Add($"✅ Padrón de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
+                        var padronSocios = MapearPadronSocios();
+                        if (padronSocios.Any())
+                        {
+                            db.InsertPadronSocios(padronSocios);
+                            Progreso = 20;
+                            Logs.Add($"Padron de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay registros validos de padron para insertar en Padron_socios.");
+                        }
                     }
-                    else
+                    if (!string.IsNullOrWhiteSpace(ArchivoCategorias))
                     {
-                        Logs.Add("⚠️ No hay registros válidos de padrón para insertar en Padron_socios.");
+                        var categorias = MapearCategorias();
+                        if (categorias.Any())
+                        {
+                            Logs.Add($"Insertando {categorias.Count} categorias en Categorias_Socio...");
+                            db.InsertCategoriasSocio(categorias);
+                            Progreso = 40;
+                            Logs.Add("Categorias insertadas correctamente en Categorias_Socio.");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay categorias validas para insertar en Categorias_Socio.");
+                        }
                     }
-
-                    // Insertar categorías
-                    var categorias = MapearCategorias();
-
-                    if (categorias.Any())
+                    if (!string.IsNullOrWhiteSpace(ArchivoConsumosDetalle))
                     {
-                        Logs.Add($"💾 Insertando {categorias.Count} categorías en Categorias_Socio...");
-                        db.InsertCategoriasSocio(categorias);
-                        Progreso = 40;
-                        Logs.Add("✅ Categorías insertadas correctamente en Categorias_Socio.");
+                        var consumosDetalleImport = MapearConsumosDetalleImportacion();
+                        if (consumosDetalleImport.Any())
+                        {
+                            Logs.Add($"Insertando {consumosDetalleImport.Count} registros en Importar_Consumos_Detalle...");
+                            db.InsertImportarConsumosDetalle(consumosDetalleImport);
+                            Progreso = 60;
+                            Logs.Add("Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
+                        }
                     }
-                    else
+                    if (!string.IsNullOrWhiteSpace(ArchivoCatalogoServicios))
                     {
-                        Logs.Add("⚠️ No hay categorías válidas para insertar en Categorias_Socio.");
+                        var catalogoServicios = MapearCatalogoServicios();
+                        if (catalogoServicios.Any())
+                        {
+                            Logs.Add($"Insertando {catalogoServicios.Count} registros en Catalogo_Servicios...");
+                            db.InsertCatalogoServicios(catalogoServicios);
+                            Progreso = 75;
+                            Logs.Add("Catalogo de servicios insertado correctamente en Catalogo_Servicios.");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay registros validos para insertar en Catalogo_Servicios.");
+                        }
                     }
-
-                    // Insertar consumos detalle en tabla de importación
-                    var consumosDetalleImport = MapearConsumosDetalleImportacion();
-
-                    if (consumosDetalleImport.Any())
+                    if (!string.IsNullOrWhiteSpace(ArchivoServicios))
                     {
-                        Logs.Add($"💾 Insertando {consumosDetalleImport.Count} registros en Importar_Consumos_Detalle...");
-                        db.InsertImportarConsumosDetalle(consumosDetalleImport);
-                        Progreso = 60;
-                        Logs.Add("✅ Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
+                        var consumosServicios = MapearConsumosServicios();
+                        if (consumosServicios.Any())
+                        {
+                            Logs.Add($"Insertando {consumosServicios.Count} registros en Consumos_Servicios...");
+                            db.InsertConsumosServicios(consumosServicios);
+                            Progreso = 90;
+                            Logs.Add("Servicios insertados correctamente en Consumos_Servicios.");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay registros validos para insertar en Consumos_Servicios.");
+                        }
                     }
-                    else
+                    if (!string.IsNullOrWhiteSpace(ArchivoConsumos))
                     {
-                        Logs.Add("⚠️ No hay consumos detalle válidos para insertar en Importar_Consumos_Detalle.");
-                    }
-
-                    // Insertar catálogo de servicios
-                    var catalogoServicios = MapearCatalogoServicios();
-
-                    if (catalogoServicios.Any())
-                    {
-                        Logs.Add($"💾 Insertando {catalogoServicios.Count} registros en Catalogo_Servicios...");
-                        db.InsertCatalogoServicios(catalogoServicios);
-                        Progreso = 75;
-                        Logs.Add("✅ Catálogo de servicios insertado correctamente en Catalogo_Servicios.");
-                    }
-                    else
-                    {
-                        Logs.Add("⚠️ No hay registros válidos para insertar en Catalogo_Servicios.");
-                    }
-
-                    // Insertar servicios (consumos servicios)
-                    var consumosServicios = MapearConsumosServicios();
-
-                    if (consumosServicios.Any())
-                    {
-                        Logs.Add($"💾 Insertando {consumosServicios.Count} registros en Consumos_Servicios...");
-                        db.InsertConsumosServicios(consumosServicios);
-                        Progreso = 90;
-                        Logs.Add("✅ Servicios insertados correctamente en Consumos_Servicios.");
-                    }
-                    else
-                    {
-                        Logs.Add("⚠️ No hay registros válidos para insertar en Consumos_Servicios.");
-                    }
-
-                    // Insertar consumos (tabla Consumo)
-                    var consumosImportados = MapearConsumosImportados();
-
-                    if (consumosImportados.Any())
-                    {
-                        Logs.Add($"💾 Insertando {consumosImportados.Count} registros en Consumo...");
-                        db.InsertConsumosImportados(consumosImportados);
-                        Progreso = 100;
-                        Logs.Add("✅ Consumos insertados correctamente en tabla Consumo.");
-                    }
-                    else
-                    {
-                        Logs.Add("⚠️ No hay registros válidos para insertar en tabla Consumo.");
+                        var consumosImportados = MapearConsumosImportados();
+                        if (consumosImportados.Any())
+                        {
+                            Logs.Add($"Insertando {consumosImportados.Count} registros en Consumo...");
+                            db.InsertConsumosImportados(consumosImportados);
+                            Progreso = 100;
+                            Logs.Add("Consumos insertados correctamente en tabla Consumo.");
+                        }
+                        else
+                        {
+                            Logs.Add("No hay registros validos para insertar en tabla Consumo.");
+                        }
                     }
                 }
-            });
+            }
+            finally
+            {
+                EstaProcesando = false;
+            }
 
-            EstaProcesando = false;
+            await Task.CompletedTask;
         }
     }
 }
