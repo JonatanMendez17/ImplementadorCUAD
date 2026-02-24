@@ -15,20 +15,20 @@ namespace MigradorCUAD.Data
                 return;
             }
 
-            var empleadoresIniciales = new[]
-            {
-                new Empleador { Nombre = "Empleador 1" },
-                new Empleador { Nombre = "Empleador 2" }
-            };
+            //var empleadoresIniciales = new[]
+            //{
+            //    new Empleador { Nombre = "Empleador 1" },
+            //    new Empleador { Nombre = "Empleador 2" }
+            //};
 
-            var entidadesIniciales = new[]
-            {
-                new Entidad { Codigo = "ENT1", Nombre = "Entidad A" },
-                new Entidad { Codigo = "ENT2", Nombre = "Entidad B" }
-            };
+            //var entidadesIniciales = new[]
+            //{
+            //    new Entidad { Codigo = "ENT1", Nombre = "Entidad A" },
+            //    new Entidad { Codigo = "ENT2", Nombre = "Entidad B" }
+            //};
 
-            context.Empleador.AddRange(empleadoresIniciales);
-            context.Entidades.AddRange(entidadesIniciales);
+            //context.Empleador.AddRange(empleadoresIniciales);
+            //context.Entidades.AddRange(entidadesIniciales);
 
             context.SaveChanges();
         }

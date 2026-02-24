@@ -33,19 +33,23 @@ namespace MigradorCUAD.Data
                 .Property(x => x.Importe)
                 .HasColumnType("decimal(18,2)");
 
-            // Configuración opcional para Empleador
-            modelBuilder.Entity<Empleador>()
-                .Property(e => e.Nombre)
-                .HasMaxLength(150);
+            // Configuración para Empleador
+            modelBuilder.Entity<Empleador>(entity =>
+            {
+                entity.ToTable("Empleador");
 
-            // Configuración opcional para Entidad
-            modelBuilder.Entity<Entidad>()
-                .Property(e => e.Nombre)
-                .HasMaxLength(150);
+                entity.Property(e => e.Nombre)
+                    .HasMaxLength(150);
+            });
 
-            modelBuilder.Entity<Entidad>()
-                .Property(e => e.Codigo)
-                .HasMaxLength(20);
+            // Configuración para Entidad
+            modelBuilder.Entity<Entidad>(entity =>
+            {
+                entity.ToTable("Entidad");
+
+                entity.Property(e => e.Nombre)
+                .HasMaxLength(150);
+            });
         }
     }
 }
