@@ -26,6 +26,11 @@ namespace MigradorCUAD.ViewModels
         private bool _estaProcesando;
         private bool _validacionFinalizada;
         private List<Dictionary<string, string>> _datosValidados = new();
+        private List<Dictionary<string, string>> _datosCategoriasValidadas = new();
+        private List<Dictionary<string, string>> _datosConsumosValidados = new();
+        private List<Dictionary<string, string>> _datosConsumosDetalleValidados = new();
+        private List<Dictionary<string, string>> _datosCatalogoServiciosValidados = new();
+        private List<Dictionary<string, string>> _datosServiciosValidados = new();
 
 
         // Publicas
@@ -295,8 +300,13 @@ namespace MigradorCUAD.ViewModels
                     datosServicios != null &&
                     datosCatalogoServicios != null)
                 {
-                    // Guardar datos validados de padrón para la copia a base
+                    // Guardar datos validados de padrón y otros para la copia a base
                     _datosValidados = datosPadron;
+                    _datosCategoriasValidadas = datosCategorias;
+                    _datosConsumosValidados = datosConsumos;
+                    _datosConsumosDetalleValidados = datosConsumosDetalle;
+                    _datosCatalogoServiciosValidados = datosCatalogoServicios;
+                    _datosServiciosValidados = datosServicios;
 
                     // Mapear a modelos fuertemente tipados
                     var socios = GenericMapper.MapToList<Socio>(datosPadron);
@@ -499,6 +509,292 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        private List<CategoriaSocio> MapearCategorias()
+        {
+            var resultado = new List<CategoriaSocio>();
+
+            foreach (var fila in _datosCategoriasValidadas)
+            {
+                try
+                {
+                    // Lectura segura de valores
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Código Categoría", out var codigoCategoria);
+                    fila.TryGetValue("Categoría", out var nombreCategoria);
+                    fila.TryGetValue("Descripción Categoría", out var descripcionCategoria);
+                    fila.TryGetValue("Categoría Predeterminada", out var esPredeterminadaTexto);
+                    fila.TryGetValue("Monto CS", out var montoCsTexto);
+                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(codigoCategoria) ||
+                        string.IsNullOrWhiteSpace(nombreCategoria) ||
+                        string.IsNullOrWhiteSpace(montoCsTexto) ||
+                        string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
+                    {
+                        Logs.Add("⚠️ Fila de categorías incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var categoria = new CategoriaSocio
+                    {
+                        EntidadCod = entidad,
+                        CatCodigo = codigoCategoria,
+                        CatNombre = nombreCategoria,
+                        CatDescripcion = descripcionCategoria,
+                        EsPredeterminada = string.Equals(esPredeterminadaTexto, "S", StringComparison.OrdinalIgnoreCase),
+                        MontoCS = decimal.Parse(montoCsTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
+                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
+                    };
+
+                    resultado.Add(categoria);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de categorías: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
+        private List<ImportarConsumosDetalle> MapearConsumosDetalleImportacion()
+        {
+            var resultado = new List<ImportarConsumosDetalle>();
+
+            foreach (var fila in _datosConsumosDetalleValidados)
+            {
+                try
+                {
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Código Consumo", out var codigoConsumoTexto);
+                    fila.TryGetValue("Nro Cuota", out var nroCuotaTexto);
+                    fila.TryGetValue("Fecha Vencimiento", out var fechaVencimientoTexto);
+                    fila.TryGetValue("Monto", out var montoTexto);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(codigoConsumoTexto) ||
+                        string.IsNullOrWhiteSpace(nroCuotaTexto) ||
+                        string.IsNullOrWhiteSpace(fechaVencimientoTexto) ||
+                        string.IsNullOrWhiteSpace(montoTexto))
+                    {
+                        Logs.Add("⚠️ Fila de consumos detalle incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var registro = new ImportarConsumosDetalle
+                    {
+                        Entidad = entidad,
+                        CodigoConsumo = int.Parse(codigoConsumoTexto),
+                        NroCuota = int.Parse(nroCuotaTexto),
+                        FechaVencimiento = DateTime.Parse(fechaVencimientoTexto),
+                        Monto = decimal.Parse(montoTexto, NumberStyles.Any, CultureInfo.InvariantCulture)
+                    };
+
+                    resultado.Add(registro);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de consumos detalle: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
+        private List<CatalogoServicio> MapearCatalogoServicios()
+        {
+            var resultado = new List<CatalogoServicio>();
+
+            foreach (var fila in _datosCatalogoServiciosValidados)
+            {
+                try
+                {
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Servicio", out var servicioNombre);
+                    fila.TryGetValue("Importe", out var importeTexto);
+                    fila.TryGetValue("Comentarios / Info de Servicio", out var descripcion);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(servicioNombre) ||
+                        string.IsNullOrWhiteSpace(importeTexto))
+                    {
+                        Logs.Add("⚠️ Fila de catálogo de servicios incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var registro = new CatalogoServicio
+                    {
+                        EntidadCod = entidad,
+                        ServicioNombre = servicioNombre,
+                        Importe = decimal.Parse(importeTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
+                        ServicioDescripcion = descripcion
+                    };
+
+                    resultado.Add(registro);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de catálogo de servicios: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
+        private List<PadronSocio> MapearPadronSocios()
+        {
+            var resultado = new List<PadronSocio>();
+
+            foreach (var fila in _datosValidados)
+            {
+                try
+                {
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Nro Socio", out var nroSocioTexto);
+                    fila.TryGetValue("Fecha Alta Socio", out var fechaAltaTexto);
+                    fila.TryGetValue("Documento", out var documentoTexto);
+                    fila.TryGetValue("CUIT", out var cuitTexto);
+                    fila.TryGetValue("Beneficio", out var beneficioTexto);
+                    fila.TryGetValue("Código Categoría", out var codigoCategoria);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(nroSocioTexto) ||
+                        string.IsNullOrWhiteSpace(fechaAltaTexto) ||
+                        string.IsNullOrWhiteSpace(documentoTexto) ||
+                        string.IsNullOrWhiteSpace(cuitTexto) ||
+                        string.IsNullOrWhiteSpace(beneficioTexto) ||
+                        string.IsNullOrWhiteSpace(codigoCategoria))
+                    {
+                        Logs.Add("⚠️ Fila de padrón incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var registro = new PadronSocio
+                    {
+                        EntidadCod = entidad,
+                        NroSocio = int.Parse(nroSocioTexto),
+                        FechaAltaSocio = DateTime.Parse(fechaAltaTexto),
+                        Documento = int.Parse(documentoTexto),
+                        Cuit = long.Parse(cuitTexto),
+                        Beneficio = int.Parse(beneficioTexto),
+                        CodigoCategoria = codigoCategoria
+                    };
+
+                    resultado.Add(registro);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de padrón: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
+        private List<ConsumoServicio> MapearConsumosServicios()
+        {
+            var resultado = new List<ConsumoServicio>();
+
+            foreach (var fila in _datosServiciosValidados)
+            {
+                try
+                {
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Nro de Socio", out var nroSocioTexto);
+                    fila.TryGetValue("CUIT", out var cuitTexto);
+                    fila.TryGetValue("Nro Beneficio", out var nroBeneficioTexto);
+                    fila.TryGetValue("Código Consumo", out var codigoConsumoTexto);
+                    fila.TryGetValue("Importe Cuota", out var importeCuotaTexto);
+                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(nroSocioTexto) ||
+                        string.IsNullOrWhiteSpace(cuitTexto) ||
+                        string.IsNullOrWhiteSpace(nroBeneficioTexto) ||
+                        string.IsNullOrWhiteSpace(codigoConsumoTexto) ||
+                        string.IsNullOrWhiteSpace(importeCuotaTexto) ||
+                        string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
+                    {
+                        Logs.Add("⚠️ Fila de servicios incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var registro = new ConsumoServicio
+                    {
+                        EntidadCod = entidad,
+                        NroSocio = int.Parse(nroSocioTexto),
+                        Cuit = long.Parse(cuitTexto),
+                        NroBeneficio = int.Parse(nroBeneficioTexto),
+                        CodigoConsumo = int.Parse(codigoConsumoTexto),
+                        ImporteCuota = decimal.Parse(importeCuotaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
+                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
+                    };
+
+                    resultado.Add(registro);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de servicios: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
+        private List<ConsumoImportado> MapearConsumosImportados()
+        {
+            var resultado = new List<ConsumoImportado>();
+
+            foreach (var fila in _datosConsumosValidados)
+            {
+                try
+                {
+                    fila.TryGetValue("Entidad", out var entidad);
+                    fila.TryGetValue("Nro Socio", out var nroSocioTexto);
+                    fila.TryGetValue("CUIT", out var cuitTexto);
+                    fila.TryGetValue("Beneficio", out var beneficioTexto);
+                    fila.TryGetValue("Código", out var codigoTexto);
+                    fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
+                    fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
+                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
+
+                    if (string.IsNullOrWhiteSpace(entidad) ||
+                        string.IsNullOrWhiteSpace(nroSocioTexto) ||
+                        string.IsNullOrWhiteSpace(cuitTexto) ||
+                        string.IsNullOrWhiteSpace(beneficioTexto) ||
+                        string.IsNullOrWhiteSpace(codigoTexto) ||
+                        string.IsNullOrWhiteSpace(cuotasPendientesTexto) ||
+                        string.IsNullOrWhiteSpace(montoDeudaTexto) ||
+                        string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
+                    {
+                        Logs.Add("⚠️ Fila de consumos incompleta. Se omite el registro.");
+                        continue;
+                    }
+
+                    var registro = new ConsumoImportado
+                    {
+                        EntidadCod = entidad,
+                        NroSocio = int.Parse(nroSocioTexto),
+                        Cuit = long.Parse(cuitTexto),
+                        Beneficio = int.Parse(beneficioTexto),
+                        CodigoConsumo = long.Parse(codigoTexto),
+                        CuotasPendientes = int.Parse(cuotasPendientesTexto),
+                        MontoDeuda = decimal.Parse(montoDeudaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
+                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
+                    };
+
+                    resultado.Add(registro);
+                }
+                catch (Exception ex)
+                {
+                    Logs.Add($"⚠️ Error mapeando fila de consumos: {ex.Message}");
+                }
+            }
+
+            return resultado;
+        }
+
         private bool PuedeCopiarABase(object? parameter)
         {
             return ValidacionFinalizada;
@@ -564,36 +860,106 @@ namespace MigradorCUAD.ViewModels
             EstaProcesando = true;
             Progreso = 0;
 
-            var lista = _datosValidados; // tu lista validada de padrón
-            int total = lista.Count;
-            int procesados = 0;
-
             await Task.Run(() =>
             {
                 using (var db = new AppDbContext())
                 {
-                    foreach (var item in lista)
+                    // Insertar padrón de socios en Padron_socios
+                    var padronSocios = MapearPadronSocios();
+                    int totalPadron = padronSocios.Count;
+                    int procesadosPadron = 0;
+
+                    if (padronSocios.Any())
                     {
-                        var entidad = new DatosPadron
+                        foreach (var socio in padronSocios)
                         {
-                            // Ajusta las claves según los nombres reales de columnas en tu archivo
-                            Cuit = item.ContainsKey("Cuit") ? item["Cuit"] : null,
-                            RazonSocial = item.ContainsKey("RazonSocial") ? item["RazonSocial"] : null,
-                            FechaAlta = item.ContainsKey("FechaAlta")
-                                ? DateTime.Parse(item["FechaAlta"])
-                                : DateTime.Now,
-                            Importe = item.ContainsKey("Importe")
-                                ? decimal.Parse(item["Importe"], NumberStyles.Any, CultureInfo.InvariantCulture)
-                                : 0m
-                        };
+                            db.PadronSocios.Add(socio);
+                            procesadosPadron++;
+                            Progreso = (procesadosPadron * 100) / Math.Max(totalPadron, 1);
+                        }
 
-                        db.DatosPadron.Add(entidad);
-                        procesados++;
-
-                        Progreso = (procesados * 100) / total;
+                        db.SaveChanges();
+                        Logs.Add($"✅ Padrón de socios insertado correctamente en Padron_socios ({totalPadron} registros).");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay registros válidos de padrón para insertar en Padron_socios.");
                     }
 
-                    db.SaveChanges();
+                    // Insertar categorías
+                    var categorias = MapearCategorias();
+
+                    if (categorias.Any())
+                    {
+                        Logs.Add($"💾 Insertando {categorias.Count} categorías en Categorias_Socio...");
+                        db.CategoriasSocio.AddRange(categorias);
+                        db.SaveChanges();
+                        Logs.Add("✅ Categorías insertadas correctamente en Categorias_Socio.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay categorías válidas para insertar en Categorias_Socio.");
+                    }
+
+                    // Insertar consumos detalle en tabla de importación
+                    var consumosDetalleImport = MapearConsumosDetalleImportacion();
+
+                    if (consumosDetalleImport.Any())
+                    {
+                        Logs.Add($"💾 Insertando {consumosDetalleImport.Count} registros en Importar_Consumos_Detalle...");
+                        db.ImportarConsumosDetalle.AddRange(consumosDetalleImport);
+                        db.SaveChanges();
+                        Logs.Add("✅ Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay consumos detalle válidos para insertar en Importar_Consumos_Detalle.");
+                    }
+
+                    // Insertar catálogo de servicios
+                    var catalogoServicios = MapearCatalogoServicios();
+
+                    if (catalogoServicios.Any())
+                    {
+                        Logs.Add($"💾 Insertando {catalogoServicios.Count} registros en Catalogo_Servicios...");
+                        db.CatalogoServicios.AddRange(catalogoServicios);
+                        db.SaveChanges();
+                        Logs.Add("✅ Catálogo de servicios insertado correctamente en Catalogo_Servicios.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay registros válidos para insertar en Catalogo_Servicios.");
+                    }
+
+                    // Insertar servicios (consumos servicios)
+                    var consumosServicios = MapearConsumosServicios();
+
+                    if (consumosServicios.Any())
+                    {
+                        Logs.Add($"💾 Insertando {consumosServicios.Count} registros en Consumos_Servicios...");
+                        db.ConsumosServicios.AddRange(consumosServicios);
+                        db.SaveChanges();
+                        Logs.Add("✅ Servicios insertados correctamente en Consumos_Servicios.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay registros válidos para insertar en Consumos_Servicios.");
+                    }
+
+                    // Insertar consumos (tabla Consumo)
+                    var consumosImportados = MapearConsumosImportados();
+
+                    if (consumosImportados.Any())
+                    {
+                        Logs.Add($"💾 Insertando {consumosImportados.Count} registros en Consumo...");
+                        db.ConsumosImportados.AddRange(consumosImportados);
+                        db.SaveChanges();
+                        Logs.Add("✅ Consumos insertados correctamente en tabla Consumo.");
+                    }
+                    else
+                    {
+                        Logs.Add("⚠️ No hay registros válidos para insertar en tabla Consumo.");
+                    }
                 }
             });
 
