@@ -9,7 +9,7 @@ namespace MigradorCUAD.Data
         {
             try
             {
-                using var connection = new SqlConnection(DatabaseConfig.ConnectionString);
+                using var connection = new SqlConnection(ConnectionSettings.ConnectionString);
                 connection.Open();
                 return true;
             }

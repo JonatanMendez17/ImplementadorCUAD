@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
+using MigradorCUAD.Infrastructure;
 using MigradorCUAD.Models;
-using MigradorCUAD.Services;
 
 namespace MigradorCUAD.Data
 {
@@ -10,7 +10,7 @@ namespace MigradorCUAD.Data
 
         public AppDbContext()
         {
-            _connectionString = new ConfiguracionAppService().ObtenerConnectionString();
+            _connectionString = ConnectionSettings.ConnectionString;
         }
 
         public void Dispose()
@@ -196,7 +196,7 @@ namespace MigradorCUAD.Data
         {
             if (string.IsNullOrWhiteSpace(_connectionString))
             {
-                throw new InvalidOperationException("No se encontró la cadena de conexión en appsettings.json.");
+                throw new InvalidOperationException("No se encontró la cadena de conexión en Infrastructure/ConnectionSettings.cs.");
             }
 
             var connection = new SqlConnection(_connectionString);

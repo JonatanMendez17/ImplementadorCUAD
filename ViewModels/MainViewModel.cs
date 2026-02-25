@@ -14,8 +14,8 @@ namespace MigradorCUAD.ViewModels
     public class MainViewModel : ViewModelBase
     {
         // Privados
-        private string? _empleadorSeleccionado;
-        private string? _entidadSeleccionada;
+        private Empleador? _empleadorSeleccionado;
+        private Entidad? _entidadSeleccionada;
         private string? _archivoCategorias;
         private string? _archivoPadron;
         private string? _archivoConsumos;
@@ -34,12 +34,12 @@ namespace MigradorCUAD.ViewModels
 
 
         // Publicas
-        public string? EmpleadorSeleccionado
+        public Empleador? EmpleadorSeleccionado
         {
             get => _empleadorSeleccionado;
             set => SetProperty(ref _empleadorSeleccionado, value);
         }
-        public string? EntidadSeleccionada
+        public Entidad? EntidadSeleccionada
         {
             get => _entidadSeleccionada;
             set => SetProperty(ref _entidadSeleccionada, value);
@@ -145,6 +145,7 @@ namespace MigradorCUAD.ViewModels
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
 
             LimpiarPantallaCommand = new RelayCommand(_ => LimpiarPantalla());
+            ExportarLogCommand = new RelayCommand(_ => ExportarLog());
 
         }
 
