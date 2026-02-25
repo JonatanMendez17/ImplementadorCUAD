@@ -5,8 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="av"
         Title="Migrador CUAD"
-        Height="640"
-        Width="920"
+        Height="634"
+        Width="1000"
+        MinHeight="670"
+        MinWidth="960"
         WindowStartupLocation="CenterScreen"
         Background="#FF101010">
 
@@ -122,8 +124,7 @@
                                    Placement="Bottom"
                                    AllowsTransparency="True"
                                    Focusable="False"
-                                   IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   PopupAnimation="Fade">
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
                                 <Border Margin="0,6,0,0"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         CornerRadius="10"
@@ -150,7 +151,7 @@
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#FF60A5FA" />
-                                <Setter TargetName="ComboBorder" Property="BorderThickness" Value="1.5" />
+                                <Setter TargetName="ComboBorder" Property="BorderThickness" Value="1" />
                             </Trigger>
                             <Trigger Property="SelectedIndex" Value="-1">
                                 <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
@@ -220,10 +221,10 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="19,16,16,60">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" MinHeight="576.74" />
+            <RowDefinition Height="0*" />
         </Grid.RowDefinitions>
 
         <!-- Encabezado -->
@@ -240,10 +241,10 @@
         </DockPanel>
 
         <!-- Contenido principal -->
-        <Grid Grid.Row="1">
+        <Grid Margin="0,0,0,21">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2.2*" />
-                <ColumnDefinition Width="2.8*" />
+                <ColumnDefinition Width="2.1*" MinWidth="360" />
+                <ColumnDefinition Width="2.9*" MinWidth="500" />
             </Grid.ColumnDefinitions>
 
             <!-- Columna izquierda: selección de empleador, entidad y archivos -->
@@ -362,19 +363,17 @@
                     </Grid.RowDefinitions>
 
                     <!-- Acciones -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
                         <Button Content="Validar archivos"
                                 Command="{Binding ValidarCommand}"
-                                Width="150" Height="30" />
+                                Width="150" Height="30" Margin="0,0,8,8" />
                         <Button Content="Migrar datos"
                                 Command="{Binding CopiarCommand}"
-                                Width="150"
-                                Margin="8,0,0,0" Height="30" />
+                                Width="150" Height="30" Margin="0,0,8,8" />
                         <Button Content="Exportar log"
                                 Command="{Binding ExportarLogCommand}"
-                                Width="150"
-                                Margin="8,0,0,0" Height="30" />
-                    </StackPanel>
+                                Width="150" Height="30" Margin="0,0,0,8" />
+                    </WrapPanel>
 
                     <!-- Logs -->
                     <StackPanel Grid.Row="1">
