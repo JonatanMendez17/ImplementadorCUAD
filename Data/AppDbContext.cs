@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using MigradorCUAD.Infrastructure;
 using MigradorCUAD.Models;
+using System.Globalization;
 
 namespace MigradorCUAD.Data
 {
@@ -162,6 +163,22 @@ namespace MigradorCUAD.Data
                 command.Parameters.AddWithValue("@MontoDeuda", registro.MontoDeuda);
                 command.Parameters.AddWithValue("@ConceptoDescuento", registro.ConceptoDescuento);
             });
+        }
+
+        public bool ExistsImportedDataForEntidad(string entidad)
+        {
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT CASE
+                    WHEN EXISTS (SELECT 1 FROM Importar_Padron_Socio WHERE Ips_Entidad = @Entidad)
+                      OR EXISTS (SELECT 1 FROM Importar_Consumo_Cab WHERE lcc_Entidad = @Entidad)
+                      OR EXISTS (SELECT 1 FROM Importar_Consumo_Det WHERE Icd_Entidad = @Entidad)
+                    THEN 1 ELSE 0 END;",
+                connection);
+
+            command.Parameters.AddWithValue("@Entidad", entidad);
+            var exists = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+            return exists == 1;
         }
 
         private int ExecuteInsert<T>(

@@ -12,6 +12,7 @@ namespace MigradorCUAD.ViewModels
     public class MainViewModel : ViewModelBase
     {
         private readonly FileImportService _fileImportService;
+        private readonly GeneralValidationService _generalValidationService;
         private readonly MigrationService _migrationService;
         private MigrationValidationResult _validationResult = new();
 
@@ -112,6 +113,7 @@ namespace MigradorCUAD.ViewModels
         public MainViewModel()
         {
             _fileImportService = new FileImportService();
+            _generalValidationService = new GeneralValidationService();
             _migrationService = new MigrationService(new MigrationMapperService());
 
             Logs = new ObservableCollection<string>();
@@ -199,7 +201,30 @@ namespace MigradorCUAD.ViewModels
             //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
 
             _validationResult = _fileImportService.ValidateAndLoadFiles(BuildSelection(), Logs.Add);
-            ValidacionFinalizada = _validationResult.HuboCarga;
+
+            if (!_validationResult.HuboCarga)
+            {
+                ValidacionFinalizada = false;
+                return;
+            }
+
+            var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
+                _validationResult,
+                Logs.Add,
+                out var entidadComun);
+
+            if (!entidadConsistente)
+            {
+                ValidacionFinalizada = false;
+                return;
+            }
+
+            var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
+                entidadComun,
+                EmpleadorSeleccionado,
+                Logs.Add);
+
+            ValidacionFinalizada = sinDatosPrevios;
         }
 
         private bool PuedeCopiarABase(object? parameter)

@@ -75,7 +75,7 @@ namespace MigradorCUAD.Services
 
             if (result.HuboCarga)
             {
-                log("Modo prueba: archivos cargados sin validaciones.");
+                log("Archivos cargados con validaciones generales.");
             }
             else
             {
