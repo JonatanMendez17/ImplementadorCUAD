@@ -59,22 +59,25 @@
         <Style TargetType="ComboBox">
             <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="Padding" Value="6,4" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="Background" Value="#FF111827" />
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="#FFF3F4F6" />
+            <Setter Property="BorderBrush" Value="#FF9CA3AF" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Height" Value="32" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="IsEditable" Value="True" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="Text" Value="Seleccionar" />
             <Style.Triggers>
                 <!-- Resalta suavemente el borde al pasar el mouse -->
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                    <Setter Property="Background" Value="#FF111B2F" />
+                    <Setter Property="BorderBrush" Value="#FF6B7280" />
+                    <Setter Property="Background" Value="#FFE5E7EB" />
                 </Trigger>
                 <!-- Resalta cuando tiene el foco de teclado -->
                 <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
+                    <Setter Property="BorderBrush" Value="#FF6B7280" />
                 </Trigger>
                 <!-- Apariencia atenuada cuando está deshabilitado -->
                 <Trigger Property="IsEnabled" Value="False">
@@ -86,7 +89,7 @@
 
         <!-- Estilo para los ítems del ComboBox -->
         <Style TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="Black" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="6,3" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -103,14 +106,14 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ItemBorder"
                                         Property="Background"
-                                        Value="#FF111B2F" />
+                                        Value="#FFE5E7EB" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="ItemBorder"
                                         Property="Background"
-                                        Value="{StaticResource AccentBrush}" />
+                                        Value="#FFBFDBFE" />
                                 <Setter Property="Foreground"
-                                        Value="{StaticResource TextPrimaryBrush}" />
+                                        Value="Black" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
