@@ -77,6 +77,7 @@ namespace MigradorCUAD.Services
             ApplyPadronSpecificValidations(result, log);
             ApplyConsumosSpecificValidations(result, log);
             ApplyConsumosDetalleSpecificValidations(result, log);
+            ApplyServiciosSpecificValidations(result, log);
 
             if (result.HuboCarga)
             {
@@ -470,6 +471,128 @@ namespace MigradorCUAD.Services
             }
 
             result.DatosConsumosDetalleValidados = detalleFiltrado;
+        }
+
+        private static void ApplyServiciosSpecificValidations(MigrationValidationResult result, Action<string> log)
+        {
+            if (result.DatosServiciosValidados.Count == 0)
+            {
+                return;
+            }
+
+            HashSet<string> entidadesCuad;
+            try
+            {
+                using var db = new AppDbContext();
+                entidadesCuad = db.GetEntidades()
+                    .SelectMany(e => new[]
+                    {
+                        e.Nombre?.Trim(),
+                        e.EntId.ToString(CultureInfo.InvariantCulture)
+                    })
+                    .Where(v => !string.IsNullOrWhiteSpace(v))
+                    .Select(v => v!)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                log($"ERROR Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
+                result.DatosServiciosValidados = new List<Dictionary<string, string>>();
+                return;
+            }
+
+            var padronPorSocio = result.DatosPadronValidados
+                .Where(f => TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
+                .GroupBy(f => GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var codigosConsumos = result.DatosConsumosValidados
+                .Select(f => GetFirstValue(f, "Codigo", "Código", "CÃ³digo").Trim())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var serviciosFiltrados = new List<Dictionary<string, string>>();
+            var codigosServiciosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var rechazadas = 0;
+
+            for (int i = 0; i < result.DatosServiciosValidados.Count; i++)
+            {
+                var fila = result.DatosServiciosValidados[i];
+                var numeroFila = i + 2;
+                var filaValida = true;
+
+                var entidad = GetFirstValue(fila, "Entidad");
+                var nroSocio = GetFirstValue(fila, "Nro de Socio", "Nro Socio");
+                var cuitServicio = GetFirstValue(fila, "CUIT");
+                var beneficioServicio = GetFirstValue(fila, "Nro Beneficio", "Beneficio");
+                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo");
+
+                if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
+                {
+                    log($"ERROR Servicios fila {numeroFila}: entidad '{entidad}' no existe en CUAD.");
+                    filaValida = false;
+                }
+
+                if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
+                {
+                    log($"ERROR Servicios fila {numeroFila}: socio '{nroSocio}' no existe o no corresponde al padron.");
+                    filaValida = false;
+                }
+                else
+                {
+                    var cuitPadron = GetFirstValue(filaPadron, "CUIT");
+                    var beneficioPadron = GetFirstValue(filaPadron, "Beneficio");
+
+                    if (!EqualsDigitsOnly(cuitServicio, cuitPadron))
+                    {
+                        log($"ERROR Servicios fila {numeroFila}: CUIT no coincide con padron para socio '{nroSocio}'.");
+                        filaValida = false;
+                    }
+
+                    if (!EqualsTrimmed(beneficioServicio, beneficioPadron))
+                    {
+                        log($"ERROR Servicios fila {numeroFila}: Beneficio no coincide con padron para socio '{nroSocio}'.");
+                        filaValida = false;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(codigoConsumo))
+                {
+                    log($"ERROR Servicios fila {numeroFila}: codigo de consumo vacio.");
+                    filaValida = false;
+                }
+                else
+                {
+                    var codigoNormalizado = codigoConsumo.Trim();
+                    if (!codigosServiciosVistos.Add(codigoNormalizado))
+                    {
+                        log($"ERROR Servicios fila {numeroFila}: codigo de consumo '{codigoConsumo}' repetido en Servicios.");
+                        filaValida = false;
+                    }
+
+                    if (codigosConsumos.Contains(codigoNormalizado))
+                    {
+                        log($"ERROR Servicios fila {numeroFila}: codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
+                        filaValida = false;
+                    }
+                }
+
+                if (filaValida)
+                {
+                    serviciosFiltrados.Add(fila);
+                }
+                else
+                {
+                    rechazadas++;
+                }
+            }
+
+            if (rechazadas > 0)
+            {
+                log($"Resumen validacion especifica Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
+            }
+
+            result.DatosServiciosValidados = serviciosFiltrados;
         }
 
         private static bool IsCategoriaValida(
