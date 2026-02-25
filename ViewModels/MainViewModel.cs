@@ -491,9 +491,9 @@ namespace MigradorCUAD.ViewModels
             return resultado;
         }
 
-        private List<ImportarConsumosDetalle> MapearConsumosDetalleImportacion()
+        private List<ImportarConsumosDet> MapearConsumosDetalleImportacion()
         {
-            var resultado = new List<ImportarConsumosDetalle>();
+            var resultado = new List<ImportarConsumosDet>();
 
             foreach (var fila in _datosConsumosDetalleValidados)
             {
@@ -515,7 +515,7 @@ namespace MigradorCUAD.ViewModels
                         continue;
                     }
 
-                    var registro = new ImportarConsumosDetalle
+                    var registro = new ImportarConsumosDet
                     {
                         Entidad = entidad,
                         CodigoConsumo = int.Parse(codigoConsumoTexto),
@@ -575,9 +575,9 @@ namespace MigradorCUAD.ViewModels
             return resultado;
         }
 
-        private List<PadronSocio> MapearPadronSocios()
+        private List<ImportarPadronSocio> MapearPadronSocios()
         {
-            var resultado = new List<PadronSocio>();
+            var resultado = new List<ImportarPadronSocio>();
 
             foreach (var fila in _datosValidados)
             {
@@ -588,40 +588,50 @@ namespace MigradorCUAD.ViewModels
                     fila.TryGetValue("Fecha Alta Socio", out var fechaAltaTexto);
                     fila.TryGetValue("Documento", out var documentoTexto);
                     fila.TryGetValue("CUIT", out var cuitTexto);
-                    fila.TryGetValue("Beneficio", out var beneficioTexto);
                     fila.TryGetValue("Código Categoría", out var codigoCategoria);
 
+                    // ❗ Campos obligatorios según la tabla
                     if (string.IsNullOrWhiteSpace(entidad) ||
                         string.IsNullOrWhiteSpace(nroSocioTexto) ||
                         string.IsNullOrWhiteSpace(fechaAltaTexto) ||
                         string.IsNullOrWhiteSpace(documentoTexto) ||
-                        string.IsNullOrWhiteSpace(cuitTexto) ||
-                        string.IsNullOrWhiteSpace(beneficioTexto) ||
                         string.IsNullOrWhiteSpace(codigoCategoria))
                     {
                         Logs.Add("⚠️ Fila de padrón incompleta. Se omite el registro.");
                         continue;
                     }
 
+                    // ❗ Validaciones de formato
                     if (!TryParseIntFlexible(nroSocioTexto, out var nroSocio) ||
                         !TryParseDateFlexible(fechaAltaTexto, out var fechaAltaSocio) ||
-                        !TryParseIntFlexible(documentoTexto, out var documento) ||
-                        !TryParseLongDigitsOnly(cuitTexto, out var cuit) ||
-                        !TryParseIntFlexible(beneficioTexto, out var beneficio))
+                        !TryParseIntFlexible(documentoTexto, out var documento))
                     {
                         Logs.Add("⚠️ Fila de padrón con formato inválido. Se omite el registro.");
                         continue;
                     }
 
-                    var registro = new PadronSocio
+                    // ✔ CUIT ahora es opcional
+                    long? cuit = null;
+                    if (!string.IsNullOrWhiteSpace(cuitTexto))
                     {
-                        EntidadCod = entidad.Trim(),
+                        if (!TryParseLongDigitsOnly(cuitTexto, out var cuitParseado))
+                        {
+                            Logs.Add("⚠️ CUIT inválido. Se omite el registro.");
+                            continue;
+                        }
+
+                        cuit = cuitParseado;
+                    }
+
+                    var registro = new ImportarPadronSocio
+                    {
+                        Entidad = entidad.Trim(),
                         NroSocio = nroSocio,
-                        FechaAltaSocio = fechaAltaSocio,
                         Documento = documento,
-                        Cuit = cuit,
-                        Beneficio = beneficio,
-                        CodigoCategoria = codigoCategoria.Trim()
+                        Cuit = cuit,              // nullable
+                        NroPuesto = null,         // no viene en el archivo
+                        CodigoCategoria = codigoCategoria.Trim(),
+                        FechaAltaSocio = fechaAltaSocio
                     };
 
                     resultado.Add(registro);
@@ -727,9 +737,62 @@ namespace MigradorCUAD.ViewModels
             return resultado;
         }
 
-        private List<ConsumoImportado> MapearConsumosImportados()
+        //private List<ImportarConsumoCab> MapearConsumosImportados()
+        //{
+        //    var resultado = new List<ImportarConsumoCab>();
+
+        //    foreach (var fila in _datosConsumosValidados)
+        //    {
+        //        try
+        //        {
+        //            fila.TryGetValue("Entidad", out var entidad);
+        //            fila.TryGetValue("Nro Socio", out var nroSocioTexto);
+        //            fila.TryGetValue("CUIT", out var cuitTexto);
+        //            fila.TryGetValue("Beneficio", out var beneficioTexto);
+        //            fila.TryGetValue("Código", out var codigoTexto);
+        //            fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
+        //            fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
+        //            fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
+
+        //            if (string.IsNullOrWhiteSpace(entidad) ||
+        //                string.IsNullOrWhiteSpace(nroSocioTexto) ||
+        //                string.IsNullOrWhiteSpace(cuitTexto) ||
+        //                string.IsNullOrWhiteSpace(beneficioTexto) ||
+        //                string.IsNullOrWhiteSpace(codigoTexto) ||
+        //                string.IsNullOrWhiteSpace(cuotasPendientesTexto) ||
+        //                string.IsNullOrWhiteSpace(montoDeudaTexto) ||
+        //                string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
+        //            {
+        //                Logs.Add("⚠️ Fila de consumos incompleta. Se omite el registro.");
+        //                continue;
+        //            }
+
+        //            var registro = new ImportarConsumoCab
+        //            {
+        //                EntidadCod = entidad,
+        //                NroSocio = int.Parse(nroSocioTexto),
+        //                Cuit = long.Parse(cuitTexto),
+        //                Beneficio = int.Parse(beneficioTexto),
+        //                CodigoConsumo = long.Parse(codigoTexto),
+        //                CuotasPendientes = int.Parse(cuotasPendientesTexto),
+        //                MontoDeuda = decimal.Parse(montoDeudaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
+        //                ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
+        //            };
+
+        //            resultado.Add(registro);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Logs.Add($"⚠️ Error mapeando fila de consumos: {ex.Message}");
+        //        }
+        //    }
+
+        //    return resultado;
+        //}
+
+        private List<ImportarConsumoCab> MapearConsumosImportados()
         {
-            var resultado = new List<ConsumoImportado>();
+            var resultado = new List<ImportarConsumoCab>();
 
             foreach (var fila in _datosConsumosValidados)
             {
@@ -738,16 +801,15 @@ namespace MigradorCUAD.ViewModels
                     fila.TryGetValue("Entidad", out var entidad);
                     fila.TryGetValue("Nro Socio", out var nroSocioTexto);
                     fila.TryGetValue("CUIT", out var cuitTexto);
-                    fila.TryGetValue("Beneficio", out var beneficioTexto);
                     fila.TryGetValue("Código", out var codigoTexto);
                     fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
                     fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
                     fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
 
+                    // 🔴 Beneficio eliminado (ya no existe en la tabla)
+
                     if (string.IsNullOrWhiteSpace(entidad) ||
                         string.IsNullOrWhiteSpace(nroSocioTexto) ||
-                        string.IsNullOrWhiteSpace(cuitTexto) ||
-                        string.IsNullOrWhiteSpace(beneficioTexto) ||
                         string.IsNullOrWhiteSpace(codigoTexto) ||
                         string.IsNullOrWhiteSpace(cuotasPendientesTexto) ||
                         string.IsNullOrWhiteSpace(montoDeudaTexto) ||
@@ -757,16 +819,28 @@ namespace MigradorCUAD.ViewModels
                         continue;
                     }
 
-                    var registro = new ConsumoImportado
+                    var registro = new ImportarConsumoCab
                     {
-                        EntidadCod = entidad,
+                        Entidad = entidad,
                         NroSocio = int.Parse(nroSocioTexto),
-                        Cuit = long.Parse(cuitTexto),
-                        Beneficio = int.Parse(beneficioTexto),
+
+                        // Ahora permite NULL
+                        Cuit = string.IsNullOrWhiteSpace(cuitTexto)
+                            ? null
+                            : long.Parse(cuitTexto),
+
+                        // Ahora permite NULL en BD
+                        NroPuesto = null,
+
                         CodigoConsumo = long.Parse(codigoTexto),
                         CuotasPendientes = int.Parse(cuotasPendientesTexto),
-                        MontoDeuda = decimal.Parse(montoDeudaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
-                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
+
+                        MontoDeuda = decimal.Parse(
+                            montoDeudaTexto,
+                            NumberStyles.Any,
+                            CultureInfo.InvariantCulture),
+
+                        ConceptoDescuento = int.Parse(conceptoDescuentoTexto)
                     };
 
                     resultado.Add(registro);
@@ -854,7 +928,7 @@ namespace MigradorCUAD.ViewModels
                         var padronSocios = MapearPadronSocios();
                         if (padronSocios.Any())
                         {
-                            db.InsertPadronSocios(padronSocios);
+                            db.InsertPadronSocio(padronSocios);
                             Progreso = 20;
                             Logs.Add($"Padron de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
                         }
@@ -884,7 +958,7 @@ namespace MigradorCUAD.ViewModels
                         if (consumosDetalleImport.Any())
                         {
                             Logs.Add($"Insertando {consumosDetalleImport.Count} registros en Importar_Consumos_Detalle...");
-                            db.InsertImportarConsumosDetalle(consumosDetalleImport);
+                            db.InsertImportarConsumosDet(consumosDetalleImport);
                             Progreso = 60;
                             Logs.Add("Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
                         }
@@ -929,7 +1003,7 @@ namespace MigradorCUAD.ViewModels
                         if (consumosImportados.Any())
                         {
                             Logs.Add($"Insertando {consumosImportados.Count} registros en Consumo...");
-                            db.InsertConsumosImportados(consumosImportados);
+                            db.InsertImportarConsumoCab(consumosImportados);
                             Progreso = 100;
                             Logs.Add("Consumos insertados correctamente en tabla Consumo.");
                         }

@@ -4,8 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MigradorCUAD.Models
 {
-    [Table("Importar_Consumos_Detalle")]
-    public class ImportarConsumosDetalle
+    [Table("Importar_Consumo_Det")]
+    public class ImportarConsumosDet
     {
         [Key]
         [Column("Icd_Id")]
