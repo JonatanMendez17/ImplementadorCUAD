@@ -170,6 +170,7 @@ namespace MigradorCUAD.Services
                 //}
 
                 var registros = new List<Dictionary<string, string>>();
+                var clavesUnicas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 for (int i = 1; i < lineas.Length; i++)
                 {
                     var valores = lineas[i].Split(',');
@@ -196,7 +197,10 @@ namespace MigradorCUAD.Services
 
                     if (filaEsValida)
                     {
-                        registros.Add(fila);
+                        if (ValidateSpecificUniqueness(nombreLogico, i + 1, fila, clavesUnicas, log))
+                        {
+                            registros.Add(fila);
+                        }
                     }
                 }
 
@@ -315,6 +319,52 @@ namespace MigradorCUAD.Services
         {
             // Permite letras (incluyendo acentos), dígitos, espacios y puntuación de uso común.
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\(\)\'\""\#\%\&\+]");
+        }
+
+        private static bool ValidateSpecificUniqueness(
+            string nombreLogico,
+            int numeroFila,
+            Dictionary<string, string> fila,
+            HashSet<string> clavesUnicas,
+            Action<string> log)
+        {
+            if (nombreLogico.Equals("Padron", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!fila.TryGetValue("Nro Socio", out var nroSocio) || string.IsNullOrWhiteSpace(nroSocio))
+                {
+                    log($"❌ Padron - fila {numeroFila}: 'Nro Socio' vacío.");
+                    return false;
+                }
+
+                var clave = $"PADRON::{nroSocio.Trim()}";
+                if (!clavesUnicas.Add(clave))
+                {
+                    log($"❌ Padron - fila {numeroFila}: el número de socio '{nroSocio}' está repetido.");
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (nombreLogico.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!fila.TryGetValue("Código", out var nroConsumo) || string.IsNullOrWhiteSpace(nroConsumo))
+                {
+                    log($"❌ Consumos - fila {numeroFila}: 'Código' (nro de consumo) vacío.");
+                    return false;
+                }
+
+                var clave = $"CONSUMOS::{nroConsumo.Trim()}";
+                if (!clavesUnicas.Add(clave))
+                {
+                    log($"❌ Consumos - fila {numeroFila}: el nro de consumo '{nroConsumo}' está repetido.");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return true;
         }
     }
 }
