@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+ï»¿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MigradorCUAD.Models
 {
@@ -6,12 +6,15 @@ namespace MigradorCUAD.Models
     {
         public int Id { get; set; }
 
-        // Código de empleador (columna física Emr_Id)
         [Column("Ent_Id")]
         public int EntId { get; set; }
 
-        // Nombre de empleador (columna física Emr_Nombre)
         [Column("Ent_Nombre")]
         public string? Nombre { get; set; }
+
+        public override string ToString()
+        {
+            return Nombre ?? string.Empty;
+        }
     }
 }
