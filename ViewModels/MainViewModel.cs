@@ -179,6 +179,7 @@ namespace MigradorCUAD.ViewModels
             _migrationService = new MigrationService(new MigrationMapperService());
 
             Logs = new ObservableCollection<string>();
+            Logs.Add("Esperando carga...");
             Progreso = 0;
 
             using (var db = new AppDbContext())

@@ -322,21 +322,22 @@
                                Style="{StaticResource SectionTitleTextBlockStyle}" />
 
                     <StackPanel Margin="0,4,0,0">
-                        <!-- Categorias -->
+                        <!-- Catalogo de Servicios -->
+                        <StackPanel Margin="0,4,0,0">
+                            <Button Content="Seleccionar Catalogo de Servicios"
+                                    Command="{Binding SeleccionarCatalogoServiciosCommand}" />
+                            <TextBlock Text="{Binding ArchivoCatalogoServiciosNombre}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+                        
+                        <!-- Categorias Socios -->
                         <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Categorias"
+                            <Button Content="Seleccionar Categorias Socios"
                                     Command="{Binding SeleccionarCategoriasCommand}" />
                             <TextBlock Text="{Binding ArchivoCategoriasNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Padron de Socios-->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Padron de Socios"
-                                    Command="{Binding SeleccionarPadronCommand}" />
-                            <TextBlock Text="{Binding ArchivoPadronNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
 
                         <!-- Consumos -->
                         <StackPanel Margin="0,4,0,6">
@@ -354,19 +355,19 @@
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Servicios -->
+                        <!-- Consumos Servicios -->
                         <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Servicios"
+                            <Button Content="Seleccionar Consumos Servicios"
                                     Command="{Binding SeleccionarServiciosCommand}" />
                             <TextBlock Text="{Binding ArchivoServiciosNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Catalogo de Servicios -->
-                        <StackPanel Margin="0,4,0,0">
-                            <Button Content="Seleccionar Catalogo de Servicios"
-                                    Command="{Binding SeleccionarCatalogoServiciosCommand}" />
-                            <TextBlock Text="{Binding ArchivoCatalogoServiciosNombre}"
+                        <!-- Padron Socios-->
+                        <StackPanel Margin="0,4,0,6">
+                            <Button Content="Seleccionar Padron Socios"
+                                    Command="{Binding SeleccionarPadronCommand}" />
+                            <TextBlock Text="{Binding ArchivoPadronNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
                     </StackPanel>
@@ -396,7 +397,7 @@
                         <Button Content="Migrar datos"
                                 Command="{Binding CopiarCommand}"
                                 Width="150" Height="30" Margin="0,0,8,8" />
-                        <Button Content="Limpiar base entidad"
+                        <Button Content="Limpiar entidad"
                                 Command="{Binding LimpiarBaseEntidadCommand}"
                                 Width="150" Height="30" Margin="0,0,8,8" />
                         <Button Content="Exportar log"
