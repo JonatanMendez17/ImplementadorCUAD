@@ -57,6 +57,32 @@
             </Setter>
         </Style>
 
+        <!-- Barra de progreso con extremos redondeados -->
+        <Style TargetType="ProgressBar">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Background" Value="#FF0F172A" />
+            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border CornerRadius="9"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid Margin="1" ClipToBounds="True">
+                                <Rectangle x:Name="PART_Track" Fill="Transparent" />
+                                <Border x:Name="PART_Indicator"
+                                        Background="{TemplateBinding Foreground}"
+                                        CornerRadius="8"
+                                        HorizontalAlignment="Left" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Estilo moderno para ComboBox -->
         <Style TargetType="ComboBox">
             <Setter Property="Margin" Value="0,0,0,10" />
@@ -409,10 +435,18 @@
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    FontSize="12"
                                    Margin="0,0,0,4" />
-                        <ProgressBar Height="18"
-                                     Minimum="0"
-                                     Maximum="100"
-                                     Value="{Binding Progreso}" />
+                        <Grid Height="18">
+                            <ProgressBar Height="18"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="{Binding Progreso}" />
+                            <TextBlock Text="{Binding Progreso, StringFormat={}{0}%}"
+                                       Foreground="White"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </Border>

@@ -20,19 +20,51 @@ namespace MigradorCUAD.Services
         {
             using var db = new AppDbContext();
 
+            var totalPasos = 0;
+            if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
+            {
+                totalPasos++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
+            {
+                totalPasos++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
+            {
+                totalPasos++;
+            }
+
+            if (totalPasos == 0)
+            {
+                reportProgress(100);
+                log("No hay archivos de migracion compatibles para procesar en esta ejecucion.");
+                return Task.CompletedTask;
+            }
+
+            var pasosCompletados = 0;
+            void AvanzarProgreso()
+            {
+                pasosCompletados++;
+                var porcentaje = (int)Math.Round((double)pasosCompletados * 100 / totalPasos, MidpointRounding.AwayFromZero);
+                reportProgress(Math.Min(100, porcentaje));
+            }
+
             if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
             {
                 var padronSocios = _mapperService.MapPadronSocios(validationResult.DatosPadronValidados, log);
                 if (padronSocios.Any())
                 {
                     db.InsertPadronSocio(padronSocios);
-                    reportProgress(20);
                     log($"Padron de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
                 }
                 else
                 {
                     log("No hay registros validos de padron para insertar en Padron_socios.");
                 }
+
+                AvanzarProgreso();
             }
 
             if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
@@ -42,13 +74,14 @@ namespace MigradorCUAD.Services
                 {
                     log($"Insertando {consumosDetalle.Count} registros en Importar_Consumos_Detalle...");
                     db.InsertImportarConsumosDet(consumosDetalle);
-                    reportProgress(60);
                     log("Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
                 }
                 else
                 {
                     log("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
                 }
+
+                AvanzarProgreso();
             }
 
             if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
@@ -58,13 +91,14 @@ namespace MigradorCUAD.Services
                 {
                     log($"Insertando {consumosImportados.Count} registros en Consumo...");
                     db.InsertImportarConsumoCab(consumosImportados);
-                    reportProgress(100);
                     log("Consumos insertados correctamente en tabla Consumo.");
                 }
                 else
                 {
                     log("No hay registros validos para insertar en tabla Consumo.");
                 }
+
+                AvanzarProgreso();
             }
 
             return Task.CompletedTask;
