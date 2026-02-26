@@ -181,6 +181,51 @@ namespace MigradorCUAD.Data
             return exists == 1;
         }
 
+        public (int Padron, int ConsumoCab, int ConsumoDet) DeleteImportedDataForEntidad(string entidadNombre, int entidadId)
+        {
+            if (string.IsNullOrWhiteSpace(entidadNombre) && entidadId <= 0)
+            {
+                throw new ArgumentException("Debe informar una entidad valida para eliminar datos.");
+            }
+
+            var entidadNombreNormalizada = (entidadNombre ?? string.Empty).Trim();
+            var entidadIdTexto = entidadId.ToString(CultureInfo.InvariantCulture);
+
+            using var connection = CreateOpenConnection();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                int ExecuteDelete(string sql)
+                {
+                    using var command = new SqlCommand(sql, connection, transaction);
+                    command.Parameters.AddWithValue("@EntidadNombre", entidadNombreNormalizada);
+                    command.Parameters.AddWithValue("@EntidadId", entidadIdTexto);
+                    return command.ExecuteNonQuery();
+                }
+
+                var eliminadosConsumoDet = ExecuteDelete(
+                    @"DELETE FROM Importar_Consumo_Det
+                      WHERE Icd_Entidad = @EntidadNombre OR Icd_Entidad = @EntidadId;");
+
+                var eliminadosConsumoCab = ExecuteDelete(
+                    @"DELETE FROM Importar_Consumo_Cab
+                      WHERE lcc_Entidad = @EntidadNombre OR lcc_Entidad = @EntidadId;");
+
+                var eliminadosPadron = ExecuteDelete(
+                    @"DELETE FROM Importar_Padron_Socio
+                      WHERE Ips_Entidad = @EntidadNombre OR Ips_Entidad = @EntidadId;");
+
+                transaction.Commit();
+                return (eliminadosPadron, eliminadosConsumoCab, eliminadosConsumoDet);
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
         private int ExecuteInsert<T>(
             IEnumerable<T> registros,
             string sql,

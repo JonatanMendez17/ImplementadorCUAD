@@ -50,6 +50,7 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _entidadSeleccionada, value) && !_suppressContextSelectionEffects)
                 {
                     InvalidateValidationState("Se actualizo la entidad seleccionada. Se reinicio el estado de validacion.");
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
         }
@@ -99,7 +100,13 @@ namespace MigradorCUAD.ViewModels
         public bool EstaProcesando
         {
             get => _estaProcesando;
-            set => SetProperty(ref _estaProcesando, value);
+            set
+            {
+                if (SetProperty(ref _estaProcesando, value))
+                {
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
         }
 
         public bool ValidacionFinalizada
@@ -123,6 +130,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand CopiarCommand { get; }
         public ICommand ExportarLogCommand { get; }
         public ICommand LimpiarPantallaCommand { get; }
+        public ICommand LimpiarBaseEntidadCommand { get; }
 
         public MainViewModel()
         {
@@ -150,6 +158,7 @@ namespace MigradorCUAD.ViewModels
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
             LimpiarPantallaCommand = new RelayCommand(_ => LimpiarPantalla());
+            LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
         private MigrationFileSelection BuildSelection()
@@ -332,6 +341,66 @@ namespace MigradorCUAD.ViewModels
             EstaProcesando = false;
             ValidacionFinalizada = false;
             _validationResult = new MigrationValidationResult();
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private bool PuedeLimpiarBaseEntidad(object? parameter)
+        {
+            return EntidadSeleccionada != null && !EstaProcesando;
+        }
+
+        private void LimpiarBaseEntidad(object? parameter)
+        {
+            if (EntidadSeleccionada == null)
+            {
+                Logs.Add("Debe seleccionar una entidad para limpiar la base.");
+                return;
+            }
+
+            var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
+            var entidadNombre = EntidadSeleccionada.Nombre ?? EntidadSeleccionada.EntId.ToString();
+
+            var confirmacion = MessageBox.Show(
+                $"Se eliminaran los datos importados de la entidad '{entidadNombre}' (ID {EntidadSeleccionada.EntId}) en el contexto del empleador '{empleadorInfo}'.\n\n¿Desea continuar?",
+                "Confirmar limpieza de base",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirmacion != MessageBoxResult.Yes)
+            {
+                Logs.Add("Limpieza de base cancelada por el usuario.");
+                return;
+            }
+
+            try
+            {
+                using var db = new AppDbContext();
+                var eliminados = db.DeleteImportedDataForEntidad(
+                    EntidadSeleccionada.Nombre ?? string.Empty,
+                    EntidadSeleccionada.EntId);
+
+                var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
+                Logs.Add($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
+                Logs.Add($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
+
+                if (totalEliminado == 0)
+                {
+                    Logs.Add("No se encontraron registros para eliminar con la entidad seleccionada.");
+                }
+
+                ValidacionFinalizada = false;
+                Progreso = 0;
+                _validationResult = new MigrationValidationResult();
+            }
+            catch (Exception ex)
+            {
+                Logs.Add($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
+                MessageBox.Show(
+                    $"No se pudo limpiar la base.\n{ex.Message}",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private void InvalidateValidationState(string mensaje)
