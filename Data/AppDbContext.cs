@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using MigradorCUAD.Infrastructure;
 using MigradorCUAD.Models;
 using System.Globalization;
@@ -258,7 +258,7 @@ namespace MigradorCUAD.Data
         {
             if (string.IsNullOrWhiteSpace(_connectionString))
             {
-                throw new InvalidOperationException("No se encontró la cadena de conexión en Infrastructure/ConnectionSettings.cs.");
+                throw new InvalidOperationException("No se encontro la cadena de conexion en Infrastructure/ConnectionSettings.cs.");
             }
 
             var connection = new SqlConnection(_connectionString);
@@ -267,3 +267,5 @@ namespace MigradorCUAD.Data
         }
     }
 }
+
+

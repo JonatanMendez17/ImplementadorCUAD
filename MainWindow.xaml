@@ -1,4 +1,4 @@
-<Window x:Class="MigradorCUAD.MainWindow"
+﻿<Window x:Class="MigradorCUAD.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,7 +13,7 @@
         Background="#FF101010">
 
     <Window.Resources>
-        <!-- Tipografía y colores base -->
+        <!-- Tipografia y colores base -->
         <SolidColorBrush x:Key="AccentBrush" Color="#FF3B82F6" />
         <SolidColorBrush x:Key="AccentBrushLight" Color="#FF60A5FA" />
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF1F2933" />
@@ -196,7 +196,7 @@
             </Setter>
         </Style>
 
-        <!-- Estilo para los ítems del ComboBox -->
+        <!-- Estilo para los items del ComboBox -->
         <Style TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="Black" />
             <Setter Property="Background" Value="Transparent" />
@@ -231,7 +231,7 @@
             </Setter>
         </Style>
 
-        <!-- Estilo para TextBlock de título de sección -->
+        <!-- Estilo para TextBlock de titulo de seccion -->
         <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -260,7 +260,7 @@
                            FontSize="20"
                            FontWeight="Bold"
                            Foreground="{StaticResource TextPrimaryBrush}" />
-                <TextBlock Text="Cargar los archivos, validá y copiá a base de datos"
+                <TextBlock Text="Cargar los archivos, valida y copia a base de datos"
                            FontSize="12"
                            Foreground="{StaticResource TextSecondaryBrush}" />
             </StackPanel>
@@ -273,7 +273,7 @@
                 <ColumnDefinition Width="2.9*" MinWidth="500" />
             </Grid.ColumnDefinitions>
 
-            <!-- Columna izquierda: selección de empleador, entidad y archivos -->
+            <!-- Columna izquierda: seleccion de empleador, entidad y archivos -->
             <Border Grid.Column="0"
                     Background="{StaticResource CardBackgroundBrush}"
                     BorderBrush="{StaticResource CardBorderBrush}"
@@ -282,8 +282,8 @@
                     Padding="16"
                     Margin="0,0,10,0">
                 <StackPanel>
-                    <!-- Selección de Empleador y Entidad -->
-                    <TextBlock Text="Contexto de Migración"
+                    <!-- Seleccion de Empleador y Entidad -->
+                    <TextBlock Text="Contexto de Migracion"
                                Style="{StaticResource SectionTitleTextBlockStyle}" />
 
                     <Grid Margin="0,4,0,12">
@@ -317,24 +317,24 @@
 
                     <Separator Margin="0,4,0,12" />
 
-                    <!-- Selección de archivos -->
-                    <TextBlock Text="Archivos de Migración"
+                    <!-- Seleccion de archivos -->
+                    <TextBlock Text="Archivos de Migracion"
                                Style="{StaticResource SectionTitleTextBlockStyle}" />
 
                     <StackPanel Margin="0,4,0,0">
-                        <!-- Categorías -->
+                        <!-- Categorias -->
                         <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Categorías"
+                            <Button Content="Seleccionar Categorias"
                                     Command="{Binding SeleccionarCategoriasCommand}" />
-                            <TextBlock Text="{Binding ArchivoCategorias}"
+                            <TextBlock Text="{Binding ArchivoCategoriasNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Padrón de Socios-->
+                        <!-- Padron de Socios-->
                         <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Padrón de Socios"
+                            <Button Content="Seleccionar Padron de Socios"
                                     Command="{Binding SeleccionarPadronCommand}" />
-                            <TextBlock Text="{Binding ArchivoPadron}"
+                            <TextBlock Text="{Binding ArchivoPadronNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
@@ -342,7 +342,7 @@
                         <StackPanel Margin="0,4,0,6">
                             <Button Content="Seleccionar Consumos"
                                     Command="{Binding SeleccionarConsumosCommand}" />
-                            <TextBlock Text="{Binding ArchivoConsumos}"
+                            <TextBlock Text="{Binding ArchivoConsumosNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
@@ -350,7 +350,7 @@
                         <StackPanel Margin="0,4,0,6">
                             <Button Content="Seleccionar Consumos Detalle"
                                     Command="{Binding SeleccionarConsumosDetalleCommand}" />
-                            <TextBlock Text="{Binding ArchivoConsumosDetalle}"
+                            <TextBlock Text="{Binding ArchivoConsumosDetalleNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
@@ -358,22 +358,22 @@
                         <StackPanel Margin="0,4,0,6">
                             <Button Content="Seleccionar Servicios"
                                     Command="{Binding SeleccionarServiciosCommand}" />
-                            <TextBlock Text="{Binding ArchivoServicios}"
+                            <TextBlock Text="{Binding ArchivoServiciosNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Catálogo de Servicios -->
+                        <!-- Catalogo de Servicios -->
                         <StackPanel Margin="0,4,0,0">
-                            <Button Content="Seleccionar Catálogo de Servicios"
+                            <Button Content="Seleccionar Catalogo de Servicios"
                                     Command="{Binding SeleccionarCatalogoServiciosCommand}" />
-                            <TextBlock Text="{Binding ArchivoCatalogoServicios}"
+                            <TextBlock Text="{Binding ArchivoCatalogoServiciosNombre}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Columna derecha: validación, logs y progreso -->
+            <!-- Columna derecha: validacion, logs y progreso -->
             <Border Grid.Column="1"
                     Background="{StaticResource CardBackgroundBrush}"
                     BorderBrush="{StaticResource CardBorderBrush}"
@@ -406,7 +406,7 @@
 
                     <!-- Logs -->
                     <StackPanel Grid.Row="1">
-                        <TextBlock Text="Log de validación"
+                        <TextBlock Text="Log de validacion"
                                    Style="{StaticResource SectionTitleTextBlockStyle}" />
                         <Border BorderBrush="{StaticResource CardBorderBrush}"
                                 BorderThickness="1"
@@ -431,7 +431,7 @@
 
                     <!-- Progreso -->
                     <StackPanel Grid.Row="2" Margin="0,10,0,0">
-                        <TextBlock Text="Progreso de migración"
+                        <TextBlock Text="Progreso de migracion"
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    FontSize="12"
                                    Margin="0,0,0,4" />
@@ -453,3 +453,6 @@
         </Grid>
     </Grid>
 </Window>
+
+
+

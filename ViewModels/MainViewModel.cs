@@ -16,7 +16,6 @@ namespace MigradorCUAD.ViewModels
         private readonly GeneralValidationService _generalValidationService;
         private readonly MigrationService _migrationService;
         private MigrationValidationResult _validationResult = new();
-        private bool _suppressContextSelectionEffects;
 
         private Empleador? _empleadorSeleccionado;
         private Entidad? _entidadSeleccionada;
@@ -35,7 +34,7 @@ namespace MigradorCUAD.ViewModels
             get => _empleadorSeleccionado;
             set
             {
-                if (SetProperty(ref _empleadorSeleccionado, value) && !_suppressContextSelectionEffects)
+                if (SetProperty(ref _empleadorSeleccionado, value))
                 {
                     InvalidateValidationState("Se actualizo el empleador seleccionado. Se reinicio el estado de validacion.");
                 }
@@ -47,7 +46,7 @@ namespace MigradorCUAD.ViewModels
             get => _entidadSeleccionada;
             set
             {
-                if (SetProperty(ref _entidadSeleccionada, value) && !_suppressContextSelectionEffects)
+                if (SetProperty(ref _entidadSeleccionada, value))
                 {
                     InvalidateValidationState("Se actualizo la entidad seleccionada. Se reinicio el estado de validacion.");
                     CommandManager.InvalidateRequerySuggested();
@@ -58,38 +57,81 @@ namespace MigradorCUAD.ViewModels
         public string? ArchivoCategorias
         {
             get => _archivoCategorias;
-            set => SetProperty(ref _archivoCategorias, value);
+            set
+            {
+                if (SetProperty(ref _archivoCategorias, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoCategoriasNombre));
+                }
+            }
         }
 
         public string? ArchivoPadron
         {
             get => _archivoPadron;
-            set => SetProperty(ref _archivoPadron, value);
+            set
+            {
+                if (SetProperty(ref _archivoPadron, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoPadronNombre));
+                }
+            }
         }
 
         public string? ArchivoConsumos
         {
             get => _archivoConsumos;
-            set => SetProperty(ref _archivoConsumos, value);
+            set
+            {
+                if (SetProperty(ref _archivoConsumos, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoConsumosNombre));
+                }
+            }
         }
 
         public string? ArchivoConsumosDetalle
         {
             get => _archivoConsumosDetalle;
-            set => SetProperty(ref _archivoConsumosDetalle, value);
+            set
+            {
+                if (SetProperty(ref _archivoConsumosDetalle, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
+                }
+            }
         }
 
         public string? ArchivoServicios
         {
             get => _archivoServicios;
-            set => SetProperty(ref _archivoServicios, value);
+            set
+            {
+                if (SetProperty(ref _archivoServicios, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoServiciosNombre));
+                }
+            }
         }
 
         public string? ArchivoCatalogoServicios
         {
             get => _archivoCatalogoServicios;
-            set => SetProperty(ref _archivoCatalogoServicios, value);
+            set
+            {
+                if (SetProperty(ref _archivoCatalogoServicios, value))
+                {
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosNombre));
+                }
+            }
         }
+
+        public string ArchivoCategoriasNombre => GetNombreArchivo(ArchivoCategorias);
+        public string ArchivoPadronNombre => GetNombreArchivo(ArchivoPadron);
+        public string ArchivoConsumosNombre => GetNombreArchivo(ArchivoConsumos);
+        public string ArchivoConsumosDetalleNombre => GetNombreArchivo(ArchivoConsumosDetalle);
+        public string ArchivoServiciosNombre => GetNombreArchivo(ArchivoServicios);
+        public string ArchivoCatalogoServiciosNombre => GetNombreArchivo(ArchivoCatalogoServicios);
 
         public int Progreso
         {
@@ -126,10 +168,8 @@ namespace MigradorCUAD.ViewModels
         public ICommand SeleccionarServiciosCommand { get; }
         public ICommand SeleccionarCatalogoServiciosCommand { get; }
         public ICommand ValidarCommand { get; }
-        public ICommand CopiarABaseCommand { get; }
         public ICommand CopiarCommand { get; }
         public ICommand ExportarLogCommand { get; }
-        public ICommand LimpiarPantallaCommand { get; }
         public ICommand LimpiarBaseEntidadCommand { get; }
 
         public MainViewModel()
@@ -154,10 +194,8 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
             SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("CatalogoServicios"));
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
-            CopiarABaseCommand = new RelayCommand(CopiarABase, PuedeCopiarABase);
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
-            LimpiarPantallaCommand = new RelayCommand(_ => LimpiarPantalla());
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
@@ -269,16 +307,6 @@ namespace MigradorCUAD.ViewModels
             ValidacionFinalizada = sinDatosPrevios;
         }
 
-        private bool PuedeCopiarABase(object? parameter)
-        {
-            return ValidacionFinalizada;
-        }
-
-        private void CopiarABase(object? parameter)
-        {
-            Logs.Add("ðŸ’¾ Iniciando proceso de copia a base de datos...");
-        }
-
         private async Task CopiarABaseAsync()
         {
             if (EntidadSeleccionada == null)
@@ -293,7 +321,7 @@ namespace MigradorCUAD.ViewModels
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
                 var resultado = MessageBox.Show(
-                    "Algunas validaciones no pasaron o la carga fue descartada. Â¿Desea migrar igualmente?",
+                    "Algunas validaciones no pasaron o la carga fue descartada. Desea migrar igualmente?",
                     "Confirmar migracion",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
@@ -322,26 +350,6 @@ namespace MigradorCUAD.ViewModels
             {
                 EstaProcesando = false;
             }
-        }
-
-        private void LimpiarPantalla()
-        {
-            _suppressContextSelectionEffects = true;
-            EmpleadorSeleccionado = null;
-            EntidadSeleccionada = null;
-            _suppressContextSelectionEffects = false;
-            ArchivoCategorias = null;
-            ArchivoPadron = null;
-            ArchivoConsumos = null;
-            ArchivoConsumosDetalle = null;
-            ArchivoServicios = null;
-            ArchivoCatalogoServicios = null;
-            Logs.Clear();
-            Progreso = 0;
-            EstaProcesando = false;
-            ValidacionFinalizada = false;
-            _validationResult = new MigrationValidationResult();
-            CommandManager.InvalidateRequerySuggested();
         }
 
         private bool PuedeLimpiarBaseEntidad(object? parameter)
@@ -473,6 +481,12 @@ namespace MigradorCUAD.ViewModels
                 MessageBox.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private static string GetNombreArchivo(string? ruta)
+        {
+            return string.IsNullOrWhiteSpace(ruta) ? string.Empty : Path.GetFileName(ruta);
+        }
     }
 }
+
 

@@ -751,10 +751,6 @@ namespace MigradorCUAD.Services
                             ? valores[indiceColumna.Value]
                             : string.Empty;
 
-                        // Modo prueba: validacion de tipo deshabilitada.
-                        //var config = columnasConfig[j];
-                        //if (!ValidateDataType(valor, config)) { ... }
-
                         if (!ValidateGeneralRules(valor, config, out var error))
                         {
                             log($"ERROR {nombreLogico} fila {i + 1}, columna '{config.Clave}': {error}");
@@ -851,28 +847,6 @@ namespace MigradorCUAD.Services
             }
 
             return builder.ToString();
-        }
-
-        private static bool ValidateDataType(string valor, ColumnaConfiguracion config)
-        {
-            if (valor.Length > config.LargoMaximo)
-            {
-                return false;
-            }
-
-            switch (config.TipoDato.ToLowerInvariant())
-            {
-                case "int":
-                    return int.TryParse(valor, out _);
-                case "decimal":
-                    return decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
-                case "fecha":
-                    return DateTime.TryParse(valor, out _);
-                case "texto":
-                    return !string.IsNullOrWhiteSpace(valor);
-                default:
-                    return false;
-            }
         }
 
         private static bool ValidateGeneralRules(string valor, ColumnaConfiguracion config, out string error)
