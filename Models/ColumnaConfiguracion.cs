@@ -1,4 +1,4 @@
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
     public class ColumnaConfiguracion
     {

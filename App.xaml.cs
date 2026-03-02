@@ -1,7 +1,7 @@
 using System.Windows;
-using MigradorCUAD.Data;
+using ImplementadorCUAD.Data;
 
-namespace MigradorCUAD
+namespace ImplementadorCUAD
 {
     public partial class App : Application
     {

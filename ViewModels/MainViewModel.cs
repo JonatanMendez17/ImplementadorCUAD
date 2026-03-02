@@ -1,21 +1,21 @@
-﻿using Microsoft.Win32;
-using MigradorCUAD.Commands;
-using MigradorCUAD.Data;
-using MigradorCUAD.Models;
-using MigradorCUAD.Services;
+using Microsoft.Win32;
+using ImplementadorCUAD.Commands;
+using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Models;
+using ImplementadorCUAD.Services;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 
-namespace MigradorCUAD.ViewModels
+namespace ImplementadorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
-        private readonly MigrationService _migrationService;
-        private MigrationValidationResult _validationResult = new();
+        private readonly ImplementacionService _ImplementacionService;
+        private ImplementacionValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
         private Entidad? _entidadSeleccionada;
@@ -213,7 +213,7 @@ namespace MigradorCUAD.ViewModels
         {
             _fileImportService = new FileImportService();
             _generalValidationService = new GeneralValidationService();
-            _migrationService = new MigrationService(new MigrationMapperService());
+            _ImplementacionService = new ImplementacionService(new ImplementacionMapperService());
 
             Logs = new ObservableCollection<string>();
             Logs.Add("Esperando carga de archivos para validacion...");
@@ -246,9 +246,9 @@ namespace MigradorCUAD.ViewModels
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
-        private MigrationFileSelection BuildSelection()
+        private ImplementacionFileSelection BuildSelection()
         {
-            return new MigrationFileSelection
+            return new ImplementacionFileSelection
             {
                 ArchivoCategorias = ArchivoCategorias,
                 ArchivoPadron = ArchivoPadron,
@@ -359,29 +359,29 @@ namespace MigradorCUAD.ViewModels
         {
             if (!HasEntidadSeleccionadaReal())
             {
-                Logs.Add("Debe seleccionar una entidad antes de migrar.");
+                Logs.Add("Debe seleccionar una entidad antes de implementar.");
                 return;
             }
 
             var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            Logs.Add($"Contexto de migracion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+            Logs.Add($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
                 var resultado = DialogService.Show(
-                    "Algunas validaciones no pasaron o la carga fue descartada. Desea migrar igualmente?",
-                    "Confirmar migracion",
+                    "Algunas validaciones no pasaron o la carga fue descartada. Desea implementar igualmente?",
+                    "Confirmar Implementación",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
 
                 if (resultado != MessageBoxResult.Yes)
                 {
-                    Logs.Add("Migracion cancelada por el usuario.");
+                    Logs.Add("Implementación cancelada por el usuario.");
                     return;
                 }
 
-                Logs.Add("El usuario confirmo migrar con validaciones pendientes.");
+                Logs.Add("El usuario confirmo implementar con validaciones pendientes.");
             }
 
             EstaProcesando = true;
@@ -389,7 +389,7 @@ namespace MigradorCUAD.ViewModels
 
             try
             {
-                await _migrationService.CopyToDatabaseAsync(
+                await _ImplementacionService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     Logs.Add,
@@ -448,7 +448,7 @@ namespace MigradorCUAD.ViewModels
 
                 ValidacionFinalizada = false;
                 Progreso = 0;
-                _validationResult = new MigrationValidationResult();
+                _validationResult = new ImplementacionValidationResult();
             }
             catch (Exception ex)
             {
@@ -466,7 +466,7 @@ namespace MigradorCUAD.ViewModels
             var teniaEstado = _validationResult.HuboCarga || ValidacionFinalizada || Progreso > 0;
             ValidacionFinalizada = false;
             Progreso = 0;
-            _validationResult = new MigrationValidationResult();
+            _validationResult = new ImplementacionValidationResult();
 
             if (teniaEstado)
             {
@@ -491,7 +491,7 @@ namespace MigradorCUAD.ViewModels
             ArchivoCatalogoServicios = null;
             ValidacionFinalizada = false;
             Progreso = 0;
-            _validationResult = new MigrationValidationResult();
+            _validationResult = new ImplementacionValidationResult();
 
             Logs.Clear();
             Logs.Add("Esperando carga de archivos para validacion...");
@@ -536,7 +536,7 @@ namespace MigradorCUAD.ViewModels
             {
                 Title = "Guardar log",
                 Filter = "Archivo de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
-                FileName = $"LogMigracion_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
+                FileName = $"LogImplementacion_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
                 AddExtension = true,
                 DefaultExt = "txt"
             };

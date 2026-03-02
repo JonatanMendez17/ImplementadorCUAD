@@ -1,12 +1,12 @@
 using System.Xml.Linq;
-using MigradorCUAD.Models;
+using ImplementadorCUAD.Models;
 
-namespace MigradorCUAD.Services
+namespace ImplementadorCUAD.Services
 {
     /// Servicio encargado de leer la configuración de columnas
     public class ConfiguracionService
     {
-        private readonly string _rutaXml = "ConfiguracionMigracion.xml";
+        private readonly string _rutaXml = "Configuracion.xml";
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
         public List<ColumnaConfiguracion> ObtenerColumnas(string nombreArchivo)

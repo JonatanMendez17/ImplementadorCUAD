@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
     [Table("Importar_Consumo_Cab")]
     public class ImportarConsumoCab

@@ -1,10 +1,10 @@
-﻿<Window x:Class="MigradorCUAD.MainWindow"
+<Window x:Class="ImplementadorCUAD.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="av"
-        Title="Migrador CUAD"
+        Title="Implementador CUAD"
         Height="690"
         Width="1120"
         MinHeight="690"
@@ -281,7 +281,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Panel de Migracion de Datos"
+                   Text="Panel de Implementacion de Datos"
                    Foreground="White"
                    FontSize="24"
                    FontWeight="Bold"
@@ -442,7 +442,7 @@
 
                     <Button Grid.Row="1"
                             Style="{StaticResource PrimaryButtonStyle}"
-                            Content="MIGRAR DATOS"
+                            Content="IMPLEMENTAR DATOS"
                             Command="{Binding CopiarCommand}"
                             Margin="0,0,0,12" Height="40" />
 
@@ -490,7 +490,7 @@
                     <TextBlock Grid.Row="6"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                FontSize="12"
-                               Text="{Binding Progreso, StringFormat=Progreso de migracion: {0}%}" />
+                               Text="{Binding Progreso, StringFormat=Progreso de implementacion: {0}%}" />
                 </Grid>
             </Border>
         </Grid>

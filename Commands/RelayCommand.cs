@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace MigradorCUAD.Commands
+namespace ImplementadorCUAD.Commands
 {
     public class RelayCommand : ICommand
     {

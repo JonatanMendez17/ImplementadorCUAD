@@ -1,6 +1,6 @@
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
-    public class MigrationValidationResult
+    public class ImplementacionValidationResult
     {
         public List<Dictionary<string, string>> DatosPadronValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosCategoriasValidadas { get; set; } = new();

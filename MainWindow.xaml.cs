@@ -1,7 +1,7 @@
 using System.Windows;
-using MigradorCUAD.ViewModels;
+using ImplementadorCUAD.ViewModels;
 
-namespace MigradorCUAD
+namespace ImplementadorCUAD
 {
     public partial class MainWindow : Window
     {

@@ -1,12 +1,12 @@
-using MigradorCUAD.Data;
-using MigradorCUAD.Models;
+using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Models;
 
-namespace MigradorCUAD.Services
+namespace ImplementadorCUAD.Services
 {
     public class GeneralValidationService
     {
         public bool ValidateEntidadConsistency(
-            MigrationValidationResult validationResult,
+            ImplementacionValidationResult validationResult,
             Action<string> log,
             out string entidadComun)
         {

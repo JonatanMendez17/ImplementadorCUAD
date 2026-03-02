@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
     [Table("Importar_Padron_Socio")]
     public class ImportarPadronSocio

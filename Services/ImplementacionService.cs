@@ -1,20 +1,20 @@
-using MigradorCUAD.Data;
-using MigradorCUAD.Models;
+using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Models;
 
-namespace MigradorCUAD.Services
+namespace ImplementadorCUAD.Services
 {
-    public class MigrationService
+    public class ImplementacionService
     {
-        private readonly MigrationMapperService _mapperService;
+        private readonly ImplementacionMapperService _mapperService;
 
-        public MigrationService(MigrationMapperService mapperService)
+        public ImplementacionService(ImplementacionMapperService mapperService)
         {
             _mapperService = mapperService;
         }
 
         public Task CopyToDatabaseAsync(
-            MigrationValidationResult validationResult,
-            MigrationFileSelection selection,
+            ImplementacionValidationResult validationResult,
+            ImplementacionFileSelection selection,
             Action<string> log,
             Action<int> reportProgress)
         {
@@ -39,7 +39,7 @@ namespace MigradorCUAD.Services
             if (totalPasos == 0)
             {
                 reportProgress(100);
-                log("No hay archivos de migracion compatibles para procesar en esta ejecucion.");
+                log("No hay archivos de implementación compatibles para procesar en esta ejecucion.");
                 return Task.CompletedTask;
             }
 

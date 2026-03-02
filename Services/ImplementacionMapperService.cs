@@ -1,9 +1,9 @@
-using MigradorCUAD.Models;
+using ImplementadorCUAD.Models;
 using System.Globalization;
 
-namespace MigradorCUAD.Services
+namespace ImplementadorCUAD.Services
 {
-    public class MigrationMapperService
+    public class ImplementacionMapperService
     {
         public List<ImportarPadronSocio> MapPadronSocios(
             IEnumerable<Dictionary<string, string>> datos,

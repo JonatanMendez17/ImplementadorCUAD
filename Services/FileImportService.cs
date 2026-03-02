@@ -1,18 +1,18 @@
-﻿using ExcelDataReader;
-using MigradorCUAD.Data;
-using MigradorCUAD.Models;
+using ExcelDataReader;
+using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Models;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace MigradorCUAD.Services
+namespace ImplementadorCUAD.Services
 {
     public class FileImportService
     {
-        public MigrationValidationResult ValidateAndLoadFiles(MigrationFileSelection selection, Action<string> log)
+        public ImplementacionValidationResult ValidateAndLoadFiles(ImplementacionFileSelection selection, Action<string> log)
         {
-            var result = new MigrationValidationResult();
+            var result = new ImplementacionValidationResult();
 
             var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
                 ? null
@@ -91,7 +91,7 @@ namespace MigradorCUAD.Services
             return result;
         }
 
-        private static void ApplyPadronSpecificValidations(MigrationValidationResult result, Action<string> log)
+        private static void ApplyPadronSpecificValidations(ImplementacionValidationResult result, Action<string> log)
         {
             if (result.DatosPadronValidados.Count == 0)
             {
@@ -197,7 +197,7 @@ namespace MigradorCUAD.Services
             result.DatosPadronValidados = padronFiltrado;
         }
 
-        private static void ApplyConsumosSpecificValidations(MigrationValidationResult result, Action<string> log)
+        private static void ApplyConsumosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
         {
             if (result.DatosConsumosValidados.Count == 0)
             {
@@ -304,7 +304,7 @@ namespace MigradorCUAD.Services
             result.DatosConsumosValidados = consumosFiltrados;
         }
 
-        private static void ApplyConsumosDetalleSpecificValidations(MigrationValidationResult result, Action<string> log)
+        private static void ApplyConsumosDetalleSpecificValidations(ImplementacionValidationResult result, Action<string> log)
         {
             if (result.DatosConsumosDetalleValidados.Count == 0)
             {
@@ -473,7 +473,7 @@ namespace MigradorCUAD.Services
             result.DatosConsumosDetalleValidados = detalleFiltrado;
         }
 
-        private static void ApplyServiciosSpecificValidations(MigrationValidationResult result, Action<string> log)
+        private static void ApplyServiciosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
         {
             if (result.DatosServiciosValidados.Count == 0)
             {

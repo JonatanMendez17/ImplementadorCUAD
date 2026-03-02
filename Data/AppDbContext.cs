@@ -1,9 +1,9 @@
-﻿using Microsoft.Data.SqlClient;
-using MigradorCUAD.Infrastructure;
-using MigradorCUAD.Models;
+using Microsoft.Data.SqlClient;
+using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Models;
 using System.Globalization;
 
-namespace MigradorCUAD.Data
+namespace ImplementadorCUAD.Data
 {
     public class AppDbContext : IDisposable
     {

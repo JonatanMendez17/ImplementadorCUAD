@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
     public class Entidad
     {

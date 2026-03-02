@@ -1,6 +1,6 @@
-namespace MigradorCUAD.Models
+namespace ImplementadorCUAD.Models
 {
-    public class MigrationFileSelection
+    public class ImplementacionFileSelection
     {
         public string? ArchivoCategorias { get; set; }
         public string? ArchivoPadron { get; set; }
