@@ -87,7 +87,14 @@ namespace ImplementadorCUAD.Services
                     fila.TryGetValue("Entidad", out var entidad);
                     fila.TryGetValue("Nro Socio", out var nroSocioTexto);
                     fila.TryGetValue("CUIT", out var cuitTexto);
-                    fila.TryGetValue("Código", out var codigoTexto);
+                    // En los datos validados la clave real es 'Codigo Consumo' (segun Configuracion.xml),
+                    // aunque en el archivo original el encabezado pueda ser 'Código' u otro alias.
+                    if (!fila.TryGetValue("Codigo Consumo", out var codigoTexto) &&
+                        !fila.TryGetValue("Código Consumo", out codigoTexto) &&
+                        !fila.TryGetValue("Código", out codigoTexto))
+                    {
+                        codigoTexto = null;
+                    }
                     fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
                     fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
                     fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);

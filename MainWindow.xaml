@@ -310,12 +310,12 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Entidad" Style="{StaticResource LabelStyle}" />
-                            <ComboBox ItemsSource="{Binding Entidad}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Nombre" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
                             <TextBlock Text="Empleador" Style="{StaticResource LabelStyle}" />
                             <ComboBox ItemsSource="{Binding Empleador}" SelectedItem="{Binding EmpleadorSeleccionado}" DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="Entidad" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding Entidad}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Nombre" />
                         </StackPanel>
                     </Grid>
 

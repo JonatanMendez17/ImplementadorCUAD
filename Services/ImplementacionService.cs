@@ -20,6 +20,10 @@ namespace ImplementadorCUAD.Services
         {
             using var db = new AppDbContext();
 
+            var insertadosPadron = 0;
+            var insertadosConsumosDetalle = 0;
+            var insertadosConsumos = 0;
+
             var totalPasos = 0;
             if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
             {
@@ -57,6 +61,7 @@ namespace ImplementadorCUAD.Services
                 if (padronSocios.Any())
                 {
                     db.InsertPadronSocio(padronSocios);
+                    insertadosPadron = padronSocios.Count;
                 }
                 else
                 {
@@ -72,6 +77,7 @@ namespace ImplementadorCUAD.Services
                 if (consumosDetalle.Any())
                 {
                     db.InsertImportarConsumosDet(consumosDetalle);
+                    insertadosConsumosDetalle = consumosDetalle.Count;
                 }
                 else
                 {
@@ -86,9 +92,8 @@ namespace ImplementadorCUAD.Services
                 var consumosImportados = _mapperService.MapConsumos(validationResult.DatosConsumosValidados, log);
                 if (consumosImportados.Any())
                 {
-                    log($"Insertando {consumosImportados.Count} registros en Consumo...");
                     db.InsertImportarConsumoCab(consumosImportados);
-                    log("Consumos insertados correctamente en tabla Consumo.");
+                    insertadosConsumos = consumosImportados.Count;
                 }
                 else
                 {
@@ -96,6 +101,15 @@ namespace ImplementadorCUAD.Services
                 }
 
                 AvanzarProgreso();
+            }
+
+            if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)
+            {
+                log($"Resumen implementación: Padron_socios={insertadosPadron}, Importar_Consumos_Detalle={insertadosConsumosDetalle}, Consumo={insertadosConsumos}.");
+            }
+            else
+            {
+                log("Resumen implementación: no se insertaron registros en la base.");
             }
 
             return Task.CompletedTask;

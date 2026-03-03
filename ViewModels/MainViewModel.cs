@@ -554,12 +554,14 @@ namespace ImplementadorCUAD.ViewModels
         private void Log(string message)
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            Logs.Add(new LogEntry(timestamp, message));
+            var prefix = GetLogPrefix(message);
+            Logs.Add(new LogEntry(timestamp, $"{prefix} {message}"));
         }
 
         private void LogRaw(string message)
         {
-            Logs.Add(new LogEntry(null, message));
+            var prefix = GetLogPrefix(message);
+            Logs.Add(new LogEntry(null, $"{prefix} {message}"));
         }
 
         public sealed class LogEntry
@@ -579,6 +581,30 @@ namespace ImplementadorCUAD.ViewModels
                     ? Message
                     : $"{Timestamp} - {Message}";
             }
+        }
+
+        private static string GetLogPrefix(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return "[INFO]";
+            }
+
+            var trimmed = message.TrimStart();
+
+            if (trimmed.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[ERROR]";
+            }
+
+            if (trimmed.StartsWith("⚠️") ||
+                trimmed.StartsWith("Aviso", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[WARN]";
+            }
+
+            return "[INFO]";
         }
 
         private static string GetNombreArchivo(string? ruta)
