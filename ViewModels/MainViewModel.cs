@@ -36,6 +36,11 @@ namespace ImplementadorCUAD.ViewModels
         private bool _validacionFinalizada;
         private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
         private DispatcherTimer? _logFlushTimer;
+        private readonly List<LogEntry> _fullLogForExport = new();
+        private bool _logTruncationMessageShown;
+
+        private const int MaxVisibleLogEntries = 50;
+        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, "[INFO] Para ver todo el log, exporte a archivo.");
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -347,6 +352,9 @@ namespace ImplementadorCUAD.ViewModels
             }
 
             Logs.Clear();
+            _fullLogForExport.Clear();
+            _logTruncationMessageShown = false;
+            while (_logBuffer.TryDequeue(out _)) { }
 
             if (!HasEntidadSeleccionadaReal())
             {
@@ -400,6 +408,7 @@ namespace ImplementadorCUAD.ViewModels
                 _logFlushTimer = null;
                 FlushLogBuffer();
                 EstaProcesando = false;
+                ScheduleDeferredLogFlush();
             }
 
             if (!_validationResult.HuboCarga)
@@ -581,6 +590,9 @@ namespace ImplementadorCUAD.ViewModels
             _validationResult = new ImplementacionValidationResult();
 
             Logs.Clear();
+            _fullLogForExport.Clear();
+            _logTruncationMessageShown = false;
+            while (_logBuffer.TryDequeue(out _)) { }
             LogRaw("Esperando carga de archivos para validacion...");
         }
 
@@ -610,7 +622,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private void ExportarLog()
         {
-            if (Logs.Count == 0)
+            if (_fullLogForExport.Count == 0)
             {
                 Log("No hay mensajes de log para exportar.");
                 return;
@@ -632,7 +644,7 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                File.WriteAllLines(dialog.FileName, Logs.Select(l => l.ToExportString()));
+                File.WriteAllLines(dialog.FileName, _fullLogForExport.Select(l => l.ToExportString()));
                 Log($"Log exportado a: {dialog.FileName}");
                 DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -667,16 +679,51 @@ namespace ImplementadorCUAD.ViewModels
             }
             else
             {
-                Logs.Add(entry);
+                _fullLogForExport.Add(entry);
+                if (_logTruncationMessageShown)
+                    return;
+                if (Logs.Count < MaxVisibleLogEntries)
+                    Logs.Add(entry);
+                else
+                {
+                    Logs.Add(LogTruncationPlaceholder);
+                    _logTruncationMessageShown = true;
+                }
             }
         }
 
-        private void FlushLogBuffer()
+        private const int MaxLogEntriesPerFlush = 200;
+
+        private int FlushLogBuffer()
         {
-            while (_logBuffer.TryDequeue(out var entry))
+            var count = 0;
+            while (count < MaxLogEntriesPerFlush && _logBuffer.TryDequeue(out var entry))
             {
-                Logs.Add(entry);
+                _fullLogForExport.Add(entry);
+                if (!_logTruncationMessageShown)
+                {
+                    if (Logs.Count < MaxVisibleLogEntries)
+                        Logs.Add(entry);
+                    else
+                    {
+                        Logs.Add(LogTruncationPlaceholder);
+                        _logTruncationMessageShown = true;
+                    }
+                }
+                count++;
             }
+            return count;
+        }
+
+        private void ScheduleDeferredLogFlush()
+        {
+            Application.Current?.Dispatcher.BeginInvoke(new Action(DeferredFlushNext), DispatcherPriority.Background);
+        }
+
+        private void DeferredFlushNext()
+        {
+            if (FlushLogBuffer() >= MaxLogEntriesPerFlush)
+                ScheduleDeferredLogFlush();
         }
 
         public sealed class LogEntry
