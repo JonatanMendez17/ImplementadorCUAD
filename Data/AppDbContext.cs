@@ -182,7 +182,8 @@ namespace ImplementadorCUAD.Data
                         (object?)registro.NroPuesto ?? DBNull.Value);
 
                     command.Parameters.AddWithValue("@CodigoCategoria", registro.CodigoCategoria);
-                });
+                },
+                progress);
         }
 
         public Task<int> InsertImportarConsumosDetAsync(
@@ -214,7 +215,8 @@ namespace ImplementadorCUAD.Data
                     command.Parameters.AddWithValue("@NroCuota", registro.NroCuota);
                     command.Parameters.AddWithValue("@FechaVencimiento", registro.FechaVencimiento);
                     command.Parameters.AddWithValue("@Monto", registro.Monto);
-                });
+                },
+                progress);
         }
 
         public Task<int> InsertImportarConsumoCabAsync(
@@ -252,7 +254,8 @@ namespace ImplementadorCUAD.Data
                 command.Parameters.AddWithValue("@CuotasPendientes", registro.CuotasPendientes);
                 command.Parameters.AddWithValue("@MontoDeuda", registro.MontoDeuda);
                 command.Parameters.AddWithValue("@ConceptoDescuento", registro.ConceptoDescuento);
-            });
+            },
+            progress);
         }
 
         public bool ExistsImportedDataForEntidad(string entidad)

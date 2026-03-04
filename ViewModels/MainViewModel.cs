@@ -485,7 +485,8 @@ namespace ImplementadorCUAD.ViewModels
                     _validationResult,
                     BuildSelection(),
                     Log,
-                    progress => Progreso = progress);
+                    progress => Application.Current?.Dispatcher.InvokeAsync(() => Progreso = progress));
+                DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             finally
             {
