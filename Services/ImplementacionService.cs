@@ -33,7 +33,7 @@ namespace ImplementadorCUAD.Services
                 ? _mapperService.MapPadronSocios(validationResult.DatosPadronValidados, log)
                 : new List<ImportarPadronSocio>();
 
-            var consumosDetalle = !string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle)
+            var consumosDetalle = (selection.ArchivosConsumosDetalle?.Count ?? 0) > 0
                 ? _mapperService.MapConsumosDetalle(validationResult.DatosConsumosDetalleValidados, log)
                 : new List<ImportarConsumosDet>();
 
@@ -76,7 +76,7 @@ namespace ImplementadorCUAD.Services
             {
                 insertadosConsumosDetalle = await db.InsertImportarConsumosDetAsync(consumosDetalle, progress).ConfigureAwait(false);
             }
-            else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
+            else if ((selection.ArchivosConsumosDetalle?.Count ?? 0) > 0)
             {
                 log("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
             }
@@ -92,11 +92,11 @@ namespace ImplementadorCUAD.Services
 
             if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)
             {
-                log($"Resumen implementación: Padron_socios={insertadosPadron}, Importar_Consumos_Detalle={insertadosConsumosDetalle}, Consumo={insertadosConsumos}.");
+                log($"Resumen implementaci?n: Padron_socios={insertadosPadron}, Importar_Consumos_Detalle={insertadosConsumosDetalle}, Consumo={insertadosConsumos}.");
             }
             else
             {
-                log("Resumen implementación: no se insertaron registros en la base.");
+                log("Resumen implementaci?n: no se insertaron registros en la base.");
             }
         }
     }

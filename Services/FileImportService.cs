@@ -2,6 +2,7 @@ using ExcelDataReader;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -37,9 +38,25 @@ namespace ImplementadorCUAD.Services
                 ? null
                 : LoadFile("Consumos", selection.ArchivoConsumos, log, progress);
 
-            var datosConsumosDetalle = string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle)
-                ? null
-                : LoadFile("ConsumosDetalle", selection.ArchivoConsumosDetalle, log, progress);
+            List<Dictionary<string, string>>? datosConsumosDetalle = null;
+            var archivosConsumosDetalle = selection.ArchivosConsumosDetalle;
+            if (archivosConsumosDetalle != null && archivosConsumosDetalle.Count > 0)
+            {
+                datosConsumosDetalle = new List<Dictionary<string, string>>();
+                var n = archivosConsumosDetalle.Count;
+                for (var i = 0; i < n; i++)
+                {
+                    var ruta = archivosConsumosDetalle[i];
+                    if (string.IsNullOrWhiteSpace(ruta)) continue;
+                    if (n > 1)
+                        log($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                    var datos = LoadFile("ConsumosDetalle", ruta, log, progress);
+                    if (datos != null && datos.Count > 0)
+                        datosConsumosDetalle.AddRange(datos);
+                }
+                if (datosConsumosDetalle.Count == 0)
+                    datosConsumosDetalle = null;
+            }
 
             var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
                 ? null

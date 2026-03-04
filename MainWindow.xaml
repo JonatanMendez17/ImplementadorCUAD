@@ -13,6 +13,7 @@
         Background="#10141D">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <SolidColorBrush x:Key="PanelBrush" Color="#1E293B" />
         <SolidColorBrush x:Key="PanelBorderBrush" Color="#32455F" />
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F8FAFC" />
@@ -411,13 +412,14 @@
                                     Margin="0,5,0,3" />
                         </Grid>
 
-                        <!-- Consumos Detalle -->
+                        <!-- Consumos Detalle (permite varios archivos) -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="28" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}" Margin="0,0,4,0">
+                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}" Margin="0,0,4,0"
+                                    ToolTip="{Binding ArchivoConsumosDetalleToolTip}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28" />
@@ -528,6 +530,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Text="Procesamiento" Style="{StaticResource SectionTitleStyle}" />
@@ -587,11 +590,19 @@
                                 Margin="8,0,0,0" Click="Button_Click_1" />
                     </Grid>
 
-                    <Grid Grid.Row="5" Height="18" Margin="0,0,0,6">
+                    <TextBlock Grid.Row="2"
+                               Text="Procesando..."
+                               Foreground="{StaticResource AccentBrushLight}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Margin="408,11,4,3"
+                               Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVis}}" />
+
+                    <Grid Grid.Row="6" Height="18" Margin="0,0,0,6">
                         <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progreso}" />
                     </Grid>
 
-                    <TextBlock Grid.Row="6"
+                    <TextBlock Grid.Row="7"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                FontSize="12"
                                Text="{Binding Progreso, StringFormat=Progreso de implementacion: {0}%}" />

@@ -4,8 +4,10 @@ using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -26,12 +28,19 @@ namespace ImplementadorCUAD.ViewModels
         private string? _archivoCategorias;
         private string? _archivoPadron;
         private string? _archivoConsumos;
-        private string? _archivoConsumosDetalle;
+        private readonly ObservableCollection<string> _archivosConsumosDetalle = new ObservableCollection<string>();
         private string? _archivoServicios;
         private string? _archivoCatalogoServicios;
         private int _progreso;
         private bool _estaProcesando;
         private bool _validacionFinalizada;
+        private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
+        private DispatcherTimer? _logFlushTimer;
+        private readonly List<LogEntry> _fullLogForExport = new();
+        private bool _logTruncationMessageShown;
+
+        private const int MaxVisibleLogEntries = 50;
+        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, "[INFO] Para ver todo el log, exporte a archivo.");
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -103,20 +112,7 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        public string? ArchivoConsumosDetalle
-        {
-            get => _archivoConsumosDetalle;
-            set
-            {
-                if (SetProperty(ref _archivoConsumosDetalle, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
-                    OnPropertyChanged(nameof(ArchivoConsumosDetalleCargado));
-                    OnPropertyChanged(nameof(ArchivoConsumosDetalleEstado));
-                    OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
-                }
-            }
-        }
+        public ObservableCollection<string> ArchivosConsumosDetalle => _archivosConsumosDetalle;
 
         public string? ArchivoServicios
         {
@@ -151,13 +147,13 @@ namespace ImplementadorCUAD.ViewModels
         public string ArchivoCategoriasNombre => GetNombreArchivo(ArchivoCategorias);
         public string ArchivoPadronNombre => GetNombreArchivo(ArchivoPadron);
         public string ArchivoConsumosNombre => GetNombreArchivo(ArchivoConsumos);
-        public string ArchivoConsumosDetalleNombre => GetNombreArchivo(ArchivoConsumosDetalle);
+        public string ArchivoConsumosDetalleNombre => GetArchivosConsumosDetalleNombre();
         public string ArchivoServiciosNombre => GetNombreArchivo(ArchivoServicios);
         public string ArchivoCatalogoServiciosNombre => GetNombreArchivo(ArchivoCatalogoServicios);
         public bool ArchivoCategoriasCargado => !string.IsNullOrWhiteSpace(ArchivoCategorias);
         public bool ArchivoPadronCargado => !string.IsNullOrWhiteSpace(ArchivoPadron);
         public bool ArchivoConsumosCargado => !string.IsNullOrWhiteSpace(ArchivoConsumos);
-        public bool ArchivoConsumosDetalleCargado => !string.IsNullOrWhiteSpace(ArchivoConsumosDetalle);
+        public bool ArchivoConsumosDetalleCargado => _archivosConsumosDetalle.Count > 0;
         public bool ArchivoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoServicios);
         public bool ArchivoCatalogoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoCatalogoServicios);
         public string ArchivoCategoriasEstado => BuildEstadoArchivo(ArchivoCategoriasNombre, ArchivoCategoriasCargado);
@@ -170,6 +166,7 @@ namespace ImplementadorCUAD.ViewModels
         public string ArchivoPadronIcono => ArchivoPadronCargado ? "✓" : "↑";
         public string ArchivoConsumosIcono => ArchivoConsumosCargado ? "✓" : "↑";
         public string ArchivoConsumosDetalleIcono => ArchivoConsumosDetalleCargado ? "✓" : "↑";
+        public string? ArchivoConsumosDetalleToolTip => GetArchivosConsumosDetalleToolTip();
         public string ArchivoServiciosIcono => ArchivoServiciosCargado ? "✓" : "↑";
         public string ArchivoCatalogoServiciosIcono => ArchivoCatalogoServiciosCargado ? "✓" : "↑";
 
@@ -242,6 +239,14 @@ namespace ImplementadorCUAD.ViewModels
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
+            _archivosConsumosDetalle.CollectionChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
+                OnPropertyChanged(nameof(ArchivoConsumosDetalleCargado));
+                OnPropertyChanged(nameof(ArchivoConsumosDetalleEstado));
+                OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
+                OnPropertyChanged(nameof(ArchivoConsumosDetalleToolTip));
+            };
             SeleccionarCategoriasCommand = new RelayCommand(_ => SeleccionarArchivo("Categorias"));
             SeleccionarPadronCommand = new RelayCommand(_ => SeleccionarArchivo("Padron"));
             SeleccionarConsumosCommand = new RelayCommand(_ => SeleccionarArchivo("Consumos"));
@@ -268,7 +273,7 @@ namespace ImplementadorCUAD.ViewModels
                 ArchivoCategorias = ArchivoCategorias,
                 ArchivoPadron = ArchivoPadron,
                 ArchivoConsumos = ArchivoConsumos,
-                ArchivoConsumosDetalle = ArchivoConsumosDetalle,
+                ArchivosConsumosDetalle = _archivosConsumosDetalle.ToList(),
                 ArchivoServicios = ArchivoServicios,
                 ArchivoCatalogoServicios = ArchivoCatalogoServicios
             };
@@ -278,7 +283,8 @@ namespace ImplementadorCUAD.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*"
+                Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
+                Multiselect = tipo == "ConsumosDetalle"
             };
 
             if (dialog.ShowDialog() != true)
@@ -298,7 +304,11 @@ namespace ImplementadorCUAD.ViewModels
                     ArchivoConsumos = dialog.FileName;
                     break;
                 case "ConsumosDetalle":
-                    ArchivoConsumosDetalle = dialog.FileName;
+                    _archivosConsumosDetalle.Clear();
+                    foreach (var path in dialog.FileNames)
+                    {
+                        _archivosConsumosDetalle.Add(path);
+                    }
                     break;
                 case "Servicios":
                     ArchivoServicios = dialog.FileName;
@@ -323,7 +333,7 @@ namespace ImplementadorCUAD.ViewModels
                     ArchivoConsumos = null;
                     break;
                 case "ConsumosDetalle":
-                    ArchivoConsumosDetalle = null;
+                    _archivosConsumosDetalle.Clear();
                     break;
                 case "Servicios":
                     ArchivoServicios = null;
@@ -342,6 +352,9 @@ namespace ImplementadorCUAD.ViewModels
             }
 
             Logs.Clear();
+            _fullLogForExport.Clear();
+            _logTruncationMessageShown = false;
+            while (_logBuffer.TryDequeue(out _)) { }
 
             if (!HasEntidadSeleccionadaReal())
             {
@@ -374,6 +387,13 @@ namespace ImplementadorCUAD.ViewModels
             EstaProcesando = true;
             Progreso = 0;
 
+            _logFlushTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
+            {
+                Interval = TimeSpan.FromMilliseconds(150)
+            };
+            _logFlushTimer.Tick += (_, _) => FlushLogBuffer();
+            _logFlushTimer.Start();
+
             try
             {
                 var selection = BuildSelection();
@@ -384,7 +404,11 @@ namespace ImplementadorCUAD.ViewModels
             }
             finally
             {
+                _logFlushTimer.Stop();
+                _logFlushTimer = null;
+                FlushLogBuffer();
                 EstaProcesando = false;
+                ScheduleDeferredLogFlush();
             }
 
             if (!_validationResult.HuboCarga)
@@ -461,7 +485,8 @@ namespace ImplementadorCUAD.ViewModels
                     _validationResult,
                     BuildSelection(),
                     Log,
-                    progress => Progreso = progress);
+                    progress => Application.Current?.Dispatcher.InvokeAsync(() => Progreso = progress));
+                DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             finally
             {
@@ -558,7 +583,7 @@ namespace ImplementadorCUAD.ViewModels
             ArchivoCategorias = null;
             ArchivoPadron = null;
             ArchivoConsumos = null;
-            ArchivoConsumosDetalle = null;
+            _archivosConsumosDetalle.Clear();
             ArchivoServicios = null;
             ArchivoCatalogoServicios = null;
             ValidacionFinalizada = false;
@@ -566,6 +591,9 @@ namespace ImplementadorCUAD.ViewModels
             _validationResult = new ImplementacionValidationResult();
 
             Logs.Clear();
+            _fullLogForExport.Clear();
+            _logTruncationMessageShown = false;
+            while (_logBuffer.TryDequeue(out _)) { }
             LogRaw("Esperando carga de archivos para validacion...");
         }
 
@@ -595,7 +623,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private void ExportarLog()
         {
-            if (Logs.Count == 0)
+            if (_fullLogForExport.Count == 0)
             {
                 Log("No hay mensajes de log para exportar.");
                 return;
@@ -617,7 +645,7 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                File.WriteAllLines(dialog.FileName, Logs.Select(l => l.ToExportString()));
+                File.WriteAllLines(dialog.FileName, _fullLogForExport.Select(l => l.ToExportString()));
                 Log($"Log exportado a: {dialog.FileName}");
                 DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -648,12 +676,55 @@ namespace ImplementadorCUAD.ViewModels
             var dispatcher = Application.Current?.Dispatcher;
             if (dispatcher != null && !dispatcher.CheckAccess())
             {
-                dispatcher.InvokeAsync(() => Logs.Add(entry), DispatcherPriority.Normal);
+                _logBuffer.Enqueue(entry);
             }
             else
             {
-                Logs.Add(entry);
+                _fullLogForExport.Add(entry);
+                if (_logTruncationMessageShown)
+                    return;
+                if (Logs.Count < MaxVisibleLogEntries)
+                    Logs.Add(entry);
+                else
+                {
+                    Logs.Add(LogTruncationPlaceholder);
+                    _logTruncationMessageShown = true;
+                }
             }
+        }
+
+        private const int MaxLogEntriesPerFlush = 200;
+
+        private int FlushLogBuffer()
+        {
+            var count = 0;
+            while (count < MaxLogEntriesPerFlush && _logBuffer.TryDequeue(out var entry))
+            {
+                _fullLogForExport.Add(entry);
+                if (!_logTruncationMessageShown)
+                {
+                    if (Logs.Count < MaxVisibleLogEntries)
+                        Logs.Add(entry);
+                    else
+                    {
+                        Logs.Add(LogTruncationPlaceholder);
+                        _logTruncationMessageShown = true;
+                    }
+                }
+                count++;
+            }
+            return count;
+        }
+
+        private void ScheduleDeferredLogFlush()
+        {
+            Application.Current?.Dispatcher.BeginInvoke(new Action(DeferredFlushNext), DispatcherPriority.Background);
+        }
+
+        private void DeferredFlushNext()
+        {
+            if (FlushLogBuffer() >= MaxLogEntriesPerFlush)
+                ScheduleDeferredLogFlush();
         }
 
         public sealed class LogEntry
@@ -697,6 +768,20 @@ namespace ImplementadorCUAD.ViewModels
             }
 
             return "[INFO]";
+        }
+
+        private string GetArchivosConsumosDetalleNombre()
+        {
+            var n = _archivosConsumosDetalle.Count;
+            if (n == 0) return string.Empty;
+            if (n == 1) return GetNombreArchivo(_archivosConsumosDetalle[0]);
+            return $"{n} archivos";
+        }
+
+        private string? GetArchivosConsumosDetalleToolTip()
+        {
+            if (_archivosConsumosDetalle.Count <= 1) return null;
+            return string.Join(Environment.NewLine, _archivosConsumosDetalle.Select(p => GetNombreArchivo(p)));
         }
 
         private static string GetNombreArchivo(string? ruta)
