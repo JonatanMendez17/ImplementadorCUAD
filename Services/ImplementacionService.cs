@@ -16,6 +16,12 @@ namespace ImplementadorCUAD.Services
 
         public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)
         {
+            if (string.IsNullOrWhiteSpace(selection.TargetConnectionString))
+            {
+                log("No se encontró base de datos para el empleador seleccionado.");
+                reportProgress(100);
+                return;
+            }
             using var db = _dbContextFactory.Create(selection.TargetConnectionString);
 
             var insertadosPadron = 0;

@@ -4,14 +4,9 @@ using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ServiciosValidator
+public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
-    public ServiciosValidator(IAppDbContextFactory dbContextFactory)
-    {
-        _dbContextFactory = dbContextFactory;
-    }
+    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
     public void Apply(ImplementacionValidationResult result, Action<string> log)
     {

@@ -16,9 +16,9 @@ namespace ImplementadorCUAD.Data
 
         public AppDbContext(string connectionString)
         {
-            _connectionString = string.IsNullOrWhiteSpace(connectionString)
-                ? ConnectionSettings.CuadConnectionString
-                : connectionString;
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("El connection string de destino no puede ser nulo ni vacío.", nameof(connectionString));
+            _connectionString = connectionString;
         }
 
         public void Dispose()

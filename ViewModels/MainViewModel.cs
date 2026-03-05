@@ -240,10 +240,6 @@ namespace ImplementadorCUAD.ViewModels
                 });
                 idx++;
             }
-            if (Empleador.Count == 0)
-            {
-                Empleador.Add(new Empleador { Id = 1, EmrId = 1, Nombre = "Default", ConnectionString = null });
-            }
             Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
 
             using (var db = _dbContextFactory.Create())
@@ -443,6 +439,13 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
+            if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+            {
+                Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                ValidacionFinalizada = false;
+                return;
+            }
+
             var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
                 entidadComun,
                 EmpleadorSeleccionado,
@@ -458,6 +461,27 @@ namespace ImplementadorCUAD.ViewModels
             {
                 DialogService.Show(
                     "Debe seleccionar una entidad antes de implementar.",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!HasEmpleadorSeleccionadoReal())
+            {
+                DialogService.Show(
+                    "Debe seleccionar un empleador antes de implementar.",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+            {
+                Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                DialogService.Show(
+                    $"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre}'.",
                     "Implementación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -505,7 +529,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private bool PuedeLimpiarBaseEntidad(object? parameter)
         {
-            return HasEntidadSeleccionadaReal() && !EstaProcesando;
+            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !EstaProcesando;
         }
 
         private void LimpiarBaseEntidad(object? parameter)
@@ -514,6 +538,20 @@ namespace ImplementadorCUAD.ViewModels
             {
                 DialogService.Show(
                     "Debe seleccionar una entidad para limpiar la base.",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!HasEmpleadorSeleccionadoReal() || string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+            {
+                var nombreEmpleador = EmpleadorSeleccionado?.Nombre ?? "seleccionado";
+                Log($"No se encontró base de datos para empleador '{nombreEmpleador}'.");
+                DialogService.Show(
+                    string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString)
+                        ? $"No se encontró base de datos para empleador '{nombreEmpleador}'."
+                        : "Debe seleccionar un empleador para limpiar la base.",
                     "Limpieza de base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);

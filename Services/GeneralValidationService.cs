@@ -38,12 +38,17 @@ namespace ImplementadorCUAD.Services
 
         public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, string? targetConnectionString, Action<string> log)
         {
+            if (string.IsNullOrWhiteSpace(targetConnectionString))
+            {
+                log($"No se encontró base de datos para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
+                return false;
+            }
             using var db = _dbContextFactory.Create(targetConnectionString);
             var existe = db.ExistsImportedDataForEntidad(entidad);
             if (existe)
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
-                log($"ERROR: ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
+                log($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
                 return false;
             }
 
