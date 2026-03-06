@@ -13,22 +13,22 @@ namespace ImplementadorCUAD.Services
 
             var entidades = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            AddEntidad("Categorias", validationResult.DatosCategoriasValidadas, entidades, log);
-            AddEntidad("Padron", validationResult.DatosPadronValidados, entidades, log);
+            AddEntidad("Categorias Socios", validationResult.DatosCategoriasValidadas, entidades, log);
+            AddEntidad("Padron Socios", validationResult.DatosPadronValidados, entidades, log);
             AddEntidad("Consumos", validationResult.DatosConsumosValidados, entidades, log);
-            AddEntidad("ConsumosDetalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
-            AddEntidad("Servicios", validationResult.DatosServiciosValidados, entidades, log);
-            AddEntidad("CatalogoServicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
+            AddEntidad("Consumos Detalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
+            AddEntidad("Catalogo Servicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
+            AddEntidad("Consumos Servicios", validationResult.DatosServiciosValidados, entidades, log);
 
             if (entidades.Count == 0)
             {
-                log("ERROR: no se encontro el valor de 'Entidad' en los archivos cargados.");
+                log("No se encontro el valor de 'Entidad' en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
-                log($"ERROR: la entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
+                log($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
                 return false;
             }
 
@@ -38,12 +38,17 @@ namespace ImplementadorCUAD.Services
 
         public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, string? targetConnectionString, Action<string> log)
         {
+            if (string.IsNullOrWhiteSpace(targetConnectionString))
+            {
+                log($"No se encontró base de datos para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
+                return false;
+            }
             using var db = _dbContextFactory.Create(targetConnectionString);
             var existe = db.ExistsImportedDataForEntidad(entidad);
             if (existe)
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
-                log($"ERROR: ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
+                log($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
                 return false;
             }
 
@@ -58,7 +63,7 @@ namespace ImplementadorCUAD.Services
                 numeroFila++;
                 if (!fila.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log($"ERROR: {nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
+                    log($"{nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 

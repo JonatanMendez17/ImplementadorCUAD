@@ -4,14 +4,9 @@ using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ServiciosValidator
+public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
-    public ServiciosValidator(IAppDbContextFactory dbContextFactory)
-    {
-        _dbContextFactory = dbContextFactory;
-    }
+    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
     public void Apply(ImplementacionValidationResult result, Action<string> log)
     {
@@ -36,7 +31,7 @@ public sealed class ServiciosValidator
         }
         catch (Exception ex)
         {
-            log($"Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
+            log($"Consumos Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosServiciosValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -69,12 +64,12 @@ public sealed class ServiciosValidator
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
+                erroresFila.Add($"La entidad '{entidad}' no existe en CUAD.");
             }
 
             if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
             {
-                erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
+                erroresFila.Add($"El socio '{nroSocio}' no existe o no corresponde al padron socios.");
             }
             else
             {
@@ -83,30 +78,30 @@ public sealed class ServiciosValidator
 
                 if (!EqualsDigitsOnly(cuitServicio, cuitPadron))
                 {
-                    erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El CUIT no coincide con padron para socio '{nroSocio}'.");
                 }
 
                 if (!EqualsTrimmed(beneficioServicio, beneficioPadron))
                 {
-                    erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El Beneficio no coincide con padron para socio '{nroSocio}'.");
                 }
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo))
             {
-                erroresFila.Add("codigo de consumo vacio.");
+                erroresFila.Add("EL campo 'codigo consumo' se encuentra vacio.");
             }
             else
             {
                 var codigoNormalizado = codigoConsumo.Trim();
                 if (!codigosServiciosVistos.Add(codigoNormalizado))
                 {
-                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido en Servicios.");
+                    erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido en Consumos Servicios.");
                 }
 
                 if (codigosConsumos.Contains(codigoNormalizado))
                 {
-                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
+                    erroresFila.Add($"El codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
                 }
             }
 
@@ -117,13 +112,13 @@ public sealed class ServiciosValidator
             else
             {
                 rechazadas++;
-                log($"ERROR Servicios fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos Servicios fila {numeroFila}: {string.Join(" | ", erroresFila)}");
             }
         }
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion especifica Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
+            log($"Resumen validacion Consumos Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosServiciosValidados = serviciosFiltrados;

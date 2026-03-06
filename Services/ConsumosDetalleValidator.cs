@@ -1,7 +1,6 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
-using System.IO;
 
 namespace ImplementadorCUAD.Services;
 
@@ -32,7 +31,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
         catch (Exception ex)
         {
-            log($"ConsumosDetalle: no se pudo validar entidades de CUAD. {ex.Message}");
+            log($"Consumos Detalle: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -57,21 +56,21 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
+                erroresFila.Add($"La entidad '{entidad}' no existe en CUAD.");
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
             {
-                erroresFila.Add($"codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos.");
+                erroresFila.Add($"El codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos detalle.");
             }
 
             if (!TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add("fecha de vencimiento invalida.");
+                erroresFila.Add("La fecha de vencimiento es invalida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add("fecha de vencimiento no puede ser hoy o anterior.");
+                erroresFila.Add("La fecha de vencimiento no puede ser hoy o anterior.");
             }
 
             if (erroresFila.Count == 0)
@@ -81,7 +80,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             else
             {
                 rechazadas++;
-                log($"ConsumosDetalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos Detalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -108,14 +107,14 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas))
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"ConsumosDetalle: no se pudo leer 'Cuotas Pendientes' para codigo de consumo '{codigo}'.");
+                log($"Consumos Detalle: No se pudo leer 'Cuotas Pendientes' para el codigo de consumo '{codigo}'.");
                 continue;
             }
 
             if (!TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"ConsumosDetalle: no se pudo leer 'Monto Deuda' para codigo de consumo '{codigo}'.");
+                log($"Consumos Detalle: No se pudo leer el 'Monto Deuda' para el codigo de consumo '{codigo}'.");
                 continue;
             }
 
@@ -146,7 +145,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!parseOk)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"ERROR ConsumosDetalle: monto o numero de cuota invalido en detalle para codigo de consumo '{codigo}'.");
+                log($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una fila con 'Monto' o 'Nro Cuota' inválidos.");
                 continue;
             }
 
@@ -164,7 +163,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!consecutivas)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
+                log($"Consumos Detalle: Los Nro Cuota no son consecutivos para codigo de consumo '{codigo}'.");
                 continue;
             }
 
@@ -172,7 +171,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"ConsumosDetalle: cuotas/importe no coinciden para codigo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
+                log($"Consumos Detalle: La cantidad de cuotas y monto deuda no coinciden para el codigo de consumo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
             }
         }
 
@@ -196,7 +195,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion especifica ConsumosDetalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
+            log($"Resumen validacion Consumos Detalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;

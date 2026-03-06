@@ -26,7 +26,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(documentoTexto) ||
                         string.IsNullOrWhiteSpace(codigoCategoria))
                     {
-                        log("Fila de padrón incompleta. Se omite el registro.");
+                        log("Fila de padrón socio incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -34,7 +34,7 @@ namespace ImplementadorCUAD.Services
                         !TryParseDateFlexible(fechaAltaTexto, out var fechaAltaSocio) ||
                         !TryParseIntFlexible(documentoTexto, out var documento))
                     {
-                        log("Fila de padrón con formato inválido. Se omite el registro.");
+                        log("Fila de padrón socio con formato inválido. Se omite el registro.");
                         continue;
                     }
 

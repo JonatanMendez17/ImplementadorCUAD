@@ -23,7 +23,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         }
         catch (Exception ex)
         {
-            log($"CatalogoServicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
+            log($"Catalogo Servicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
             result.DatosCatalogoServiciosValidados = [];
             return;
         }
@@ -49,7 +49,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
             if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
             {
-                log($"CatalogoServicios fila {numeroFila}: entidad vacia.");
+                log($"Catalogo Servicios fila {numeroFila}: La entidad se encuentra vacia.");
                 filaValida = false;
             }
             else
@@ -57,14 +57,14 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                 {
-                    log($" CatalogoServicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                    log($" Catalogo Servicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
                     filaValida = false;
                 }
                 else
                 {
                     if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                     {
-                        log($"CatalogoServicios fila {numeroFila}: importe '{importeTexto}' invalido.");
+                        log($"Catalogo Servicios fila {numeroFila}: El importe '{importeTexto}' es invalido.");
                         filaValida = false;
                     }
                     else
@@ -72,7 +72,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                         var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
                         if (diferencia > 0.01m)
                         {
-                            log($"CatalogoServicios fila {numeroFila}: importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                            log($"Catalogo Servicios fila {numeroFila}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
                             filaValida = false;
                         }
                     }
@@ -91,7 +91,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion especifica CatalogoServicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
+            log($"Resumen validaciones Catalogo Servicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosCatalogoServiciosValidados = filtrado;

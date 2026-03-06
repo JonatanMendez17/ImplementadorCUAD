@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.Win32;
 using ImplementadorCUAD.Commands;
 using ImplementadorCUAD.Infrastructure;
@@ -17,7 +18,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
-        private readonly ImplementacionService _ImplementacionService;
+        private readonly ImplementacionService _implementacionService;
         private ImplementacionValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
@@ -218,7 +219,7 @@ namespace ImplementadorCUAD.ViewModels
             _dbContextFactory = new AppDbContextFactory();
             _fileImportService = new FileImportService(_dbContextFactory);
             _generalValidationService = new GeneralValidationService(_dbContextFactory);
-            _ImplementacionService = new ImplementacionService(new ImplementacionMapperService(), _dbContextFactory);
+            _implementacionService = new ImplementacionService(new ImplementacionMapperService(), _dbContextFactory);
 
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
@@ -239,10 +240,6 @@ namespace ImplementadorCUAD.ViewModels
                     ConnectionString = ec.ConnectionString
                 });
                 idx++;
-            }
-            if (Empleador.Count == 0)
-            {
-                Empleador.Add(new Empleador { Id = 1, EmrId = 1, Nombre = "Default", ConnectionString = null });
             }
             Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
 
@@ -410,6 +407,28 @@ namespace ImplementadorCUAD.ViewModels
                 _validationResult = await Task.Run(
                     () => _fileImportService.ValidateAndLoadFiles(selection, Log, progress));
             }
+            catch (SqlException ex)
+            {
+                Log($"Error de base de datos al cargar o validar archivos: {ex.Message}");
+                ValidacionFinalizada = false;
+                DialogService.Show(
+                    $"Error al consultar la base de datos (CUAD).\n\n{ex.Message}",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Log($"Error al validar archivos: {ex.Message}");
+                ValidacionFinalizada = false;
+                DialogService.Show(
+                    $"Error inesperado al validar.\n\n{ex.Message}",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
             finally
             {
                 _logFlushTimer.Stop();
@@ -425,31 +444,61 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
-            var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
-                _validationResult,
-                Log,
-                out var entidadComun);
-
-            if (!entidadConsistente)
+            try
             {
-                ValidacionFinalizada = false;
-                return;
-            }
+                var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
+                    _validationResult,
+                    Log,
+                    out var entidadComun);
 
-            if (!MatchesSelectedEntidad(entidadComun))
+                if (!entidadConsistente)
+                {
+                    ValidacionFinalizada = false;
+                    return;
+                }
+
+                if (!MatchesSelectedEntidad(entidadComun))
+                {
+                    Log($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
+                    ValidacionFinalizada = false;
+                    return;
+                }
+
+                if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+                {
+                    Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                    ValidacionFinalizada = false;
+                    return;
+                }
+
+                var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
+                    entidadComun,
+                    EmpleadorSeleccionado,
+                    EmpleadorSeleccionado?.ConnectionString,
+                    Log);
+
+                ValidacionFinalizada = sinDatosPrevios;
+            }
+            catch (SqlException ex)
             {
-                Log($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
+                Log($"Error de base de datos al validar: {ex.Message}");
                 ValidacionFinalizada = false;
-                return;
+                DialogService.Show(
+                    $"Error al consultar la base de datos.\n\n{ex.Message}",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
-
-            var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
-                entidadComun,
-                EmpleadorSeleccionado,
-                EmpleadorSeleccionado?.ConnectionString,
-                Log);
-
-            ValidacionFinalizada = sinDatosPrevios;
+            catch (Exception ex)
+            {
+                Log($"Error al validar: {ex.Message}");
+                ValidacionFinalizada = false;
+                DialogService.Show(
+                    $"Error inesperado al validar.\n\n{ex.Message}",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private async Task CopiarABaseAsync()
@@ -458,6 +507,27 @@ namespace ImplementadorCUAD.ViewModels
             {
                 DialogService.Show(
                     "Debe seleccionar una entidad antes de implementar.",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!HasEmpleadorSeleccionadoReal())
+            {
+                DialogService.Show(
+                    "Debe seleccionar un empleador antes de implementar.",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+            {
+                Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                DialogService.Show(
+                    $"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre}'.",
                     "Implementación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -490,12 +560,30 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                await _ImplementacionService.CopyToDatabaseAsync(
+                await _implementacionService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     Log,
                     progress => Application.Current?.Dispatcher.InvokeAsync(() => Progreso = progress));
                 DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (SqlException ex)
+            {
+                Log($"Error de base de datos al implementar: {ex.Message}");
+                DialogService.Show(
+                    $"Error al escribir en la base de datos.\n\n{ex.Message}",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                Log($"Error al implementar: {ex.Message}");
+                DialogService.Show(
+                    $"Error inesperado al implementar.\n\n{ex.Message}",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             finally
             {
@@ -505,7 +593,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private bool PuedeLimpiarBaseEntidad(object? parameter)
         {
-            return HasEntidadSeleccionadaReal() && !EstaProcesando;
+            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !EstaProcesando;
         }
 
         private void LimpiarBaseEntidad(object? parameter)
@@ -514,6 +602,20 @@ namespace ImplementadorCUAD.ViewModels
             {
                 DialogService.Show(
                     "Debe seleccionar una entidad para limpiar la base.",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!HasEmpleadorSeleccionadoReal() || string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
+            {
+                var nombreEmpleador = EmpleadorSeleccionado?.Nombre ?? "seleccionado";
+                Log($"No se encontró base de datos para empleador '{nombreEmpleador}'.");
+                DialogService.Show(
+                    string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString)
+                        ? $"No se encontró base de datos para empleador '{nombreEmpleador}'."
+                        : "Debe seleccionar un empleador para limpiar la base.",
                     "Limpieza de base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -562,11 +664,20 @@ namespace ImplementadorCUAD.ViewModels
                 Progreso = 0;
                 _validationResult = new ImplementacionValidationResult();
             }
+            catch (SqlException ex)
+            {
+                Log($"Error de base de datos al limpiar: {ex.Message}");
+                DialogService.Show(
+                    $"Error al consultar o modificar la base de datos.\n\n{ex.Message}",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
                 Log($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
                 DialogService.Show(
-                    $"No se pudo limpiar la base.\n{ex.Message}",
+                    $"No se pudo limpiar la base.\n\n{ex.Message}",
                     "Limpieza de base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

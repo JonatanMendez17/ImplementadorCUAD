@@ -36,7 +36,7 @@ public sealed class ConsumosValidator
         }
         catch (Exception ex)
         {
-            log($"ERROR Consumos: no se pudo validar entidades de CUAD. {ex.Message}");
+            log($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -64,12 +64,12 @@ public sealed class ConsumosValidator
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
+                erroresFila.Add($"La entidad '{entidad}' no existe en CUAD.");
             }
 
             if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
             {
-                erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
+                erroresFila.Add($"El nro socio '{nroSocio}' no existe o no corresponde al padron.");
             }
             else
             {
@@ -78,22 +78,22 @@ public sealed class ConsumosValidator
 
                 if (!EqualsDigitsOnly(cuitConsumo, cuitPadron))
                 {
-                    erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El CUIT no coincide con padron para socio '{nroSocio}'.");
                 }
 
                 if (!EqualsTrimmed(beneficioConsumo, beneficioPadron))
                 {
-                    erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El Beneficio no coincide con padron para socio '{nroSocio}'.");
                 }
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo))
             {
-                erroresFila.Add("codigo de consumo vacio.");
+                erroresFila.Add("El campo 'codigo consumo' se encuentra vacio.");
             }
             else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
             {
-                erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido.");
+                erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido.");
             }
 
             if (erroresFila.Count == 0)
@@ -103,13 +103,13 @@ public sealed class ConsumosValidator
             else
             {
                 rechazadas++;
-                log($"ERROR Consumos fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos fila {numeroFila}: {string.Join(" | ", erroresFila)}");
             }
         }
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion especifica Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
+            log($"Resumen validacion Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosConsumosValidados = consumosFiltrados;

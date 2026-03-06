@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ImplementadorCUAD"
         mc:Ignorable="av"
         Title="Implementador CUAD"
         Height="690"
@@ -284,12 +285,23 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Panel de Implementacion de Datos"
-                   Foreground="White"
-                   FontSize="24"
-                   FontWeight="Bold"
-                   Margin="0,0,0,14" />
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="Panel de Implementacion de Datos"
+                       Foreground="White"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="{x:Static local:VersionInfo.DisplayVersion}"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       FontSize="14"
+                       VerticalAlignment="Center" />
+        </Grid>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

@@ -18,11 +18,11 @@ namespace ImplementadorCUAD.Services
 
             var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
                 ? null
-                : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);
+                : LoadFile("Categorias Socios", selection.ArchivoCategorias, log, progress);
 
             var datosPadron = string.IsNullOrWhiteSpace(selection.ArchivoPadron)
                 ? null
-                : LoadFile("Padron", selection.ArchivoPadron, log, progress);
+                : LoadFile("Padron Socios", selection.ArchivoPadron, log, progress);
 
             var datosConsumos = string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
                 ? null
@@ -39,8 +39,8 @@ namespace ImplementadorCUAD.Services
                     var ruta = archivosConsumosDetalle[i];
                     if (string.IsNullOrWhiteSpace(ruta)) continue;
                     if (n > 1)
-                        log($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
-                    var datos = LoadFile("ConsumosDetalle", ruta, log, progress);
+                        log($"Consumos Detalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                    var datos = LoadFile("Consumos Detalle", ruta, log, progress);
                     if (datos != null && datos.Count > 0)
                         datosConsumosDetalle.AddRange(datos);
                 }
@@ -50,11 +50,11 @@ namespace ImplementadorCUAD.Services
 
             var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
                 ? null
-                : LoadFile("Servicios", selection.ArchivoServicios, log, progress);
+                : LoadFile("Consumos Servicios", selection.ArchivoServicios, log, progress);
 
             var datosCatalogoServicios = string.IsNullOrWhiteSpace(selection.ArchivoCatalogoServicios)
                 ? null
-                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log, progress);
+                : LoadFile("Catalogo Servicios", selection.ArchivoCatalogoServicios, log, progress);
 
             if (datosPadron != null)
             {
@@ -212,7 +212,7 @@ namespace ImplementadorCUAD.Services
 
                 if (!enumerator.MoveNext())
                 {
-                    log($"Archivo {nombreLogico} vacio.");
+                    log($"El Archivo {nombreLogico} se encuentra vacio.");
                     return null;
                 }
 
@@ -238,7 +238,7 @@ namespace ImplementadorCUAD.Services
                     if (!indice.HasValue && config.Requerida)
                     {
                         var aliasEsperados = (config.Alias?.Count > 0 ? config.Alias : new List<string> { config.Nombre });
-                        log($"{nombreLogico}: falta columna requerida para '{config.Clave}'. Alias esperados: {string.Join(", ", aliasEsperados)}.");
+                        log($"{nombreLogico}: Falta columna requerida para '{config.Clave}'.");
                         return null;
                     }
                 }
@@ -301,7 +301,7 @@ namespace ImplementadorCUAD.Services
                     }
                 }
 
-                log($"{nombreLogico}: validaciones realizadas correctamente.");
+                log($"{nombreLogico}: Validaciones realizadas correctamente.");
                 log($"Resumen {nombreLogico}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
                 return registros;
             }
@@ -501,18 +501,18 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static bool EqualsTrimmed(string? left, string? right)
-        {
-            var a = (left ?? string.Empty).Trim();
-            var b = (right ?? string.Empty).Trim();
-            return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
-        }
+        //private static bool EqualsTrimmed(string? left, string? right)
+        //{
+        //    var a = (left ?? string.Empty).Trim();
+        //    var b = (right ?? string.Empty).Trim();
+        //    return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        //}
 
-        private static bool EqualsDigitsOnly(string? left, string? right)
-        {
-            static string Digits(string? text) => new string((text ?? string.Empty).Where(char.IsDigit).ToArray());
-            return string.Equals(Digits(left), Digits(right), StringComparison.Ordinal);
-        }
+        //private static bool EqualsDigitsOnly(string? left, string? right)
+        //{
+        //    static string Digits(string? text) => new string((text ?? string.Empty).Where(char.IsDigit).ToArray());
+        //    return string.Equals(Digits(left), Digits(right), StringComparison.Ordinal);
+        //}
 
         private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
         {

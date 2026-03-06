@@ -46,13 +46,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
                 if (predeterminadas > 1)
                 {
-                    log($"Categorias: la entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
+                    log($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
                 }
             }
         }
         catch (Exception ex)
         {
-            log($"Categorias: no se pudo leer categorias de CUAD. {ex.Message}");
+            log($"Categorias Socios: No se pudo leer categorias de CUAD. {ex.Message}");
             categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -78,21 +78,21 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
             if (string.IsNullOrWhiteSpace(nroSocio))
             {
-                erroresFila.Add("'Nro Socio' vacio.");
+                erroresFila.Add("El campo 'Nro Socio' se encuentra vacio.");
             }
             else
             {
                 var nroSocioNormalizado = nroSocio.Trim();
                 if (!sociosVistos.Add(nroSocioNormalizado))
                 {
-                    erroresFila.Add($"numero de socio '{nroSocio}' repetido.");
+                    erroresFila.Add($"El numero de socio '{nroSocio}' se encuentra repetido.");
                 }
 
                 var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
                 if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
                     !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
                 {
-                    erroresFila.Add($"socio '{nroSocio}' afiliado a mas de una categoria.");
+                    erroresFila.Add($"El socio '{nroSocio}' esta afiliado a mas de una categoria.");
                 }
                 else
                 {
@@ -102,7 +102,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
             if (!IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
             {
-                erroresFila.Add("categoria informada no valida.");
+                erroresFila.Add("La categoria informada no es valida.");
             }
 
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
@@ -117,23 +117,23 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
                     if (categoriaCuad == null)
                     {
-                        erroresFila.Add($"categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
+                        erroresFila.Add($"La categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
                     }
                 }
                 else
                 {
-                    erroresFila.Add($"entidad '{entidad}' no tiene categorias definidas en CUAD.");
+                    erroresFila.Add($"La entidad '{entidad}' no tiene categorias definidas en CUAD.");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
             {
-                erroresFila.Add($"documento '{documento}' repetido.");
+                erroresFila.Add($"El documento '{documento}' se encuentra repetido.");
             }
 
             if (!string.IsNullOrWhiteSpace(beneficio) && !beneficiosVistos.Add(beneficio.Trim()))
             {
-                erroresFila.Add($"beneficio '{beneficio}' repetido.");
+                erroresFila.Add($"El beneficio '{beneficio}' se encuentra repetido.");
             }
 
             if (erroresFila.Count == 0)
@@ -149,7 +149,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion especifica Padron: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
+            log($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosPadronValidados = padronFiltrado;

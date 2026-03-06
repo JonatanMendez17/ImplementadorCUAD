@@ -4,16 +4,12 @@ using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD.Services
 {
-    /// <summary>
     /// Lee la sección Conexiones de Configuracion.xml: conexión CUAD y lista de empleadores con su connection string.
-    /// </summary>
     public class ConexionesConfigService
     {
         private readonly string _rutaXml = "Configuracion.xml";
 
-        /// <summary>
-        /// Obtiene el connection string de la base CUAD (solo lectura). Devuelve null si no existe la sección.
-        /// </summary>
+        /// Obtiene el connection string de la base CUAD. Devuelve null si no existe la sección.
         public string? GetCuadConnectionString()
         {
             try
@@ -29,10 +25,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        /// <summary>
         /// Lista de empleadores definidos en configuración, con su connection string ya resuelto.
-        /// Si no existe la sección Conexiones o no hay Empleador, devuelve lista vacía.
-        /// </summary>
         public IReadOnlyList<EmpleadorConfig> GetEmpleadores()
         {
             var resultado = new List<EmpleadorConfig>();

@@ -11,7 +11,7 @@ public interface IAppDbContextFactory
 
     /// <summary>
     /// Crea un contexto contra la base indicada (destino del empleador para importación/limpieza).
-    /// Si targetConnectionString es null o vacío, usa la conexión CUAD (compatibilidad).
+    /// No usar con null/vacío: el llamador debe validar antes.
     /// </summary>
     IAppDbContext Create(string? targetConnectionString);
 }
@@ -25,7 +25,9 @@ public sealed class AppDbContextFactory : IAppDbContextFactory
 
     public IAppDbContext Create(string? targetConnectionString)
     {
-        return new AppDbContext(targetConnectionString ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(targetConnectionString))
+            throw new ArgumentException("El connection string de destino no puede ser nulo ni vacío.", nameof(targetConnectionString));
+        return new AppDbContext(targetConnectionString);
     }
 }
 

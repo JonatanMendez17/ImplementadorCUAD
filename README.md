@@ -1,29 +1,49 @@
-# ImplementadorCUAD
+# Implementador CUAD
 
-Aplicación de escritorio WPF (.NET 8) para importar archivos de CUAD (padrones, consumos, servicios, etc.) y cargarlos en SQL Server.
+Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD (categorías, padrón, consumos, consumos detalle, servicios, catálogo de servicios) y cargarlos en SQL Server. La aplicación trabaja con una **base CUAD** (solo lectura) y una **base por empleador** (donde se importan los 6 archivos).
 
 ## Requisitos
 
-- .NET SDK 8.0 o superior.
-- SQL Server accesible desde la máquina donde corre la aplicación.
-- Cadena de conexión configurada en `App.config` (sección `connectionStrings`) o por variable de entorno.
+- .NET SDK 8.0 o superior
+- SQL Server accesible desde la máquina donde corre la aplicación
+- Configuración de conexiones en `Configuracion.xml` (sección `<Conexiones>`)
 
 ## Ejecución
 
-1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio o en un IDE compatible.
+1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio.
 2. Restaurar paquetes NuGet y compilar la solución.
-3. Verificar que la cadena de conexión apunte a una base válida.
+3. Configurar `Configuracion.xml` con las bases CUAD y empleadores.
 4. Ejecutar el proyecto `ImplementadorCUAD` como proyecto de inicio.
 
-## Configuración de la conexión a base de datos
+## Configuración
+### Conexiones a bases de datos (`Configuracion.xml`)
 
-La aplicación obtiene la cadena de conexión de la siguiente forma (en este orden):
+En la sección `<Conexiones>` se definen:
 
-1. Variable de entorno `IMPLEMENTADORCUAD_CONNECTIONSTRING` (si está definida).
-2. Entrada `connectionStrings` con nombre `ImplementadorCUADDb` en `App.config`.
-3. Valor por defecto embebido en `ConnectionSettings`.
+- **`<Cuad>`**: connection string de la base CUAD (solo lectura). De ahí se obtienen entidades, categorías y catálogo.
+- **`<ConexionBase>`**: servidor y autenticación comunes. Se combina con el atributo `baseDatos` de cada empleador.
+- **`<Empleador>`**: cada empleador que aparece en el desplegable, con `nombre` y `baseDatos` (nombre de la base donde se importan los 6 archivos).
 
-Para cambiar de base de datos, lo más sencillo es:
+También se puede indicar un connection string completo por empleador con el atributo `connectionString` en lugar de `baseDatos`.
+Si no existe la sección `<Conexiones>` o no hay empleadores configurados, el desplegable de empleador quedará vacío (solo "Seleccionar") y no se podrá
+implementar ni limpiar hasta configurar al menos un empleador.
 
-- Editar `App.config` y ajustar la cadena `ImplementadorCUADDb`, o
-- Definir `IMPLEMENTADORCUAD_CONNECTIONSTRING` apuntando al servidor/base deseados.
+### Columnas de los archivos (`Configuracion.xml`)
+
+En el mismo archivo se definen, por tipo de archivo (Categorías, Padrón, Consumos, etc.), las columnas esperadas, alias y reglas (tipo, largo, requerida).
+Si una columna no viene en el archivo, se puede comentar en la configuración para que la aplicación no la exija.
+
+## Uso de la aplicación
+
+1. Seleccionar **Empleador** y **Entidad** en los desplegables (entidades provienen de la base CUAD).
+2. Cargar los archivos (Categorías, Padrón, Consumos, Consumos detalle, Servicios, Catálogo de servicios) según corresponda.
+3. Pulsar **Validar** para comprobar consistencia y que no existan datos previos para esa entidad en la base del empleador.
+4. Pulsar **Implementar datos** para insertar en la base del empleador seleccionado.
+5. Opcional: **Limpiar entidad** borra los datos importados de la entidad seleccionada en la base del empleador.
+
+La versión de la aplicación se muestra en la esquina superior derecha del panel (por ejemplo, `v1.0.0`).
+
+## Versionado
+
+La versión se define en `ImplementadorCUAD.csproj` (`Version`, `AssemblyVersion`, `FileVersion`). Al publicar una nueva versión, actualizar ahí (por ejemplo `1.0.0` → `1.1.0`).
+La UI la muestra leyendo el ensamblado; no hace falta tocar otro archivo.

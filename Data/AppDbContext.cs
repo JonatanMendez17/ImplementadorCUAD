@@ -16,9 +16,9 @@ namespace ImplementadorCUAD.Data
 
         public AppDbContext(string connectionString)
         {
-            _connectionString = string.IsNullOrWhiteSpace(connectionString)
-                ? ConnectionSettings.CuadConnectionString
-                : connectionString;
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("El connection string de destino no puede ser nulo ni vacío.", nameof(connectionString));
+            _connectionString = connectionString;
         }
 
         public void Dispose()
@@ -229,13 +229,13 @@ namespace ImplementadorCUAD.Data
                 registros,
                 @"INSERT INTO Importar_Consumo_Cab
                 (
-                    lcc_Entidad,
-                    lcc_Nro_Socio,
-                    lcc_Cuit,
-                    lcc_Codigo_Consumo,
-                    lcc_Cuotas_Pendientes,
-                    lcc_Monto_Deuda,
-                    lcc_Concepto_Descuento
+                    Icc_Entidad,
+                    Icc_Nro_Socio,
+                    Icc_Cuit,
+                    Icc_Codigo_Consumo,
+                    Icc_Cuotas_Pendientes,
+                    Icc_Monto_Deuda,
+                    Icc_Concepto_Descuento
                 )
                 VALUES
                 (
@@ -304,7 +304,7 @@ namespace ImplementadorCUAD.Data
             using var command = new SqlCommand(
                 @"SELECT CASE
                     WHEN EXISTS (SELECT 1 FROM Importar_Padron_Socio WHERE Ips_Entidad = @Entidad)
-                      OR EXISTS (SELECT 1 FROM Importar_Consumo_Cab WHERE lcc_Entidad = @Entidad)
+                      OR EXISTS (SELECT 1 FROM Importar_Consumo_Cab WHERE Icc_Entidad = @Entidad)
                       OR EXISTS (SELECT 1 FROM Importar_Consumo_Det WHERE Icd_Entidad = @Entidad)
                     THEN 1 ELSE 0 END;",
                 connection);
@@ -344,8 +344,8 @@ namespace ImplementadorCUAD.Data
 
                 var eliminadosConsumoCab = ExecuteDelete(
                     @"DELETE FROM Importar_Consumo_Cab
-                            WHERE lcc_Entidad = @EntidadNombre 
-                               OR lcc_Entidad = @EntidadId;");
+                            WHERE Icc_Entidad = @EntidadNombre 
+                               OR Icc_Entidad = @EntidadId;");
 
                 var eliminadosPadron = ExecuteDelete(
                     @"DELETE FROM Importar_Padron_Socio
