@@ -1,4 +1,6 @@
 using System.Configuration;
+using ImplementadorCUAD.Services;
+
 namespace ImplementadorCUAD.Infrastructure
 {
     public static class ConnectionSettings
@@ -25,14 +27,25 @@ namespace ImplementadorCUAD.Infrastructure
             ConnectionString = DefaultConnectionString;
         }
 
+        /// <summary>
+        /// Cadena de conexión "general" obtenida de variables de entorno, app.config o valor por defecto.
+        /// </summary>
         public static string ConnectionString { get; set; }
 
         /// <summary>
-        /// Connection string de la base CUAD (solo lectura). Si no hay sección Conexiones en config, devuelve ConnectionString (modo una sola base).
+        /// Connection string de la base CUAD (solo lectura).
+        /// Intenta leerla desde Configuracion.xml (sección <Conexiones><Cuad .../>). Si no hay valor,
+        /// utiliza la ConnectionString general como último recurso (modo una sola base).
         /// </summary>
         public static string CuadConnectionString
         {
-            get => ConnectionString;
+            get
+            {
+                var fromConfigXml = new ConexionesConfigService().GetCuadConnectionString();
+                return !string.IsNullOrWhiteSpace(fromConfigXml)
+                    ? fromConfigXml
+                    : ConnectionString;
+            }
         }
     }
 }

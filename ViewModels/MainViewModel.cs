@@ -226,7 +226,8 @@ namespace ImplementadorCUAD.ViewModels
 
             Progreso = 0;
 
-            // Colecciones iniciales vacías; se completan luego de que la conexión sea confirmada.
+            // Inicializar colecciones con valores por defecto; se completan
+            // cuando la conexión a CUAD ya fue validada e inicializada.
             Empleador = new ObservableCollection<Empleador>
             {
                 new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" }
@@ -267,20 +268,33 @@ namespace ImplementadorCUAD.ViewModels
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
+        /// <summary>
+        /// Carga empleadores desde Configuracion.xml y entidades desde CUAD.
+        /// Debe llamarse sólo cuando la conexión a CUAD ya fue validada.
+        /// </summary>
         public void InitializeAfterConnectionEstablished()
         {
-            // Refrescar empleador con el connection string ya confirmado.
+            // 1) Empleadores desde Configuracion.xml
+            var conexionesService = new ConexionesConfigService();
+            var empleadoresConfig = conexionesService.GetEmpleadores();
+
             Empleador.Clear();
             Empleador.Add(new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
-            Empleador.Add(new Empleador
-            {
-                Id = 1,
-                EmrId = 1,
-                Nombre = "Base destino (connection string ingresado)",
-                ConnectionString = ConnectionSettings.ConnectionString
-            });
 
-            // Cargar entidades desde la base ya conectada.
+            var idx = 1;
+            foreach (var ec in empleadoresConfig)
+            {
+                Empleador.Add(new Empleador
+                {
+                    Id = idx,
+                    EmrId = idx,
+                    Nombre = ec.Nombre,
+                    ConnectionString = ec.ConnectionString
+                });
+                idx++;
+            }
+
+            // 2) Entidades desde CUAD usando la configuración actual
             using (var db = _dbContextFactory.Create())
             {
                 var entidades = db.GetEntidad();
