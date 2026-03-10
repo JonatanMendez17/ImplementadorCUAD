@@ -1,14 +1,10 @@
 using System.Configuration;
-using ImplementadorCUAD.Services;
-
 namespace ImplementadorCUAD.Infrastructure
 {
     public static class ConnectionSettings
     {
         private const string DefaultConnectionString =
             "Server=(localdb)\\MSSQLLocalDB;Database=ImplementadorCUAD_DB;Trusted_Connection=True;TrustServerCertificate=True;";
-
-        private static string? _cuadConnectionString;
 
         static ConnectionSettings()
         {
@@ -36,14 +32,7 @@ namespace ImplementadorCUAD.Infrastructure
         /// </summary>
         public static string CuadConnectionString
         {
-            get
-            {
-                if (_cuadConnectionString != null)
-                    return _cuadConnectionString;
-                var fromConexiones = new ConexionesConfigService().GetCuadConnectionString();
-                _cuadConnectionString = !string.IsNullOrWhiteSpace(fromConexiones) ? fromConexiones : ConnectionString;
-                return _cuadConnectionString;
-            }
+            get => ConnectionString;
         }
     }
 }

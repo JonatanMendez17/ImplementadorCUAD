@@ -226,28 +226,17 @@ namespace ImplementadorCUAD.ViewModels
 
             Progreso = 0;
 
-            var conexionesService = new ConexionesConfigService();
-            var empleadoresConfig = conexionesService.GetEmpleadores();
-            Empleador = new ObservableCollection<Empleador>();
-            var idx = 1;
-            foreach (var ec in empleadoresConfig)
+            // Colecciones iniciales vacías; se completan luego de que la conexión sea confirmada.
+            Empleador = new ObservableCollection<Empleador>
             {
-                Empleador.Add(new Empleador
-                {
-                    Id = idx,
-                    EmrId = idx,
-                    Nombre = ec.Nombre,
-                    ConnectionString = ec.ConnectionString
-                });
-                idx++;
-            }
-            Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+                new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" }
+            };
 
-            using (var db = _dbContextFactory.Create())
+            Entidad = new ObservableCollection<Entidad>
             {
-                Entidad = new ObservableCollection<Entidad>(db.GetEntidad());
-            }
-            Entidad.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+                new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" }
+            };
+
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
@@ -276,6 +265,35 @@ namespace ImplementadorCUAD.ViewModels
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
             LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !EstaProcesando);
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
+        }
+
+        public void InitializeAfterConnectionEstablished()
+        {
+            // Refrescar empleador con el connection string ya confirmado.
+            Empleador.Clear();
+            Empleador.Add(new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+            Empleador.Add(new Empleador
+            {
+                Id = 1,
+                EmrId = 1,
+                Nombre = "Base destino (connection string ingresado)",
+                ConnectionString = ConnectionSettings.ConnectionString
+            });
+
+            // Cargar entidades desde la base ya conectada.
+            using (var db = _dbContextFactory.Create())
+            {
+                var entidades = db.GetEntidad();
+                Entidad.Clear();
+                Entidad.Add(new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+                foreach (var ent in entidades)
+                {
+                    Entidad.Add(ent);
+                }
+            }
+
+            EntidadSeleccionada = Entidad.FirstOrDefault();
+            EmpleadorSeleccionado = Empleador.FirstOrDefault();
         }
 
         private ImplementacionFileSelection BuildSelection()
