@@ -16,13 +16,15 @@ namespace ImplementadorCUAD.Services
         {
             var result = new ImplementacionValidationResult();
 
+            // Los nombres lógicos que se pasan a LoadFile deben coincidir
+            // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuracion.xml.
             var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
                 ? null
-                : LoadFile("Categorias Socios", selection.ArchivoCategorias, log, progress);
+                : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);
 
             var datosPadron = string.IsNullOrWhiteSpace(selection.ArchivoPadron)
                 ? null
-                : LoadFile("Padron Socios", selection.ArchivoPadron, log, progress);
+                : LoadFile("Padron", selection.ArchivoPadron, log, progress);
 
             var datosConsumos = string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
                 ? null
@@ -39,8 +41,8 @@ namespace ImplementadorCUAD.Services
                     var ruta = archivosConsumosDetalle[i];
                     if (string.IsNullOrWhiteSpace(ruta)) continue;
                     if (n > 1)
-                        log($"Consumos Detalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
-                    var datos = LoadFile("Consumos Detalle", ruta, log, progress);
+                        log($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                    var datos = LoadFile("ConsumosDetalle", ruta, log, progress);
                     if (datos != null && datos.Count > 0)
                         datosConsumosDetalle.AddRange(datos);
                 }
@@ -50,11 +52,11 @@ namespace ImplementadorCUAD.Services
 
             var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
                 ? null
-                : LoadFile("Consumos Servicios", selection.ArchivoServicios, log, progress);
+                : LoadFile("Servicios", selection.ArchivoServicios, log, progress);
 
             var datosCatalogoServicios = string.IsNullOrWhiteSpace(selection.ArchivoCatalogoServicios)
                 ? null
-                : LoadFile("Catalogo Servicios", selection.ArchivoCatalogoServicios, log, progress);
+                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log, progress);
 
             if (datosPadron != null)
             {
