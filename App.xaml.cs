@@ -18,61 +18,88 @@ namespace ImplementadorCUAD
             AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
+            if (!EnsureInitialConnection())
+            {
+                return;
+            }
+
+            StartMainWindow();
+        }
+
+        private bool EnsureInitialConnection()
+        {
             try
             {
                 using (var db = new AppDbContext())
                 {
                     db.EnsureConnection();
                 }
+
+                return true;
             }
             catch (SqlException ex)
             {
-                HandleStartupConnectionError(ex);
+                return HandleStartupConnectionError(ex);
             }
             catch (Exception ex)
             {
-                HandleStartupConnectionError(ex);
+                return HandleStartupConnectionError(ex);
             }
         }
 
-        private void HandleStartupConnectionError(Exception ex)
+        private void StartMainWindow()
+        {
+            var mainWindow = new MainWindow();
+            MainWindow = mainWindow;
+            mainWindow.Show();
+        }
+
+        private bool HandleStartupConnectionError(Exception ex)
         {
             var detalle = ex.Message;
             var mensaje =
                 "No se pudo conectar a la base de datos CUAD.\n\n" +
-                "Revise la configuración de conexión antes de continuar.\n\n" +
+                "¿Desea configurar ahora la conexión a CUAD?\n\n" +
                 $"Detalle técnico: {detalle}";
 
-            var resultado = DialogService.Show(
+            var resultado = MessageBox.Show(
                 mensaje,
                 "Error de conexión",
-                MessageBoxButton.OKCancel,
-                MessageBoxImage.Error,
-                primaryButtonText: "Configurar conexión",
-                secondaryButtonText: "Cerrar");
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Error);
 
-            if (resultado == MessageBoxResult.OK)
+            if (resultado != MessageBoxResult.Yes)
             {
-                try
-                {
-                    var configPath = System.IO.Path.Combine(
-                        AppDomain.CurrentDomain.BaseDirectory,
-                        "Configuracion.xml");
-
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = configPath,
-                        UseShellExecute = true
-                    });
-                }
-                catch (Exception openEx)
-                {
-                    ShowErrorMessage(
-                        "No se pudo abrir el archivo de configuración.\n\n" + openEx.Message);
-                }
+                Shutdown();
+                return false;
             }
 
-            Shutdown();
+            var configWindow = new ConnectionConfigWindow();
+
+            var dialogResult = configWindow.ShowDialog();
+            if (dialogResult != true)
+            {
+                Shutdown();
+                return false;
+            }
+
+            try
+            {
+                using (var db = new AppDbContext())
+                {
+                    db.EnsureConnection();
+                }
+
+                return true;
+            }
+            catch (Exception retryEx)
+            {
+                ShowErrorMessage(
+                    "La conexión sigue fallando después de actualizar la configuración.\n\n" +
+                    retryEx.Message);
+                Shutdown();
+                return false;
+            }
         }
 
         private static void ShowErrorMessage(string message, string? technical = null)

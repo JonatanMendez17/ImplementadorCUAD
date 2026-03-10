@@ -17,8 +17,7 @@ namespace ImplementadorCUAD.Services
             string? tertiaryButtonText = null)
         {
             var dialog = new StyledDialogWindow(message, title, buttons, image, primaryButtonText, secondaryButtonText, tertiaryButtonText);
-            var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                        ?? Application.Current?.MainWindow;
+            var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
 
             if (owner != null && owner != dialog)
             {
