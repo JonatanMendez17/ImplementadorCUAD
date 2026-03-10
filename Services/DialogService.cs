@@ -7,9 +7,16 @@ namespace ImplementadorCUAD.Services
 {
     public static class DialogService
     {
-        public static MessageBoxResult Show(string message, string title, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage image = MessageBoxImage.None)
+        public static MessageBoxResult Show(
+            string message,
+            string title,
+            MessageBoxButton buttons = MessageBoxButton.OK,
+            MessageBoxImage image = MessageBoxImage.None,
+            string? primaryButtonText = null,
+            string? secondaryButtonText = null,
+            string? tertiaryButtonText = null)
         {
-            var dialog = new StyledDialogWindow(message, title, buttons, image);
+            var dialog = new StyledDialogWindow(message, title, buttons, image, primaryButtonText, secondaryButtonText, tertiaryButtonText);
             var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                         ?? Application.Current?.MainWindow;
 
@@ -31,12 +38,25 @@ namespace ImplementadorCUAD.Services
         private readonly Button _primaryButton;
         private readonly Button _secondaryButton;
         private readonly Button _tertiaryButton;
+        private readonly string? _primaryButtonTextOverride;
+        private readonly string? _secondaryButtonTextOverride;
+        private readonly string? _tertiaryButtonTextOverride;
 
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 
-        public StyledDialogWindow(string message, string title, MessageBoxButton buttons, MessageBoxImage image)
+        public StyledDialogWindow(
+            string message,
+            string title,
+            MessageBoxButton buttons,
+            MessageBoxImage image,
+            string? primaryButtonTextOverride,
+            string? secondaryButtonTextOverride,
+            string? tertiaryButtonTextOverride)
         {
             _buttons = buttons;
+            _primaryButtonTextOverride = primaryButtonTextOverride;
+            _secondaryButtonTextOverride = secondaryButtonTextOverride;
+            _tertiaryButtonTextOverride = tertiaryButtonTextOverride;
             Title = title;
             Width = 520;
             SizeToContent = SizeToContent.Height;
@@ -139,22 +159,22 @@ namespace ImplementadorCUAD.Services
             switch (_buttons)
             {
                 case MessageBoxButton.OK:
-                    _primaryButton.Content = "Aceptar";
+                    _primaryButton.Content = _primaryButtonTextOverride ?? "Aceptar";
                     break;
                 case MessageBoxButton.OKCancel:
-                    _primaryButton.Content = "Aceptar";
-                    _secondaryButton.Content = "Cancelar";
+                    _primaryButton.Content = _primaryButtonTextOverride ?? "Aceptar";
+                    _secondaryButton.Content = _secondaryButtonTextOverride ?? "Cancelar";
                     _secondaryButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNo:
-                    _primaryButton.Content = "Si";
-                    _secondaryButton.Content = "No";
+                    _primaryButton.Content = _primaryButtonTextOverride ?? "Si";
+                    _secondaryButton.Content = _secondaryButtonTextOverride ?? "No";
                     _secondaryButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNoCancel:
-                    _primaryButton.Content = "Si";
-                    _secondaryButton.Content = "No";
-                    _tertiaryButton.Content = "Cancelar";
+                    _primaryButton.Content = _primaryButtonTextOverride ?? "Si";
+                    _secondaryButton.Content = _secondaryButtonTextOverride ?? "No";
+                    _tertiaryButton.Content = _tertiaryButtonTextOverride ?? "Cancelar";
                     _secondaryButton.Visibility = Visibility.Visible;
                     _tertiaryButton.Visibility = Visibility.Visible;
                     break;

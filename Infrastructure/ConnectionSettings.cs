@@ -45,5 +45,13 @@ namespace ImplementadorCUAD.Infrastructure
                 return _cuadConnectionString;
             }
         }
+
+        /// <summary>
+        /// Fuerza a que se vuelva a leer el connection string de CUAD desde Configuracion.xml.
+        /// </summary>
+        public static void Reload()
+        {
+            _cuadConnectionString = null;
+        }
     }
 }
