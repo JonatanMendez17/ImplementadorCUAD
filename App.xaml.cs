@@ -9,14 +9,6 @@ namespace ImplementadorCUAD
 {
     public partial class App : Application
     {
-        //public App()
-        //{
-        //    // Manejo global de errores no controlados
-        //    DispatcherUnhandledException += OnDispatcherUnhandledException;
-        //    AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
-        //    TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-        //}
-
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
