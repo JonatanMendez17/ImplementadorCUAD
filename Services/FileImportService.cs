@@ -256,6 +256,13 @@ namespace ImplementadorCUAD.Services
                 {
                     filaNumero++;
                     var valores = enumerator.Current.Split(',');
+
+                    // Si la fila está completamente vacía (todas las columnas vacías o en blanco), se omite.
+                    if (valores.All(v => string.IsNullOrWhiteSpace(v)))
+                    {
+                        continue;
+                    }
+
                     var fila = new Dictionary<string, string>();
                     var erroresFila = new List<string>();
 

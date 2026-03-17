@@ -1,4 +1,3 @@
-using System;
 using ImplementadorCUAD.Services;
 
 namespace ImplementadorCUAD.Infrastructure
