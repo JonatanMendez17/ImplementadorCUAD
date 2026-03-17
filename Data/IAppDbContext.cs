@@ -15,6 +15,10 @@ public interface IAppDbContext : IDisposable
 
     List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad();
 
+    HashSet<string> GetCategoriasConCuotaSocialVigente();
+
+    HashSet<string> GetConceptosDescuentoVigentesParaConsumos();
+
 
     Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null);
 

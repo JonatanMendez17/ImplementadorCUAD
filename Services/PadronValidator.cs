@@ -33,12 +33,15 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         }
 
         Dictionary<string, List<CategoriaCuadRef>> categoriasCuadPorEntidad;
+        HashSet<string> categoriasConCuotaSocial;
         try
         {
             using var db = _dbContextFactory.Create();
             categoriasCuadPorEntidad = db.GetCategoriasCuad()
                 .GroupBy(c => c.Entidad.Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+            categoriasConCuotaSocial = db.GetCategoriasConCuotaSocialVigente();
 
             foreach (var kvp in categoriasCuadPorEntidad)
             {
@@ -54,6 +57,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         {
             log($"Categorias Socios: No se pudo leer categorias de CUAD. {ex.Message}");
             categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
+            categoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         var padronFiltrado = new List<Dictionary<string, string>>();
@@ -118,6 +122,14 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                     if (categoriaCuad == null)
                     {
                         erroresFila.Add($"La categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
+                    }
+                    else if (categoriasConCuotaSocial.Count > 0)
+                    {
+                        var keyCuota = $"{entidadClave}|{codigoNorm}";
+                        if (!categoriasConCuotaSocial.Contains(keyCuota))
+                        {
+                            erroresFila.Add($"La categoria '{codigoCategoria}' de la entidad '{entidadClave}' no tiene código de cuota social vigente en CUAD.");
+                        }
                     }
                 }
                 else

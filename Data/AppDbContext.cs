@@ -62,18 +62,23 @@ namespace ImplementadorCUAD.Data
             var resultado = new List<Entidad>();
 
             using var connection = CreateOpenConnection();
+            // Las entidades lógicas se obtienen desde la tabla física Mutual (Mut_Nombre, Mut_Alta='S').
             using var command = new SqlCommand(
-                "SELECT Ent_Id, Ent_Nombre FROM Entidad ORDER BY Ent_Nombre;",
+                @"SELECT Mut_Id,
+                         Mut_Nombre
+                  FROM Mutual
+                  WHERE Mut_Alta = 'S'
+                  ORDER BY Mut_Nombre;",
                 connection);
             using var reader = command.ExecuteReader();
 
             while (reader.Read())
             {
-                var entId = reader.GetInt32(0);
+                var mutId = reader.GetInt32(0);
                 resultado.Add(new Entidad
                 {
-                    Id = entId,
-                    EntId = entId,
+                    Id = mutId,
+                    EntId = mutId,
                     Nombre = reader.IsDBNull(1) ? null : reader.GetString(1)
                 });
             }
@@ -86,15 +91,18 @@ namespace ImplementadorCUAD.Data
             var resultado = new List<CategoriaCuadRef>();
 
             using var connection = CreateOpenConnection();
+            // Las categorias de CUAD se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
             using var command = new SqlCommand(
-                @"SELECT Id,
-                         Entidad,
-                         CodigoCategoria,
-                         NombreCategoria,
-                         EsPredeterminada,
-                         Habilitada
-                  FROM CategoriasCuad
-                  WHERE Habilitada = 1;",
+                @"SELECT 
+                         mc.Mca_Id,
+                         m.Mut_Nombre,
+                         mc.Mca_Nome,
+                         mc.Mca_Vigente
+                  FROM Mutual m
+                  INNER JOIN Mutual_Categoria mc 
+                      ON m.Mut_Id = mc.Mut_Id
+                  WHERE m.Mut_Alta = 'S'
+                    AND mc.Mca_Vigente = 1;",
                 connection);
             using var reader = command.ExecuteReader();
 
@@ -105,10 +113,88 @@ namespace ImplementadorCUAD.Data
                     Id = reader.GetInt32(0),
                     Entidad = reader.GetString(1),
                     CodigoCategoria = reader.GetString(2),
-                    NombreCategoria = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    EsPredeterminada = !reader.IsDBNull(4) && reader.GetString(4) == "S",
-                    Habilitada = !reader.IsDBNull(5) && reader.GetBoolean(5)
+                    NombreCategoria = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    EsPredeterminada = false,
+                    Habilitada = !reader.IsDBNull(3) && reader.GetBoolean(3)
                 });
+            }
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Devuelve las combinaciones (Entidad, CodigoCategoria) que tienen código de cuota social vigente en CUAD.
+        /// La información se obtiene desde las tablas físicas Mutual, Mutual_Categoria y Mutual_Categoria_Codigo.
+        /// </summary>
+        public HashSet<string> GetCategoriasConCuotaSocialVigente()
+        {
+            var resultado = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT 
+                         m.Mut_Nombre,
+                         mc.Mca_Nome
+                  FROM Mutual m
+                  INNER JOIN Mutual_Categoria mc 
+                      ON m.Mut_Id = mc.Mut_Id
+                  INNER JOIN Mutual_Categoria_Codigo mcc
+                      ON mc.Mca_Id = mcc.Mca_Id
+                  WHERE m.Mut_Alta = 'S'
+                    AND mc.Mca_Vigente = 1
+                    AND mcc.Mcc_Vigente = 1
+                    AND mcc.Mcc_COD_Entidad = 6619;",
+                connection);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var entidad = reader.IsDBNull(0) ? null : reader.GetString(0);
+                var categoria = reader.IsDBNull(1) ? null : reader.GetString(1);
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(categoria))
+                {
+                    continue;
+                }
+
+                var key = $"{entidad.Trim()}|{categoria.Trim()}";
+                resultado.Add(key);
+            }
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Devuelve las combinaciones (Entidad, ConceptoDescuento) que tienen código de descuento vigente
+        /// para consumos en CUAD. La información se obtiene desde las tablas físicas Mutual y Mutual_Servicio_Empleador.
+        /// </summary>
+        public HashSet<string> GetConceptosDescuentoVigentesParaConsumos()
+        {
+            var resultado = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT 
+                         m.Mut_Nombre,
+                         mse.Mse_COD_entidad
+                  FROM Mutual m
+                  INNER JOIN Mutual_Servicio_Empleador mse 
+                      ON m.Mut_Id = mse.Mut_Id
+                  WHERE m.Mut_Alta = 'S'
+                    AND mse.Mse_Vigente = 1;",
+                connection);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var entidad = reader.IsDBNull(0) ? null : reader.GetString(0);
+                var conceptoValor = reader.IsDBNull(1) ? null : reader.GetValue(1)?.ToString();
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(conceptoValor))
+                {
+                    continue;
+                }
+
+                var key = $"{entidad.Trim()}|{conceptoValor.Trim()}";
+                resultado.Add(key);
             }
 
             return resultado;

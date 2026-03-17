@@ -21,6 +21,7 @@ public sealed class ConsumosValidator
         }
 
         HashSet<string> entidadesCuad;
+        HashSet<string> conceptosDescuentoVigentes;
         try
         {
             using var db = _dbContextFactory.Create();
@@ -33,11 +34,14 @@ public sealed class ConsumosValidator
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Select(v => v!)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            conceptosDescuentoVigentes = db.GetConceptosDescuentoVigentesParaConsumos();
         }
         catch (Exception ex)
         {
             log($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosValidados = new List<Dictionary<string, string>>();
+            conceptosDescuentoVigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return;
         }
 
@@ -61,6 +65,7 @@ public sealed class ConsumosValidator
             var cuitConsumo = GetFirstValue(fila, "CUIT");
             var beneficioConsumo = GetFirstValue(fila, "Beneficio");
             var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
+            var conceptoDescuentoText = GetFirstValue(fila, "Concepto Descuento");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -94,6 +99,16 @@ public sealed class ConsumosValidator
             else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
             {
                 erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(conceptoDescuentoText) &&
+                conceptosDescuentoVigentes.Count > 0)
+            {
+                var keyConcepto = $"{entidad.Trim()}|{conceptoDescuentoText.Trim()}";
+                if (!conceptosDescuentoVigentes.Contains(keyConcepto))
+                {
+                    erroresFila.Add($"El concepto de descuento '{conceptoDescuentoText}' no existe como código de descuento vigente en CUAD para la entidad '{entidad?.Trim()}'.");
+                }
             }
 
             if (erroresFila.Count == 0)
