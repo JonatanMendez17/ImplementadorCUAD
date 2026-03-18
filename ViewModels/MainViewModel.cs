@@ -32,6 +32,7 @@ namespace ImplementadorCUAD.ViewModels
         private int _progreso;
         private bool _estaProcesando;
         private bool _validacionFinalizada;
+        private string? _tiempoImplementacion;
         private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
         private DispatcherTimer? _logFlushTimer;
         private readonly List<LogEntry> _fullLogForExport = new();
@@ -190,6 +191,12 @@ namespace ImplementadorCUAD.ViewModels
         {
             get => _validacionFinalizada;
             set => SetProperty(ref _validacionFinalizada, value);
+        }
+
+        public string? TiempoImplementacion
+        {
+            get => _tiempoImplementacion;
+            set => SetProperty(ref _tiempoImplementacion, value);
         }
 
         public ObservableCollection<LogEntry> Logs { get; }
@@ -573,7 +580,7 @@ namespace ImplementadorCUAD.ViewModels
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
                 var resultado = DialogService.Show(
-                    "Algunas validaciones no pasaron o la carga fue descartada. Desea implementar igualmente?",
+                    "Algunas validaciones no pasaron. ¿Desea implementar igualmente?",
                     "Confirmar Implementación",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
@@ -590,6 +597,8 @@ namespace ImplementadorCUAD.ViewModels
             EstaProcesando = true;
             Progreso = 0;
 
+            TiempoImplementacion = null;
+            var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 await _implementacionService.CopyToDatabaseAsync(
@@ -597,10 +606,19 @@ namespace ImplementadorCUAD.ViewModels
                     BuildSelection(),
                     Log,
                     progress => Application.Current?.Dispatcher.InvokeAsync(() => Progreso = progress));
+
+                cronometro.Stop();
+                var duracion = cronometro.Elapsed;
+                var tiempoTexto = duracion.TotalSeconds < 60
+                    ? $"{duracion.TotalSeconds:F1} seg"
+                    : $"{(int)duracion.TotalMinutes} min {duracion.Seconds} seg";
+
+                TiempoImplementacion = tiempoTexto;
                 DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (SqlException ex)
             {
+                cronometro.Stop();
                 Log($"Error de base de datos al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error al escribir en la base de datos.\n\n{ex.Message}",
@@ -610,6 +628,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
+                cronometro.Stop();
                 Log($"Error al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error inesperado al implementar.\n\n{ex.Message}",
@@ -659,8 +678,8 @@ namespace ImplementadorCUAD.ViewModels
             var entidadNombre = entidadSeleccionada.Nombre ?? entidadSeleccionada.EntId.ToString();
 
             var confirmacion = DialogService.Show(
-                $"Se eliminaran los datos importados de la entidad '{entidadNombre}' (ID {entidadSeleccionada.EntId}) en el contexto del empleador '{empleadorInfo}'.\n\n¿Desea continuar?",
-                "Confirmar limpieza de base",
+                $"Se eliminaran los datos de la base para la Entidad '{entidadNombre}'\n\n¿Desea continuar?",
+                "Confirmar limpieza",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
@@ -687,8 +706,8 @@ namespace ImplementadorCUAD.ViewModels
                 }
 
                 DialogService.Show(
-                    $"La entidad '{entidadNombre}' fue limpiada correctamente.",
-                    "Limpieza de base",
+                    $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de datos",
+                    "Limpieza entidad",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
@@ -746,6 +765,7 @@ namespace ImplementadorCUAD.ViewModels
             ArchivoCatalogoServicios = null;
             ValidacionFinalizada = false;
             Progreso = 0;
+            TiempoImplementacion = null;
             _validationResult = new ImplementacionValidationResult();
 
             Logs.Clear();
