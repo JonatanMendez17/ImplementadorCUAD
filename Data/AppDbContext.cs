@@ -32,31 +32,6 @@ namespace ImplementadorCUAD.Data
             command.ExecuteScalar();
         }
 
-
-        public List<Empleador> GetEmpleador()
-        {
-            var resultado = new List<Empleador>();
-
-            using var connection = CreateOpenConnection();
-            using var command = new SqlCommand(
-                "SELECT Emr_Id, Emr_Nombre FROM Empleador ORDER BY Emr_Nombre;",
-                connection);
-            using var reader = command.ExecuteReader();
-
-            while (reader.Read())
-            {
-                var emrId = reader.GetInt32(0);
-                resultado.Add(new Empleador
-                {
-                    Id = emrId,
-                    EmrId = emrId,
-                    Nombre = reader.IsDBNull(1) ? null : reader.GetString(1)
-                });
-            }
-
-            return resultado;
-        }
-
         public List<Entidad> GetEntidad()
         {
             var resultado = new List<Entidad>();
@@ -232,7 +207,6 @@ namespace ImplementadorCUAD.Data
 
             return resultado;
         }
-
 
         public Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null)
         {
@@ -461,5 +435,3 @@ namespace ImplementadorCUAD.Data
         }
     }
 }
-
-

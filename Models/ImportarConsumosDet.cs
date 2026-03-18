@@ -2,7 +2,6 @@ namespace ImplementadorCUAD.Models
 {
     public class ImportarConsumosDet
     {
-        public int Icd_Id { get; set; }
         public string? Entidad { get; set; }
         public int CodigoConsumo { get; set; }
         public int NroCuota { get; set; }

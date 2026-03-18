@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using Microsoft.Data.SqlClient;
 using ImplementadorCUAD.Data;

@@ -6,9 +6,6 @@ public interface IAppDbContext : IDisposable
 {
     void EnsureConnection();
 
-
-    List<Empleador> GetEmpleador();
-
     List<Entidad> GetEntidad();
 
     List<CategoriaCuadRef> GetCategoriasCuad();
@@ -19,13 +16,11 @@ public interface IAppDbContext : IDisposable
 
     HashSet<string> GetConceptosDescuentoVigentesParaConsumos();
 
-
     Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null);
 
     Task<int> InsertImportarConsumosDetAsync(IReadOnlyList<ImportarConsumosDet> registros, IProgress<int>? progress = null);
 
     Task<int> InsertImportarConsumoCabAsync(IReadOnlyList<ImportarConsumoCab> registros, IProgress<int>? progress = null);
-
 
     bool ExistsImportedDataForEntidad(string entidad);
 

@@ -109,7 +109,6 @@ namespace ImplementadorCUAD.Services
                         Entidad = entidad,
                         NroSocio = int.Parse(nroSocioTexto),
                         Cuit = string.IsNullOrWhiteSpace(cuitTexto) ? null : long.Parse(cuitTexto),
-                        NroPuesto = null,
                         CodigoConsumo = long.Parse(codigoTexto),
                         CuotasPendientes = int.Parse(cuotasPendientesTexto),
                         MontoDeuda = decimal.Parse(montoDeudaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),

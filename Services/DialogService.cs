@@ -23,34 +23,6 @@ namespace ImplementadorCUAD.Services
             return dialog.Result;
         }
 
-        /// <summary>
-        /// Muestra un diálogo específico para errores de conexión, con botón principal
-        /// "Configurar conexión" (OK) y botón secundario "Cerrar" (Cancel).
-        /// Devuelve true si el usuario elige configurar.
-        /// </summary>
-        public static bool ShowConfigurarConexionDialog(string message, string title)
-        {
-            var dialog = new StyledDialogWindow(
-                message,
-                title,
-                MessageBoxButton.OKCancel,
-                MessageBoxImage.Error,
-                primaryTextOverride: "Configurar conexión",
-                secondaryTextOverride: "Cerrar",
-                tertiaryTextOverride: null);
-
-            var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                        ?? Application.Current?.MainWindow;
-
-            if (owner != null && owner != dialog)
-            {
-                dialog.Owner = owner;
-                dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            }
-
-            dialog.ShowDialog();
-            return dialog.Result == MessageBoxResult.OK;
-        }
     }
 
     internal sealed class StyledDialogWindow : Window
@@ -60,10 +32,6 @@ namespace ImplementadorCUAD.Services
         private readonly Button _primaryButton;
         private readonly Button _secondaryButton;
         private readonly Button _tertiaryButton;
-
-        private readonly string? _primaryTextOverride;
-        private readonly string? _secondaryTextOverride;
-        private readonly string? _tertiaryTextOverride;
 
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 
@@ -169,22 +137,6 @@ namespace ImplementadorCUAD.Services
             ConfigureButtons();
         }
 
-        public StyledDialogWindow(
-            string message,
-            string title,
-            MessageBoxButton buttons,
-            MessageBoxImage image,
-            string? primaryTextOverride,
-            string? secondaryTextOverride,
-            string? tertiaryTextOverride)
-            : this(message, title, buttons, image)
-        {
-            _primaryTextOverride = primaryTextOverride;
-            _secondaryTextOverride = secondaryTextOverride;
-            _tertiaryTextOverride = tertiaryTextOverride;
-            ConfigureButtons();
-        }
-
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
@@ -199,22 +151,22 @@ namespace ImplementadorCUAD.Services
             switch (_buttons)
             {
                 case MessageBoxButton.OK:
-                    _primaryButton.Content = _primaryTextOverride ?? "Aceptar";
+                    _primaryButton.Content = "Aceptar";
                     break;
                 case MessageBoxButton.OKCancel:
-                    _primaryButton.Content = _primaryTextOverride ?? "Aceptar";
-                    _secondaryButton.Content = _secondaryTextOverride ?? "Cancelar";
+                    _primaryButton.Content = "Aceptar";
+                    _secondaryButton.Content = "Cancelar";
                     _secondaryButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNo:
-                    _primaryButton.Content = _primaryTextOverride ?? "Si";
-                    _secondaryButton.Content = _secondaryTextOverride ?? "No";
+                    _primaryButton.Content = "Si";
+                    _secondaryButton.Content = "No";
                     _secondaryButton.Visibility = Visibility.Visible;
                     break;
                 case MessageBoxButton.YesNoCancel:
-                    _primaryButton.Content = _primaryTextOverride ?? "Si";
-                    _secondaryButton.Content = _secondaryTextOverride ?? "No";
-                    _tertiaryButton.Content = _tertiaryTextOverride ?? "Cancelar";
+                    _primaryButton.Content = "Si";
+                    _secondaryButton.Content = "No";
+                    _tertiaryButton.Content = "Cancelar";
                     _secondaryButton.Visibility = Visibility.Visible;
                     _tertiaryButton.Visibility = Visibility.Visible;
                     break;

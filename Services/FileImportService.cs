@@ -1,10 +1,10 @@
-using ExcelDataReader;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Models;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using ExcelDataReader;
+using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Models;
 
 namespace ImplementadorCUAD.Services
 {
@@ -239,7 +239,6 @@ namespace ImplementadorCUAD.Services
 
                     if (!indice.HasValue && config.Requerida)
                     {
-                        var aliasEsperados = (config.Alias?.Count > 0 ? config.Alias : new List<string> { config.Nombre });
                         log($"{nombreLogico}: Falta columna requerida para '{config.Clave}'.");
                         return null;
                     }
