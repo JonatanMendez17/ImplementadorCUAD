@@ -6,6 +6,7 @@
         Width="620"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
+        Icon="pack://application:,,,/Resources/icono.ico"
         Background="#10141D">
     <Grid Margin="16">
         <Grid.RowDefinitions>
