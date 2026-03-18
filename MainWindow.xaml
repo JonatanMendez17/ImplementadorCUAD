@@ -109,6 +109,7 @@
                                    IsOpen="{TemplateBinding IsDropDownOpen}">
                                 <Border Margin="0,6,0,0"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="260"
                                         CornerRadius="8"
                                         Background="#243142"
                                         BorderBrush="#475569"
@@ -587,13 +588,16 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                            <TextBlock Text=" " FontSize="14" FontFamily="Consolas" Foreground="#CBD5E1" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding MessageBody, Mode=OneWay}"
-                                                       Foreground="#CBD5E1"
-                                                       FontSize="14"
-                                                       FontFamily="Consolas"
-                                                       TextWrapping="NoWrap"
-                                                       VerticalAlignment="Center" />
+                                            <TextBox Text="{Binding MessageBody, Mode=OneWay}"
+                                                     Foreground="#CBD5E1"
+                                                     FontSize="14"
+                                                     FontFamily="Consolas"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     IsReadOnly="True"
+                                                     IsReadOnlyCaretVisible="False"
+                                                     Padding="4,0,0,0"
+                                                     VerticalAlignment="Center" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
