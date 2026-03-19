@@ -175,6 +175,37 @@ namespace ImplementadorCUAD.Data
             return resultado;
         }
 
+        public bool TryGetEmrIdByEmpleadoCodigoYDocumento(string empleadoCodigo, long documento, out int emrId)
+        {
+            emrId = 0;
+
+            if (string.IsNullOrWhiteSpace(empleadoCodigo) || documento <= 0)
+            {
+                return false;
+            }
+
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT TOP 1 e.Emr_Id
+                  FROM Empleado e
+                  INNER JOIN Persona p ON p.Per_Id = e.Per_Id
+                  WHERE e.Emp_Cod = @EmpCod
+                    AND p.Per_NroDoc = @PerNroDoc;",
+                connection);
+
+            command.Parameters.AddWithValue("@EmpCod", empleadoCodigo.Trim());
+            command.Parameters.AddWithValue("@PerNroDoc", documento);
+
+            var result = command.ExecuteScalar();
+            if (result == null || result == DBNull.Value)
+            {
+                return false;
+            }
+
+            emrId = Convert.ToInt32(result, CultureInfo.InvariantCulture);
+            return true;
+        }
+
         public List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad()
         {
             var resultado = new List<CatalogoServicioCuadRef>();

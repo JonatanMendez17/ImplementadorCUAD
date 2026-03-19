@@ -1,5 +1,7 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Data;
+using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
@@ -65,7 +67,17 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var empleadoPorSocioDocumento = new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
         var rechazadas = 0;
+        IAppDbContext? dbValidacionEmpleado = null;
+        try
+        {
+            dbValidacionEmpleado = _dbContextFactory.Create();
+        }
+        catch (Exception ex)
+        {
+            log($"Padron socios: no se pudo abrir conexión CUAD para validar Empleado/Persona. {ex.Message}");
+        }
 
         for (int i = 0; i < result.DatosPadronValidados.Count; i++)
         {
@@ -148,6 +160,46 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 erroresFila.Add($"El beneficio '{beneficio}' se encuentra repetido.");
             }
 
+            if (!string.IsNullOrWhiteSpace(nroSocio) && !string.IsNullOrWhiteSpace(documento))
+            {
+                var socioNormalizado = nroSocio.Trim();
+                var documentoNormalizado = documento.Trim();
+                var cacheKey = $"{socioNormalizado}|{documentoNormalizado}";
+
+                if (!empleadoPorSocioDocumento.TryGetValue(cacheKey, out var cacheValue))
+                {
+                    if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
+                    {
+                        erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra CUAD.");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            if (dbValidacionEmpleado == null)
+                            {
+                                erroresFila.Add("No hay conexión disponible a CUAD para validar Empleado/Persona.");
+                            }
+                            else
+                            {
+                                var existe = dbValidacionEmpleado.TryGetEmrIdByEmpleadoCodigoYDocumento(socioNormalizado, documentoNumero, out var emrIdEncontrado);
+                                cacheValue = (existe, emrIdEncontrado);
+                                empleadoPorSocioDocumento[cacheKey] = cacheValue;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            erroresFila.Add($"No se pudo validar contra CUAD el socio '{nroSocio}' y documento '{documento}': {ex.Message}");
+                        }
+                    }
+                }
+
+                if (empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) && !value.Existe)
+                {
+                    erroresFila.Add($"No existe empleado en CUAD para Nro Socio '{nroSocio}' y Documento '{documento}'.");
+                }
+            }
+
             if (erroresFila.Count == 0)
             {
                 padronFiltrado.Add(fila);
@@ -164,6 +216,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
             log($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
+        dbValidacionEmpleado?.Dispose();
         result.DatosPadronValidados = padronFiltrado;
     }
 
