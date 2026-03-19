@@ -1,6 +1,5 @@
-using System.IO;
 using System.Windows;
-using System.Xml.Linq;
+using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Services;
 using Microsoft.Data.SqlClient;
 
@@ -8,8 +7,6 @@ namespace ImplementadorCUAD
 {
     public partial class EditarConnectionStringWindow : Window
     {
-        private readonly string _rutaXml = "Configuracion.xml";
-
         public EditarConnectionStringWindow()
         {
             InitializeComponent();
@@ -35,7 +32,6 @@ namespace ImplementadorCUAD
 
             try
             {
-                // 1) Probar conexión
                 await using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync().ConfigureAwait(false);
@@ -43,37 +39,8 @@ namespace ImplementadorCUAD
                     await command.ExecuteScalarAsync().ConfigureAwait(false);
                 }
 
-                // 2) Guardar en Configuracion.xml (nodo Conexiones/Cuad@connectionString)
-                if (!File.Exists(_rutaXml))
-                {
-                    ErrorTextBlock.Text = "No se encontró el archivo Configuracion.xml junto al ejecutable.";
-                    return;
-                }
-
-                var document = XDocument.Load(_rutaXml);
-                var root = document.Root ?? new XElement("Configuracion");
-                if (document.Root == null)
-                {
-                    document.Add(root);
-                }
-
-                var conexiones = root.Element("Conexiones");
-                if (conexiones == null)
-                {
-                    conexiones = new XElement("Conexiones");
-                    root.Add(conexiones);
-                }
-
-                var cuad = conexiones.Element("Cuad");
-                if (cuad == null)
-                {
-                    cuad = new XElement("Cuad");
-                    conexiones.AddFirst(cuad);
-                }
-
-                cuad.SetAttributeValue("connectionString", connectionString);
-
-                document.Save(_rutaXml);
+                new ConexionesConfigService().SetCuadConnectionString(connectionString);
+                ConnectionSettings.InvalidateCache();
 
                 MessageBox.Show(
                     "La conexión se probó correctamente y se guardó en Configuracion.xml.\n\nCierre y vuelva a abrir la aplicación para usar la nueva configuración.",
@@ -95,4 +62,3 @@ namespace ImplementadorCUAD
         }
     }
 }
-

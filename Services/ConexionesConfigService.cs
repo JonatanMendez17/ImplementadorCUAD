@@ -7,7 +7,8 @@ namespace ImplementadorCUAD.Services
     /// Lee y actualiza la sección Conexiones de Configuracion.xml: conexión CUAD y lista de empleadores con su connection string.
     public class ConexionesConfigService
     {
-        private readonly string _rutaXml = "Configuracion.xml";
+        public const string RutaConfiguracionXml = "Configuracion.xml";
+        private readonly string _rutaXml = RutaConfiguracionXml;
 
         /// Obtiene el connection string de la base CUAD. Devuelve null si no existe la sección.
         public string? GetCuadConnectionString()

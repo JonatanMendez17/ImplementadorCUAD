@@ -610,8 +610,8 @@ namespace ImplementadorCUAD.ViewModels
                 cronometro.Stop();
                 var duracion = cronometro.Elapsed;
                 var tiempoTexto = duracion.TotalSeconds < 60
-                    ? $"{duracion.TotalSeconds:F1} seg"
-                    : $"{(int)duracion.TotalMinutes} min {duracion.Seconds} seg";
+                    ? $"{duracion.Seconds}.{duracion.Milliseconds:D3} seg"
+                    : $"{(int)duracion.TotalMinutes} min {duracion.Seconds}.{duracion.Milliseconds:D3} seg";
 
                 TiempoImplementacion = tiempoTexto;
                 DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
