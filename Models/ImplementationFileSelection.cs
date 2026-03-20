@@ -1,6 +1,6 @@
 namespace ImplementadorCUAD.Models
 {
-    public class ImplementacionFileSelection
+    public class ImplementationFileSelection
     {
         public string? ArchivoCategorias { get; set; }
         public string? ArchivoPadron { get; set; }

@@ -3,22 +3,22 @@ using System.Globalization;
 
 namespace ImplementadorCUAD.Services
 {
-    public class ImplementacionMapperService
+    public class ImplementationMapperService
     {
-        public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
+        public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> data, Action<string> log)
         {
             var resultado = new List<ImportarPadronSocio>();
 
-            foreach (var fila in datos)
+            foreach (var row in data)
             {
                 try
                 {
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Nro Socio", out var nroSocioTexto);
-                    fila.TryGetValue("Fecha Alta Socio", out var fechaAltaTexto);
-                    fila.TryGetValue("Documento", out var documentoTexto);
-                    fila.TryGetValue("CUIT", out var cuitTexto);
-                    fila.TryGetValue("Código Categoría", out var codigoCategoria);
+                    row.TryGetValue("Entidad", out var entidad);
+                    row.TryGetValue("Nro Socio", out var nroSocioTexto);
+                    row.TryGetValue("Fecha Alta Socio", out var fechaAltaTexto);
+                    row.TryGetValue("Documento", out var documentoTexto);
+                    row.TryGetValue("CUIT", out var cuitTexto);
+                    row.TryGetValue("Código Categoría", out var codigoCategoria);
 
                     if (string.IsNullOrWhiteSpace(entidad) ||
                         string.IsNullOrWhiteSpace(nroSocioTexto) ||
@@ -65,33 +65,33 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando fila de padrón: {ex.Message}");
+                    log($"Error mapeando row de padrón: {ex.Message}");
                 }
             }
 
             return resultado;
         }
 
-        public List<ImportarConsumoCab> MapConsumos(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
+        public List<ImportarConsumoCab> MapConsumos(IEnumerable<Dictionary<string, string>> data, Action<string> log)
         {
             var resultado = new List<ImportarConsumoCab>();
 
-            foreach (var fila in datos)
+            foreach (var row in data)
             {
                 try
                 {
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Nro Socio", out var nroSocioTexto);
-                    fila.TryGetValue("CUIT", out var cuitTexto);
-                    if (!fila.TryGetValue("Codigo Consumo", out var codigoTexto) &&
-                        !fila.TryGetValue("Código Consumo", out codigoTexto) &&
-                        !fila.TryGetValue("Código", out codigoTexto))
+                    row.TryGetValue("Entidad", out var entidad);
+                    row.TryGetValue("Nro Socio", out var nroSocioTexto);
+                    row.TryGetValue("CUIT", out var cuitTexto);
+                    if (!row.TryGetValue("Codigo Consumo", out var codigoTexto) &&
+                        !row.TryGetValue("Código Consumo", out codigoTexto) &&
+                        !row.TryGetValue("Código", out codigoTexto))
                     {
                         codigoTexto = null;
                     }
-                    fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
-                    fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
-                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
+                    row.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
+                    row.TryGetValue("Monto Deuda", out var montoDeudaTexto);
+                    row.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
 
                     if (string.IsNullOrWhiteSpace(entidad) ||
                         string.IsNullOrWhiteSpace(nroSocioTexto) ||
@@ -119,26 +119,26 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando fila de consumos: {ex.Message}");
+                    log($"Error mapeando row de consumos: {ex.Message}");
                 }
             }
 
             return resultado;
         }
 
-        public List<ImportarConsumosDet> MapConsumosDetalle(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
+        public List<ImportarConsumosDet> MapConsumosDetalle(IEnumerable<Dictionary<string, string>> data, Action<string> log)
         {
             var resultado = new List<ImportarConsumosDet>();
 
-            foreach (var fila in datos)
+            foreach (var row in data)
             {
                 try
                 {
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Código Consumo", out var codigoConsumoTexto);
-                    fila.TryGetValue("Nro Cuota", out var nroCuotaTexto);
-                    fila.TryGetValue("Fecha Vencimiento", out var fechaVencimientoTexto);
-                    fila.TryGetValue("Monto", out var montoTexto);
+                    row.TryGetValue("Entidad", out var entidad);
+                    row.TryGetValue("Código Consumo", out var codigoConsumoTexto);
+                    row.TryGetValue("Nro Cuota", out var nroCuotaTexto);
+                    row.TryGetValue("Fecha Vencimiento", out var fechaVencimientoTexto);
+                    row.TryGetValue("Monto", out var montoTexto);
 
                     if (string.IsNullOrWhiteSpace(entidad) ||
                         string.IsNullOrWhiteSpace(codigoConsumoTexto) ||
@@ -163,7 +163,7 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando fila de consumos detalle: {ex.Message}");
+                    log($"Error mapeando row de consumos detalle: {ex.Message}");
                 }
             }
 

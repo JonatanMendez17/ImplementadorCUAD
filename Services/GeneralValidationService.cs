@@ -7,7 +7,7 @@ namespace ImplementadorCUAD.Services
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public bool ValidateEntidadConsistency(ImplementacionValidationResult validationResult, Action<string> log, out string entidadComun)
+        public bool ValidateEntidadConsistency(ImplementationValidationResult validationResult, Action<string> log, out string entidadComun)
         {
             entidadComun = string.Empty;
 
@@ -22,7 +22,7 @@ namespace ImplementadorCUAD.Services
 
             if (entidades.Count == 0)
             {
-                log("No se encontro el valor de 'Entidad' en los archivos cargados.");
+                log("No se encontro el value de 'Entidad' en los archivos cargados.");
                 return false;
             }
 
@@ -40,7 +40,7 @@ namespace ImplementadorCUAD.Services
         {
             if (string.IsNullOrWhiteSpace(targetConnectionString))
             {
-                log($"No se encontró base de datos para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
+                log($"No se encontró base de data para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
                 return false;
             }
             using var db = _dbContextFactory.Create(targetConnectionString);
@@ -55,15 +55,15 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static void AddEntidad(string nombreArchivo, IEnumerable<Dictionary<string, string>> filas, HashSet<string> entidades, Action<string> log)
+        private static void AddEntidad(string fileName, IEnumerable<Dictionary<string, string>> rows, HashSet<string> entidades, Action<string> log)
         {
-            var numeroFila = 1;
-            foreach (var fila in filas)
+            var rowNumber = 1;
+            foreach (var row in rows)
             {
-                numeroFila++;
-                if (!fila.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
+                rowNumber++;
+                if (!row.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log($"{nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
+                    log($"{fileName} row {rowNumber}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 

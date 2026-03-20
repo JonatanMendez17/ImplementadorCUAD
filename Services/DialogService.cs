@@ -49,10 +49,15 @@ namespace ImplementadorCUAD.Services
             Topmost = true;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
+            var panelBrush = TryGetBrush("PanelBrush") ?? new System.Windows.Media.SolidColorBrush(Color.FromRgb(31, 41, 51));
+            var panelBorderBrush = TryGetBrush("PanelBorderBrush") ?? new System.Windows.Media.SolidColorBrush(Color.FromRgb(55, 65, 81));
+            var textPrimary = TryGetBrush("TextPrimaryBrush") ?? Brushes.White;
+            var textSecondary = TryGetBrush("TextSecondaryBrush") ?? new System.Windows.Media.SolidColorBrush(Color.FromRgb(229, 231, 235));
+
             var rootBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(31, 41, 51)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(55, 65, 81)),
+                Background = panelBrush,
+                BorderBrush = panelBorderBrush,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(UiCornerRadius),
                 Padding = new Thickness(20, 12, 20, 12)
@@ -68,33 +73,36 @@ namespace ImplementadorCUAD.Services
                 Text = title,
                 FontSize = 17,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = Brushes.White
+                Foreground = textPrimary
             };
             Grid.SetRow(header, 0);
             panel.Children.Add(header);
 
-            var content = new StackPanel
+            var content = new Grid
             {
-                Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 10, 0, 10),
                 VerticalAlignment = VerticalAlignment.Center
             };
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             var icon = BuildIcon(image);
             if (icon != null)
             {
+                Grid.SetColumn(icon, 0);
                 content.Children.Add(icon);
             }
 
-            content.Children.Add(new TextBlock
+            var messageText = new TextBlock
             {
                 Text = message,
-                Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235)),
+                Foreground = textSecondary,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(12, 0, 0, 0),
-                MaxWidth = 460
-            });
+                Margin = new Thickness(icon != null ? 12 : 0, 0, 0, 0)
+            };
+            Grid.SetColumn(messageText, 1);
+            content.Children.Add(messageText);
             Grid.SetRow(content, 1);
             panel.Children.Add(content);
 
@@ -195,11 +203,13 @@ namespace ImplementadorCUAD.Services
                 return null;
             }
 
+            var accentBrush = TryGetBrushStatic("AccentBrush") ?? new SolidColorBrush(Color.FromRgb(59, 130, 246));
+
             return new Border
             {
                 Width = 26,
                 Height = 26,
-                Background = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
+                Background = accentBrush,
                 CornerRadius = new CornerRadius(UiCornerRadius),
                 Child = new TextBlock
                 {
@@ -215,6 +225,11 @@ namespace ImplementadorCUAD.Services
 
         private static Button BuildButton(string text, bool accent)
         {
+            var secondaryBg = TryGetBrushStatic("DialogSecondaryBackgroundBrush") ?? new SolidColorBrush(Color.FromRgb(71, 85, 105));
+            var secondaryBorder = TryGetBrushStatic("DialogSecondaryBorderBrush") ?? new SolidColorBrush(Color.FromRgb(100, 116, 139));
+            var accentBg = TryGetBrushStatic("AccentBrush") ?? new SolidColorBrush(Color.FromRgb(59, 130, 246));
+            var accentBorder = TryGetBrushStatic("AccentBrushLight") ?? new SolidColorBrush(Color.FromRgb(96, 165, 250));
+
             return new Button
             {
                 Content = text,
@@ -224,12 +239,8 @@ namespace ImplementadorCUAD.Services
                 Cursor = Cursors.Hand,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = Brushes.White,
-                Background = accent
-                    ? new SolidColorBrush(Color.FromRgb(59, 130, 246))
-                    : new SolidColorBrush(Color.FromRgb(71, 85, 105)),
-                BorderBrush = accent
-                    ? new SolidColorBrush(Color.FromRgb(96, 165, 250))
-                    : new SolidColorBrush(Color.FromRgb(100, 116, 139)),
+                Background = accent ? accentBg : secondaryBg,
+                BorderBrush = accent ? accentBorder : secondaryBorder,
                 BorderThickness = new Thickness(1),
                 Template = CreateRoundedButtonTemplate()
             };
@@ -292,6 +303,16 @@ namespace ImplementadorCUAD.Services
             template.Triggers.Add(disabledTrigger);
 
             return template;
+        }
+
+        private static Brush? TryGetBrushStatic(string resourceKey)
+        {
+            return Application.Current?.TryFindResource(resourceKey) as Brush;
+        }
+
+        private Brush? TryGetBrush(string resourceKey)
+        {
+            return Application.Current?.TryFindResource(resourceKey) as Brush;
         }
     }
 }

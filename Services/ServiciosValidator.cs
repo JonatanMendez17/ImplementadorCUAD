@@ -8,7 +8,7 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosServiciosValidados.Count == 0)
         {
@@ -52,15 +52,15 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 
         for (int i = 0; i < result.DatosServiciosValidados.Count; i++)
         {
-            var fila = result.DatosServiciosValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosServiciosValidados[i];
+            var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var nroSocio = GetFirstValue(fila, "Nro de Socio", "Nro Socio");
-            var cuitServicio = GetFirstValue(fila, "CUIT");
-            var beneficioServicio = GetFirstValue(fila, "Nro Beneficio", "Beneficio");
-            var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
+            var entidad = GetFirstValue(row, "Entidad");
+            var nroSocio = GetFirstValue(row, "Nro de Socio", "Nro Socio");
+            var cuitServicio = GetFirstValue(row, "CUIT");
+            var beneficioServicio = GetFirstValue(row, "Nro Beneficio", "Beneficio");
+            var codigoConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -107,12 +107,12 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 
             if (erroresFila.Count == 0)
             {
-                serviciosFiltrados.Add(fila);
+                serviciosFiltrados.Add(row);
             }
             else
             {
                 rechazadas++;
-                log($"Consumos Servicios fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos Servicios row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -124,11 +124,11 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
         result.DatosServiciosValidados = serviciosFiltrados;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -139,9 +139,9 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 
     private static bool EqualsTrimmed(string? left, string? right)

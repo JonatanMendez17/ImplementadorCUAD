@@ -4,18 +4,18 @@ using ImplementadorCUAD.Models;
 namespace ImplementadorCUAD.Services
 {
     /// Servicio encargado de leer la configuración de columnas
-    public class ConfiguracionService
+    public class ConfigurationService
     {
-        private readonly string _rutaXml = ConexionesConfigService.RutaConfiguracionXml;
+        private readonly string _rutaXml = ConnectionsConfigService.RutaConfiguracionXml;
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
-        public List<ColumnaConfiguracion> ObtenerColumnas(string nombreArchivo)
+        public List<ColumnConfiguration> GetColumns(string fileName)
         {
             var document = XDocument.Load(_rutaXml);
 
             var columnas = document
                 .Descendants("Archivo")
-                .Where(a => a.Attribute("nombre")?.Value == nombreArchivo)
+                .Where(a => a.Attribute("nombre")?.Value == fileName)
                 .Descendants("Columna")
                 .Select(c =>
                 {
@@ -35,7 +35,7 @@ namespace ImplementadorCUAD.Services
                         alias.Add(nombre);
                     }
 
-                    return new ColumnaConfiguracion
+                    return new ColumnConfiguration
                     {
                         Clave = string.IsNullOrWhiteSpace(clave) ? nombre : clave,
                         Nombre = nombre,

@@ -1,6 +1,6 @@
 namespace ImplementadorCUAD.Models
 {
-    public class ImplementacionValidationResult
+    public class ImplementationValidationResult
     {
         public List<Dictionary<string, string>> DatosPadronValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosCategoriasValidadas { get; set; } = new();
@@ -8,6 +8,6 @@ namespace ImplementadorCUAD.Models
         public List<Dictionary<string, string>> DatosConsumosDetalleValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosCatalogoServiciosValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosServiciosValidados { get; set; } = new();
-        public bool HuboCarga { get; set; }
+        public bool HasLoadedData { get; set; }
     }
 }

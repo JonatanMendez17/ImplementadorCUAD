@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 namespace ImplementadorCUAD.Services
 {
     /// Lee y actualiza la sección Conexiones de Configuracion.xml: conexión CUAD y lista de empleadores con su connection string.
-    public class ConexionesConfigService
+    public class ConnectionsConfigService
     {
         public const string RutaConfiguracionXml = "Configuracion.xml";
         private readonly string _rutaXml = RutaConfiguracionXml;

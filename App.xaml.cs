@@ -19,7 +19,7 @@ namespace ImplementadorCUAD
                 try
                 {
                     args.Handled = true;
-                    MessageBox.Show(
+                    DialogService.Show(
                         $"Se produjo un error inesperado en la aplicación.\n\n{args.Exception.Message}",
                         "Error inesperado",
                         MessageBoxButton.OK,
@@ -27,7 +27,7 @@ namespace ImplementadorCUAD
                 }
                 catch
                 {
-                    // Si falla mostrar el mensaje, no escalamos para no romper el manejador.
+                    // Si falla mostrar el message, no escalamos para no romper el manejador.
                 }
             };
 
@@ -41,7 +41,7 @@ namespace ImplementadorCUAD
                     {
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            MessageBox.Show(
+                            DialogService.Show(
                                 $"Se produjo un error inesperado en la aplicación.\n\n{ex?.Message ?? ex?.ToString()}",
                                 "Error inesperado",
                                 MessageBoxButton.OK,
@@ -76,12 +76,12 @@ namespace ImplementadorCUAD
                     {
                         if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
                         {
-                            vmWithConfig.InitializeAfterConnectionEstablished();
+                            vmWithConfig.InitializeAfterConnection();
                         }
                     }
                     catch (SqlException ex)
                     {
-                        MessageBox.Show(
+                        DialogService.Show(
                             $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
                             $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
                             "Error al leer CUAD",
@@ -91,7 +91,7 @@ namespace ImplementadorCUAD
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(
+                        DialogService.Show(
                             $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
                             "Error al iniciar",
                             MessageBoxButton.OK,
@@ -114,23 +114,23 @@ namespace ImplementadorCUAD
             };
             var result = configWindow.ShowDialog();
 
-            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnectionString))
+            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnection))
             {
                 Shutdown();
                 return;
             }
 
             // ConnectionWindow ya validó la conexión. Persistir en XML e invalidar cache.
-            var userConnectionString = configWindow.SelectedConnectionString;
+            var userConnectionString = configWindow.SelectedConnection;
             try
             {
-                new ConexionesConfigService().SetCuadConnectionString(userConnectionString);
+                new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
                 ConnectionSettings.InvalidateCache();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"No se pudo guardar la configuración en '{ConexionesConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
+                DialogService.Show(
+                    $"No se pudo guardar la configuración en '{ConnectionsConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
                     "Error de configuración",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -141,12 +141,12 @@ namespace ImplementadorCUAD
             {
                 if (mainWindow.DataContext is ViewModels.MainViewModel vm)
                 {
-                    vm.InitializeAfterConnectionEstablished();
+                    vm.InitializeAfterConnection();
                 }
             }
             catch (SqlException ex)
             {
-                MessageBox.Show(
+                DialogService.Show(
                     $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
                     $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
                     "Error al leer CUAD",
@@ -156,7 +156,7 @@ namespace ImplementadorCUAD
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                DialogService.Show(
                     $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
                     "Error al iniciar",
                     MessageBoxButton.OK,

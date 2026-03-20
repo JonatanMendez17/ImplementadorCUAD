@@ -8,7 +8,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosConsumosDetalleValidados.Count == 0)
         {
@@ -46,13 +46,13 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
         for (int i = 0; i < result.DatosConsumosDetalleValidados.Count; i++)
         {
-            var fila = result.DatosConsumosDetalleValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosConsumosDetalleValidados[i];
+            var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
-            var fechaVencimientoText = GetFirstValue(fila, "Fecha Vencimiento");
+            var entidad = GetFirstValue(row, "Entidad");
+            var codigoConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo");
+            var fechaVencimientoText = GetFirstValue(row, "Fecha Vencimiento");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -66,21 +66,21 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
             if (!TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add("La fecha de vencimiento es invalida.");
+                erroresFila.Add("La date de vencimiento es invalida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add("La fecha de vencimiento no puede ser hoy o anterior.");
+                erroresFila.Add("La date de vencimiento no puede ser hoy o anterior.");
             }
 
             if (erroresFila.Count == 0)
             {
-                detalleFiltrado.Add(fila);
+                detalleFiltrado.Add(row);
             }
             else
             {
                 rechazadas++;
-                log($"Consumos Detalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos Detalle row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -145,7 +145,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!parseOk)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una fila con 'Monto' o 'Nro Cuota' inválidos.");
+                log($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una row con 'Monto' o 'Nro Cuota' inválidos.");
                 continue;
             }
 
@@ -178,16 +178,16 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         if (codigosInvalidosPorTotales.Count > 0)
         {
             var depurado = new List<Dictionary<string, string>>();
-            foreach (var fila in detalleFiltrado)
+            foreach (var row in detalleFiltrado)
             {
-                var codigo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo").Trim();
+                var codigo = GetFirstValue(row, "Codigo Consumo", "Código Consumo").Trim();
                 if (codigosInvalidosPorTotales.Contains(codigo))
                 {
                     rechazadas++;
                     continue;
                 }
 
-                depurado.Add(fila);
+                depurado.Add(row);
             }
 
             detalleFiltrado = depurado;
@@ -201,16 +201,16 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         result.DatosConsumosDetalleValidados = detalleFiltrado;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -221,16 +221,16 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         return false;
     }
 
-    private static bool TryParseDecimalFlexible(string texto, out decimal valor)
+    private static bool TryParseDecimalFlexible(string texto, out decimal value)
     {
-        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out valor) ||
-               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out valor);
+        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
+               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
     }
 
-    private static bool TryParseDateFlexible(string texto, out DateTime fecha)
+    private static bool TryParseDateFlexible(string texto, out DateTime date)
     {
-        return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out fecha) ||
-               DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha);
+        return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out date) ||
+               DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
     }
 
 }

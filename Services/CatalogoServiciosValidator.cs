@@ -8,7 +8,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosCatalogoServiciosValidados.Count == 0)
         {
@@ -39,17 +39,17 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
         for (int i = 0; i < result.DatosCatalogoServiciosValidados.Count; i++)
         {
-            var fila = result.DatosCatalogoServiciosValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosCatalogoServiciosValidados[i];
+            var rowNumber = i + 2;
             var filaValida = true;
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var servicio = GetFirstValue(fila, "Servicio");
-            var importeTexto = GetFirstValue(fila, "Importe");
+            var entidad = GetFirstValue(row, "Entidad");
+            var servicio = GetFirstValue(row, "Servicio");
+            var importeTexto = GetFirstValue(row, "Importe");
 
             if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
             {
-                log($"Catalogo Servicios fila {numeroFila}: La entidad se encuentra vacia.");
+                log($"Catalogo Servicios row {rowNumber}: La entidad se encuentra vacia.");
                 filaValida = false;
             }
             else
@@ -57,14 +57,14 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                 {
-                    log($" Catalogo Servicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                    log($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
                     filaValida = false;
                 }
                 else
                 {
                     if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                     {
-                        log($"Catalogo Servicios fila {numeroFila}: El importe '{importeTexto}' es invalido.");
+                        log($"Catalogo Servicios row {rowNumber}: El importe '{importeTexto}' es invalido.");
                         filaValida = false;
                     }
                     else
@@ -72,7 +72,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                         var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
                         if (diferencia > 0.01m)
                         {
-                            log($"Catalogo Servicios fila {numeroFila}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                            log($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
                             filaValida = false;
                         }
                     }
@@ -81,7 +81,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
             if (filaValida)
             {
-                filtrado.Add(fila);
+                filtrado.Add(row);
             }
             else
             {
@@ -97,16 +97,16 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         result.DatosCatalogoServiciosValidados = filtrado;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -117,10 +117,10 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         return false;
     }
 
-    private static bool TryParseDecimalFlexible(string texto, out decimal valor)
+    private static bool TryParseDecimalFlexible(string texto, out decimal value)
     {
-        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out valor) ||
-               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out valor);
+        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
+               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
     }
 }
 

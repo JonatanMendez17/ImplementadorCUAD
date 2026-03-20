@@ -1,5 +1,7 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Data;
+using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
@@ -7,7 +9,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosPadronValidados.Count == 0)
         {
@@ -65,20 +67,30 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var empleadoPorSocioDocumento = new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
         var rechazadas = 0;
+        IAppDbContext? dbValidacionEmpleado = null;
+        try
+        {
+            dbValidacionEmpleado = _dbContextFactory.Create();
+        }
+        catch (Exception ex)
+        {
+            log($"Padron socios: no se pudo abrir conexión CUAD para validar Empleado/Persona. {ex.Message}");
+        }
 
         for (int i = 0; i < result.DatosPadronValidados.Count; i++)
         {
-            var fila = result.DatosPadronValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosPadronValidados[i];
+            var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var nroSocio = GetFirstValue(fila, "Nro Socio");
-            var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría");
-            var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría");
-            var documento = GetFirstValue(fila, "Documento");
-            var beneficio = GetFirstValue(fila, "Beneficio");
+            var entidad = GetFirstValue(row, "Entidad");
+            var nroSocio = GetFirstValue(row, "Nro Socio");
+            var codigoCategoria = GetFirstValue(row, "Codigo Categoria", "Código Categoría");
+            var nombreCategoriaPadron = GetFirstValue(row, "Categoria", "Categoría");
+            var documento = GetFirstValue(row, "Documento");
+            var beneficio = GetFirstValue(row, "Beneficio");
 
             if (string.IsNullOrWhiteSpace(nroSocio))
             {
@@ -148,14 +160,54 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 erroresFila.Add($"El beneficio '{beneficio}' se encuentra repetido.");
             }
 
+            if (!string.IsNullOrWhiteSpace(nroSocio) && !string.IsNullOrWhiteSpace(documento))
+            {
+                var socioNormalizado = nroSocio.Trim();
+                var documentoNormalizado = documento.Trim();
+                var cacheKey = $"{socioNormalizado}|{documentoNormalizado}";
+
+                if (!empleadoPorSocioDocumento.TryGetValue(cacheKey, out var cacheValue))
+                {
+                    if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
+                    {
+                        erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra CUAD.");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            if (dbValidacionEmpleado == null)
+                            {
+                                erroresFila.Add("No hay conexión disponible a CUAD para validar Empleado/Persona.");
+                            }
+                            else
+                            {
+                                var existe = dbValidacionEmpleado.TryGetEmrIdByEmpleadoCodigoYDocumento(socioNormalizado, documentoNumero, out var emrIdEncontrado);
+                                cacheValue = (existe, emrIdEncontrado);
+                                empleadoPorSocioDocumento[cacheKey] = cacheValue;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            erroresFila.Add($"No se pudo validar contra CUAD el socio '{nroSocio}' y documento '{documento}': {ex.Message}");
+                        }
+                    }
+                }
+
+                if (empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) && !value.Existe)
+                {
+                    erroresFila.Add($"No existe empleado en CUAD para Nro Socio '{nroSocio}' y Documento '{documento}'.");
+                }
+            }
+
             if (erroresFila.Count == 0)
             {
-                padronFiltrado.Add(fila);
+                padronFiltrado.Add(row);
             }
             else
             {
                 rechazadas++;
-                log($"Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Padron row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -164,6 +216,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
             log($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
+        dbValidacionEmpleado?.Dispose();
         result.DatosPadronValidados = padronFiltrado;
     }
 
@@ -187,11 +240,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -202,9 +255,9 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 }
 

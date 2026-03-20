@@ -16,6 +16,8 @@ public interface IAppDbContext : IDisposable
 
     HashSet<string> GetConceptosDescuentoVigentesParaConsumos();
 
+    bool TryGetEmrIdByEmpleadoCodigoYDocumento(string empleadoCodigo, long documento, out int emrId);
+
     Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null);
 
     Task<int> InsertImportarConsumosDetAsync(IReadOnlyList<ImportarConsumosDet> registros, IProgress<int>? progress = null);

@@ -8,50 +8,54 @@
         ResizeMode="NoResize"
         Icon="pack://application:,,,/Resources/icono.ico"
         Background="#10141D">
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Border Style="{StaticResource PanelCardStyle}" Margin="1,0,0,1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
+            <TextBlock Grid.Row="0"
                    Text="Ingrese el connection string"
-                   Foreground="#E5E7EB"
+                   Foreground="{StaticResource TextPrimaryBrush}"
                    FontSize="16"
                    FontWeight="SemiBold"
                    Margin="0,0,0,8" />
 
-        <TextBlock Grid.Row="1"
-                   Foreground="#9CA3AF"
+            <TextBlock Grid.Row="1"
+                   Foreground="{StaticResource TextSecondaryBrush}"
                    FontSize="12"
                    TextWrapping="Wrap"
                    Margin="0,0,0,12" ><Run Text="La aplicación usará esta conexión para "/><Run Language="es-es" Text="acceder a la base de datos"/><Run Text="."/></TextBlock>
 
-        <TextBox x:Name="ConnectionStringTextBox"
-                 Grid.Row="2"
-                 Margin="0,0,0,12"
+            <TextBox x:Name="ConnectionStringTextBox"
+                 Grid.Row="1"
+                 Margin="0,28,0,14"
                  TextWrapping="Wrap"
                  AcceptsReturn="True"
-                 Foreground="#E5E7EB"
-                 Background="#1E293B"
-                 BorderBrush="#4B5563"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Background="{StaticResource PanelBrush}"
+                 BorderBrush="#475569"
                  BorderThickness="1"
-                 VerticalScrollBarVisibility="Auto" />
+                 VerticalScrollBarVisibility="Auto" Grid.RowSpan="2" />
 
-        <StackPanel Grid.Row="3"
+            <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
-            <Button Width="100"
+                <Button Width="100"
                     Margin="0,0,8,0"
                     Content="Cancelar"
-                    IsCancel="True" />
-            <Button Width="140"
+                    Style="{StaticResource OutlineButtonStyle}" Height="33" Click="Button_Click" HorizontalAlignment="Center" VerticalAlignment="Center" IsCancel="True" />
+                <Button Width="97"
                     Content="Conectar"
                     IsDefault="True"
-                    Click="OnConnectClick" />
-        </StackPanel>
-    </Grid>
+                    Height="34"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Click="OnConnectClick" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>
 

@@ -3,16 +3,16 @@ using ImplementadorCUAD.Models;
 
 namespace ImplementadorCUAD.Services
 {
-    public class ImplementacionService(ImplementacionMapperService mapperService, IAppDbContextFactory dbContextFactory)
+    public class ImplementationService(ImplementationMapperService mapperService, IAppDbContextFactory dbContextFactory)
     {
-        private readonly ImplementacionMapperService _mapperService = mapperService;
+        private readonly ImplementationMapperService _mapperService = mapperService;
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)
+        public async Task CopyToDatabaseAsync(ImplementationValidationResult validationResult, ImplementationFileSelection selection, Action<string> log, Action<int> reportProgress)
         {
             if (string.IsNullOrWhiteSpace(selection.TargetConnectionString))
             {
-                log("No se encontró base de datos para el empleador seleccionado.");
+                log("No se encontró base de data para el empleador seleccionado.");
                 reportProgress(100);
                 return;
             }
@@ -62,7 +62,7 @@ namespace ImplementadorCUAD.Services
             }
             else if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
             {
-                log("No hay registros validos de padron socios para insertar en base de datos.");
+                log("No hay registros validos de padron socios para insertar en base de data.");
             }
 
             if (consumosDetalle.Any())
@@ -71,7 +71,7 @@ namespace ImplementadorCUAD.Services
             }
             else if ((selection.ArchivosConsumosDetalle?.Count ?? 0) > 0)
             {
-                log("No hay consumos detalle validos para insertar en base de datos.");
+                log("No hay consumos detalle validos para insertar en base de data.");
             }
 
             if (consumosImportados.Any())
@@ -80,7 +80,7 @@ namespace ImplementadorCUAD.Services
             }
             else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
             {
-                log("No hay registros validos para insertar en base de datos.");
+                log("No hay registros validos para insertar en base de data.");
             }
 
             if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)

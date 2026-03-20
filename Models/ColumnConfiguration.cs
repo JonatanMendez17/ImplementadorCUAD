@@ -1,6 +1,6 @@
 namespace ImplementadorCUAD.Models
 {
-    public class ColumnaConfiguracion
+    public class ColumnConfiguration
     {
         public string Clave { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
