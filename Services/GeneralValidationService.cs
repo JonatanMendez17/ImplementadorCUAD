@@ -7,7 +7,7 @@ namespace ImplementadorCUAD.Services
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public bool ValidateEntidadConsistency(ImplementacionValidationResult validationResult, Action<string> log, out string entidadComun)
+        public bool ValidateEntidadConsistency(ImplementationValidationResult validationResult, Action<string> log, out string entidadComun)
         {
             entidadComun = string.Empty;
 

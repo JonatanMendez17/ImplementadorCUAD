@@ -19,7 +19,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
         private readonly ImplementationService _implementacionService;
-        private ImplementacionValidationResult _validationResult = new();
+        private ImplementationValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
         private Entidad? _entidadSeleccionada;
@@ -317,9 +317,9 @@ namespace ImplementadorCUAD.ViewModels
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
         }
 
-        private ImplementacionFileSelection BuildSelection()
+        private ImplementationFileSelection BuildSelection()
         {
-            return new ImplementacionFileSelection
+            return new ImplementationFileSelection
             {
                 ArchivoCategorias = ArchivoCategorias,
                 ArchivoPadron = ArchivoPadron,
@@ -713,7 +713,7 @@ namespace ImplementadorCUAD.ViewModels
 
                 ValidacionFinalizada = false;
                 Progreso = 0;
-                _validationResult = new ImplementacionValidationResult();
+                _validationResult = new ImplementationValidationResult();
             }
             catch (SqlException ex)
             {
@@ -740,7 +740,7 @@ namespace ImplementadorCUAD.ViewModels
             var teniaEstado = _validationResult.HuboCarga || ValidacionFinalizada || Progreso > 0;
             ValidacionFinalizada = false;
             Progreso = 0;
-            _validationResult = new ImplementacionValidationResult();
+            _validationResult = new ImplementationValidationResult();
 
             if (teniaEstado)
             {
@@ -766,7 +766,7 @@ namespace ImplementadorCUAD.ViewModels
             ValidacionFinalizada = false;
             Progreso = 0;
             TiempoImplementacion = null;
-            _validationResult = new ImplementacionValidationResult();
+            _validationResult = new ImplementationValidationResult();
 
             Logs.Clear();
             _fullLogForExport.Clear();

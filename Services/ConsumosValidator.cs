@@ -13,7 +13,7 @@ public sealed class ConsumosValidator
         _dbContextFactory = dbContextFactory;
     }
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosConsumosValidados.Count == 0)
         {

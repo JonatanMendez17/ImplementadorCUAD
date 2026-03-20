@@ -9,7 +9,7 @@ namespace ImplementadorCUAD.Services
         private readonly string _rutaXml = ConnectionsConfigService.RutaConfiguracionXml;
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
-        public List<ColumnaConfiguracion> ObtenerColumnas(string nombreArchivo)
+        public List<ColumnConfiguration> ObtenerColumnas(string nombreArchivo)
         {
             var document = XDocument.Load(_rutaXml);
 
@@ -35,7 +35,7 @@ namespace ImplementadorCUAD.Services
                         alias.Add(nombre);
                     }
 
-                    return new ColumnaConfiguracion
+                    return new ColumnConfiguration
                     {
                         Clave = string.IsNullOrWhiteSpace(clave) ? nombre : clave,
                         Nombre = nombre,

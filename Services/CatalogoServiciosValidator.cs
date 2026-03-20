@@ -8,7 +8,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosCatalogoServiciosValidados.Count == 0)
         {

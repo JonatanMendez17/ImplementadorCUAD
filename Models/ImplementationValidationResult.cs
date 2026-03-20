@@ -1,6 +1,6 @@
 namespace ImplementadorCUAD.Models
 {
-    public class ImplementacionValidationResult
+    public class ImplementationValidationResult
     {
         public List<Dictionary<string, string>> DatosPadronValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosCategoriasValidadas { get; set; } = new();

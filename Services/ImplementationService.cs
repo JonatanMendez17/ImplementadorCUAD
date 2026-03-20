@@ -8,7 +8,7 @@ namespace ImplementadorCUAD.Services
         private readonly ImplementationMapperService _mapperService = mapperService;
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)
+        public async Task CopyToDatabaseAsync(ImplementationValidationResult validationResult, ImplementationFileSelection selection, Action<string> log, Action<int> reportProgress)
         {
             if (string.IsNullOrWhiteSpace(selection.TargetConnectionString))
             {

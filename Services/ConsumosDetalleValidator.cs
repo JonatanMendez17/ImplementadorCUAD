@@ -8,7 +8,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosConsumosDetalleValidados.Count == 0)
         {

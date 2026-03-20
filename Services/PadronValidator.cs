@@ -9,7 +9,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosPadronValidados.Count == 0)
         {

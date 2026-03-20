@@ -12,9 +12,9 @@ namespace ImplementadorCUAD.Services
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public ImplementacionValidationResult ValidateAndLoadFiles( ImplementacionFileSelection selection, Action<string> log, IProgress<int>? progress = null)
+        public ImplementationValidationResult ValidateAndLoadFiles( ImplementationFileSelection selection, Action<string> log, IProgress<int>? progress = null)
         {
-            var result = new ImplementacionValidationResult();
+            var result = new ImplementationValidationResult();
 
             // Los nombres lógicos que se pasan a LoadFile deben coincidir
             // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuracion.xml.
@@ -320,7 +320,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private static int? ResolveColumnIndex( ColumnaConfiguracion config, Dictionary<string, int> indicePorEncabezadoNormalizado)
+        private static int? ResolveColumnIndex( ColumnConfiguration config, Dictionary<string, int> indicePorEncabezadoNormalizado)
         {
             var candidatos = new List<string>();
 
@@ -383,7 +383,7 @@ namespace ImplementadorCUAD.Services
             return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
         }
 
-        private static bool ValidateGeneralRules(string valor, ColumnaConfiguracion config, out string error)
+        private static bool ValidateGeneralRules(string valor, ColumnConfiguration config, out string error)
         {
             error = string.Empty;
             var texto = valor?.Trim() ?? string.Empty;
