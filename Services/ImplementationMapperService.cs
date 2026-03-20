@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace ImplementadorCUAD.Services
 {
-    public class ImplementacionMapperService
+    public class ImplementationMapperService
     {
         public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
         {

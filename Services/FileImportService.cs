@@ -202,7 +202,7 @@ namespace ImplementadorCUAD.Services
                     return null;
                 }
 
-                var configService = new ConfiguracionService();
+                var configService = new ConfigurationService();
                 var columnasConfig = configService.ObtenerColumnas(nombreLogico);
                 if (columnasConfig.Count == 0)
                 {

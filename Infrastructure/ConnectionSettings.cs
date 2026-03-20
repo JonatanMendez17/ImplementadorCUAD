@@ -16,7 +16,7 @@ namespace ImplementadorCUAD.Infrastructure
                 if (_cachedCuadConnectionString != null)
                     return _cachedCuadConnectionString;
 
-                var fromXml = new ConexionesConfigService().GetCuadConnectionString();
+                var fromXml = new ConnectionsConfigService().GetCuadConnectionString();
                 if (!string.IsNullOrWhiteSpace(fromXml))
                 {
                     _cachedCuadConnectionString = fromXml;

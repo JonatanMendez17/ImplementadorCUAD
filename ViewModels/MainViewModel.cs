@@ -18,7 +18,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
-        private readonly ImplementacionService _implementacionService;
+        private readonly ImplementationService _implementacionService;
         private ImplementacionValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
@@ -226,7 +226,7 @@ namespace ImplementadorCUAD.ViewModels
             _dbContextFactory = new AppDbContextFactory();
             _fileImportService = new FileImportService(_dbContextFactory);
             _generalValidationService = new GeneralValidationService(_dbContextFactory);
-            _implementacionService = new ImplementacionService(new ImplementacionMapperService(), _dbContextFactory);
+            _implementacionService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
 
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
@@ -282,7 +282,7 @@ namespace ImplementadorCUAD.ViewModels
         public void InitializeAfterConnectionEstablished()
         {
             // 1) Empleadores desde Configuracion.xml
-            var conexionesService = new ConexionesConfigService();
+            var conexionesService = new ConnectionsConfigService();
             var empleadoresConfig = conexionesService.GetEmpleadores();
 
             Empleador.Clear();

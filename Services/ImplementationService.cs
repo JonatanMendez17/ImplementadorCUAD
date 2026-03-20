@@ -3,9 +3,9 @@ using ImplementadorCUAD.Models;
 
 namespace ImplementadorCUAD.Services
 {
-    public class ImplementacionService(ImplementacionMapperService mapperService, IAppDbContextFactory dbContextFactory)
+    public class ImplementationService(ImplementationMapperService mapperService, IAppDbContextFactory dbContextFactory)
     {
-        private readonly ImplementacionMapperService _mapperService = mapperService;
+        private readonly ImplementationMapperService _mapperService = mapperService;
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
         public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)

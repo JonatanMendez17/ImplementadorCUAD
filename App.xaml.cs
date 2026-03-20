@@ -124,13 +124,13 @@ namespace ImplementadorCUAD
             var userConnectionString = configWindow.SelectedConnectionString;
             try
             {
-                new ConexionesConfigService().SetCuadConnectionString(userConnectionString);
+                new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
                 ConnectionSettings.InvalidateCache();
             }
             catch (Exception ex)
             {
                 DialogService.Show(
-                    $"No se pudo guardar la configuración en '{ConexionesConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
+                    $"No se pudo guardar la configuración en '{ConnectionsConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
                     "Error de configuración",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

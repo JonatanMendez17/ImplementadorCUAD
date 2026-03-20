@@ -4,9 +4,9 @@ using ImplementadorCUAD.Models;
 namespace ImplementadorCUAD.Services
 {
     /// Servicio encargado de leer la configuración de columnas
-    public class ConfiguracionService
+    public class ConfigurationService
     {
-        private readonly string _rutaXml = ConexionesConfigService.RutaConfiguracionXml;
+        private readonly string _rutaXml = ConnectionsConfigService.RutaConfiguracionXml;
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
         public List<ColumnaConfiguracion> ObtenerColumnas(string nombreArchivo)
