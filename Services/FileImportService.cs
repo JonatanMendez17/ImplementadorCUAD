@@ -203,7 +203,7 @@ namespace ImplementadorCUAD.Services
                 }
 
                 var configService = new ConfigurationService();
-                var columnasConfig = configService.ObtenerColumnas(nombreLogico);
+                var columnasConfig = configService.GetColumns(nombreLogico);
                 if (columnasConfig.Count == 0)
                 {
                     log($"No existe configuracion XML para {nombreLogico}");

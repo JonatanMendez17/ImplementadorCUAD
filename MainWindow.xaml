@@ -629,26 +629,26 @@
                                FontSize="12"
                                FontWeight="SemiBold"
                                Margin="408,11,4,3"
-                               Visibility="{Binding EstaProcesando, Converter={StaticResource BoolToVis}}" />
+                               Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}" />
 
                     <Grid Grid.Row="6" Height="18" Margin="0,0,0,6">
-                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progreso}" />
+                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" />
                     </Grid>
 
                     <Grid Grid.Row="7">
                         <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
                                    FontSize="12"
                                    HorizontalAlignment="Left"
-                                   Text="{Binding Progreso, StringFormat=Progreso de implementacion: {0}%}" />
+                                   Text="{Binding Progress, StringFormat=Progress de implementacion: {0}%}" />
                         <TextBlock FontSize="12"
                                    HorizontalAlignment="Right"
                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                   Text="{Binding TiempoImplementacion, StringFormat=Tiempo: {0}}">
+                                   Text="{Binding ImplementationTime, StringFormat=Tiempo: {0}}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TiempoImplementacion}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding ImplementationTime}" Value="{x:Null}">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>

@@ -169,13 +169,13 @@ namespace ImplementadorCUAD.ViewModels
         public string ArchivoServiciosIcono => ArchivoServiciosCargado ? "✓" : "↑";
         public string ArchivoCatalogoServiciosIcono => ArchivoCatalogoServiciosCargado ? "✓" : "↑";
 
-        public int Progreso
+        public int Progress
         {
             get => _progreso;
             set => SetProperty(ref _progreso, value);
         }
 
-        public bool EstaProcesando
+        public bool IsProcessing
         {
             get => _estaProcesando;
             set
@@ -187,13 +187,13 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        public bool ValidacionFinalizada
+        public bool ValidationCompleted
         {
             get => _validacionFinalizada;
             set => SetProperty(ref _validacionFinalizada, value);
         }
 
-        public string? TiempoImplementacion
+        public string? ImplementationTime
         {
             get => _tiempoImplementacion;
             set => SetProperty(ref _tiempoImplementacion, value);
@@ -231,7 +231,7 @@ namespace ImplementadorCUAD.ViewModels
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
 
-            Progreso = 0;
+            Progress = 0;
 
             // Inicializar colecciones con valores por defecto; se completan
             // cuando la conexión a CUAD ya fue validada e inicializada.
@@ -271,7 +271,7 @@ namespace ImplementadorCUAD.ViewModels
             ValidarCommand = new SimpleAsyncCommand(ValidarArchivosAsync);
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
-            LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !EstaProcesando);
+            LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !IsProcessing);
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
@@ -398,7 +398,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private async Task ValidarArchivosAsync()
         {
-            if (EstaProcesando)
+            if (IsProcessing)
             {
                 return;
             }
@@ -415,7 +415,7 @@ namespace ImplementadorCUAD.ViewModels
                     "Validación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 return;
             }
 
@@ -428,8 +428,8 @@ namespace ImplementadorCUAD.ViewModels
                     MessageBoxImage.Information);
             }
 
-            EstaProcesando = true;
-            Progreso = 0;
+            IsProcessing = true;
+            Progress = 0;
 
             _logFlushTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
             {
@@ -441,7 +441,7 @@ namespace ImplementadorCUAD.ViewModels
             try
             {
                 var selection = BuildSelection();
-                var progress = new Progress<int>(p => Progreso = p);
+                var progress = new Progress<int>(p => Progress = p);
 
                 _validationResult = await Task.Run(
                     () => _fileImportService.ValidateAndLoadFiles(selection, Log, progress));
@@ -449,7 +449,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (SqlException ex)
             {
                 Log($"Error de base de datos al cargar o validar archivos: {ex.Message}");
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 DialogService.Show(
                     $"Error al consultar la base de datos (CUAD).\n\n{ex.Message}",
                     "Validación",
@@ -460,7 +460,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (Exception ex)
             {
                 Log($"Error al validar archivos: {ex.Message}");
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 DialogService.Show(
                     $"Error inesperado al validar.\n\n{ex.Message}",
                     "Validación",
@@ -473,13 +473,13 @@ namespace ImplementadorCUAD.ViewModels
                 _logFlushTimer.Stop();
                 _logFlushTimer = null;
                 FlushLogBuffer();
-                EstaProcesando = false;
+                IsProcessing = false;
                 ScheduleDeferredLogFlush();
             }
 
             if (!_validationResult.HuboCarga)
             {
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 return;
             }
 
@@ -492,21 +492,21 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (!entidadConsistente)
                 {
-                    ValidacionFinalizada = false;
+                    ValidationCompleted = false;
                     return;
                 }
 
                 if (!MatchesSelectedEntidad(entidadComun))
                 {
                     Log($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
-                    ValidacionFinalizada = false;
+                    ValidationCompleted = false;
                     return;
                 }
 
                 if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
                 {
                     Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
-                    ValidacionFinalizada = false;
+                    ValidationCompleted = false;
                     return;
                 }
 
@@ -516,12 +516,12 @@ namespace ImplementadorCUAD.ViewModels
                     EmpleadorSeleccionado?.ConnectionString,
                     Log);
 
-                ValidacionFinalizada = sinDatosPrevios;
+                ValidationCompleted = sinDatosPrevios;
             }
             catch (SqlException ex)
             {
                 Log($"Error de base de datos al validar: {ex.Message}");
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 DialogService.Show(
                     $"Error al consultar la base de datos.\n\n{ex.Message}",
                     "Validación",
@@ -531,7 +531,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (Exception ex)
             {
                 Log($"Error al validar: {ex.Message}");
-                ValidacionFinalizada = false;
+                ValidationCompleted = false;
                 DialogService.Show(
                     $"Error inesperado al validar.\n\n{ex.Message}",
                     "Validación",
@@ -577,7 +577,7 @@ namespace ImplementadorCUAD.ViewModels
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
             Log($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
-            if (!ValidacionFinalizada || !_validationResult.HuboCarga)
+            if (!ValidationCompleted || !_validationResult.HuboCarga)
             {
                 var resultado = DialogService.Show(
                     "Algunas validaciones no pasaron. ¿Desea implementar igualmente?",
@@ -594,10 +594,10 @@ namespace ImplementadorCUAD.ViewModels
                 Log("El usuario confirmo implementar con validaciones pendientes.");
             }
 
-            EstaProcesando = true;
-            Progreso = 0;
+            IsProcessing = true;
+            Progress = 0;
 
-            TiempoImplementacion = null;
+            ImplementationTime = null;
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
@@ -605,7 +605,7 @@ namespace ImplementadorCUAD.ViewModels
                     _validationResult,
                     BuildSelection(),
                     Log,
-                    progress => Application.Current?.Dispatcher.InvokeAsync(() => Progreso = progress));
+                    progress => Application.Current?.Dispatcher.InvokeAsync(() => Progress = progress));
 
                 cronometro.Stop();
                 var duracion = cronometro.Elapsed;
@@ -613,7 +613,7 @@ namespace ImplementadorCUAD.ViewModels
                     ? $"{duracion.Seconds}.{duracion.Milliseconds:D3} seg"
                     : $"{(int)duracion.TotalMinutes} min {duracion.Seconds}.{duracion.Milliseconds:D3} seg";
 
-                TiempoImplementacion = tiempoTexto;
+                ImplementationTime = tiempoTexto;
                 DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (SqlException ex)
@@ -638,13 +638,13 @@ namespace ImplementadorCUAD.ViewModels
             }
             finally
             {
-                EstaProcesando = false;
+                IsProcessing = false;
             }
         }
 
         private bool PuedeLimpiarBaseEntidad(object? parameter)
         {
-            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !EstaProcesando;
+            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !IsProcessing;
         }
 
         private void LimpiarBaseEntidad(object? parameter)
@@ -711,8 +711,8 @@ namespace ImplementadorCUAD.ViewModels
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
-                ValidacionFinalizada = false;
-                Progreso = 0;
+                ValidationCompleted = false;
+                Progress = 0;
                 _validationResult = new ImplementationValidationResult();
             }
             catch (SqlException ex)
@@ -737,9 +737,9 @@ namespace ImplementadorCUAD.ViewModels
 
         private void InvalidateValidationState(string mensaje)
         {
-            var teniaEstado = _validationResult.HuboCarga || ValidacionFinalizada || Progreso > 0;
-            ValidacionFinalizada = false;
-            Progreso = 0;
+            var teniaEstado = _validationResult.HuboCarga || ValidationCompleted || Progress > 0;
+            ValidationCompleted = false;
+            Progress = 0;
             _validationResult = new ImplementationValidationResult();
 
             if (teniaEstado)
@@ -750,7 +750,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private void LimpiarSoloUi()
         {
-            if (EstaProcesando)
+            if (IsProcessing)
             {
                 return;
             }
@@ -763,9 +763,9 @@ namespace ImplementadorCUAD.ViewModels
             _archivosConsumosDetalle.Clear();
             ArchivoServicios = null;
             ArchivoCatalogoServicios = null;
-            ValidacionFinalizada = false;
-            Progreso = 0;
-            TiempoImplementacion = null;
+            ValidationCompleted = false;
+            Progress = 0;
+            ImplementationTime = null;
             _validationResult = new ImplementationValidationResult();
 
             Logs.Clear();
