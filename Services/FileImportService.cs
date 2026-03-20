@@ -42,9 +42,9 @@ namespace ImplementadorCUAD.Services
                     if (string.IsNullOrWhiteSpace(ruta)) continue;
                     if (n > 1)
                         log($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
-                    var datos = LoadFile("ConsumosDetalle", ruta, log, progress);
-                    if (datos != null && datos.Count > 0)
-                        datosConsumosDetalle.AddRange(datos);
+                    var data = LoadFile("ConsumosDetalle", ruta, log, progress);
+                    if (data != null && data.Count > 0)
+                        datosConsumosDetalle.AddRange(data);
                 }
                 if (datosConsumosDetalle.Count == 0)
                     datosConsumosDetalle = null;
@@ -61,37 +61,37 @@ namespace ImplementadorCUAD.Services
             if (datosPadron != null)
             {
                 result.DatosPadronValidados = datosPadron;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             if (datosCategorias != null)
             {
                 result.DatosCategoriasValidadas = datosCategorias;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             if (datosConsumos != null)
             {
                 result.DatosConsumosValidados = datosConsumos;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             if (datosConsumosDetalle != null)
             {
                 result.DatosConsumosDetalleValidados = datosConsumosDetalle;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             if (datosCatalogoServicios != null)
             {
                 result.DatosCatalogoServiciosValidados = datosCatalogoServicios;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             if (datosServicios != null)
             {
                 result.DatosServiciosValidados = datosServicios;
-                result.HuboCarga = true;
+                result.HasLoadedData = true;
             }
 
             var padronValidator = new PadronValidator(_dbContextFactory);
@@ -106,7 +106,7 @@ namespace ImplementadorCUAD.Services
             serviciosValidator.Apply(result, log);
             catalogoServiciosValidator.Apply(result, log);
 
-            if (!result.HuboCarga)
+            if (!result.HasLoadedData)
             {
                 log("No se pudo cargar ningun archivo.");
             }
@@ -114,13 +114,13 @@ namespace ImplementadorCUAD.Services
             return result;
         }
 
-        private IEnumerable<string> EnumerateFileLines(string rutaArchivo)
+        private IEnumerable<string> EnumerateFileLines(string filePath)
         {
-            var extension = Path.GetExtension(rutaArchivo).ToLowerInvariant();
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
 
             if (extension == ".csv" || extension == ".txt")
             {
-                using var reader = new StreamReader(rutaArchivo);
+                using var reader = new StreamReader(filePath);
                 string? line;
                 while ((line = reader.ReadLine()) != null)
                 {
@@ -133,10 +133,10 @@ namespace ImplementadorCUAD.Services
             {
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-                var filas = new List<string>();
+                var rows = new List<string>();
                 var builder = new StringBuilder();
 
-                using var stream = File.Open(rutaArchivo, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var reader = ExcelReaderFactory.CreateReader(stream);
 
                 var rowIndex = 0;
@@ -157,64 +157,64 @@ namespace ImplementadorCUAD.Services
 
                             var raw = reader.GetValue(i);
 
-                            string valor;
+                            string value;
                             if (raw is IFormattable formattable && raw is not DateTime)
                             {
-                                valor = formattable.ToString(null, CultureInfo.InvariantCulture);
+                                value = formattable.ToString(null, CultureInfo.InvariantCulture);
                             }
                             else
                             {
-                                valor = raw?.ToString() ?? string.Empty;
+                                value = raw?.ToString() ?? string.Empty;
                             }
 
-                            builder.Append(valor);
+                            builder.Append(value);
                         }
 
-                        filas.Add(builder.ToString());
+                        rows.Add(builder.ToString());
                     }
                 } while (reader.NextResult());
 
-                foreach (var l in filas)
+                foreach (var l in rows)
                 {
                     yield return l;
                 }
                 yield break;
             }
 
-            foreach (var line in File.ReadLines(rutaArchivo))
+            foreach (var line in File.ReadLines(filePath))
             {
                 yield return line;
             }
         }
 
-        private List<Dictionary<string, string>>? LoadFile( string nombreLogico, string? rutaArchivo, Action<string> log, IProgress<int>? progress)
+        private List<Dictionary<string, string>>? LoadFile( string logicalName, string? filePath, Action<string> log, IProgress<int>? progress)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(rutaArchivo))
+                if (string.IsNullOrWhiteSpace(filePath))
                 {
                     return null;
                 }
 
-                if (!File.Exists(rutaArchivo))
+                if (!File.Exists(filePath))
                 {
-                    log($"Archivo invalido: {nombreLogico}");
+                    log($"Archivo invalido: {logicalName}");
                     return null;
                 }
 
                 var configService = new ConfigurationService();
-                var columnasConfig = configService.GetColumns(nombreLogico);
+                var columnasConfig = configService.GetColumns(logicalName);
                 if (columnasConfig.Count == 0)
                 {
-                    log($"No existe configuracion XML para {nombreLogico}");
+                    log($"No existe configuracion XML para {logicalName}");
                     return null;
                 }
 
-                using var enumerator = EnumerateFileLines(rutaArchivo).GetEnumerator();
+                using var enumerator = EnumerateFileLines(filePath).GetEnumerator();
 
                 if (!enumerator.MoveNext())
                 {
-                    log($"El Archivo {nombreLogico} se encuentra vacio.");
+                    log($"El Archivo {logicalName} se encuentra vacio.");
                     return null;
                 }
 
@@ -239,13 +239,13 @@ namespace ImplementadorCUAD.Services
 
                     if (!indice.HasValue && config.Requerida)
                     {
-                        log($"{nombreLogico}: Falta columna requerida para '{config.Clave}'.");
+                        log($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
                         return null;
                     }
                 }
 
                 var registros = new List<Dictionary<string, string>>();
-                var clavesUnicas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var filasAceptadas = 0;
                 var filasRechazadas = 0;
                 var totalFilasDatos = 0;
@@ -256,38 +256,38 @@ namespace ImplementadorCUAD.Services
                     filaNumero++;
                     var valores = enumerator.Current.Split(',');
 
-                    // Si la fila está completamente vacía (todas las columnas vacías o en blanco), se omite.
+                    // Si la row está completamente vacía (todas las columnas vacías o en blanco), se omite.
                     if (valores.All(v => string.IsNullOrWhiteSpace(v)))
                     {
                         continue;
                     }
 
-                    var fila = new Dictionary<string, string>();
+                    var row = new Dictionary<string, string>();
                     var erroresFila = new List<string>();
 
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
                         var config = columnasConfig[j];
                         var indiceColumna = indiceColumnaPorClave[config.Clave];
-                        var valor = indiceColumna.HasValue && indiceColumna.Value < valores.Length
+                        var value = indiceColumna.HasValue && indiceColumna.Value < valores.Length
                             ? valores[indiceColumna.Value]
                             : string.Empty;
 
-                        if (!ValidateGeneralRules(valor, config, out var error))
+                        if (!ValidateGeneralRules(value, config, out var error))
                         {
                             erroresFila.Add($"columna '{config.Clave}': {error}");
                         }
 
-                        fila[config.Clave] = valor;
+                        row[config.Clave] = value;
                     }
 
                     var filaEsValida = erroresFila.Count == 0;
 
                     if (filaEsValida)
                     {
-                        if (ValidateSpecificUniqueness(nombreLogico, filaNumero, fila, clavesUnicas, log))
+                        if (ValidateSpecificUniqueness(logicalName, filaNumero, row, uniqueKeys, log))
                         {
-                            registros.Add(fila);
+                            registros.Add(row);
                             filasAceptadas++;
                         }
                         else
@@ -297,7 +297,7 @@ namespace ImplementadorCUAD.Services
                     }
                     else
                     {
-                        log($"{nombreLogico} fila {filaNumero}: {string.Join(" | ", erroresFila)}");
+                        log($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
                         filasRechazadas++;
                     }
 
@@ -309,13 +309,13 @@ namespace ImplementadorCUAD.Services
                     }
                 }
 
-                log($"{nombreLogico}: Validaciones realizadas correctamente.");
-                log($"Resumen {nombreLogico}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+                log($"{logicalName}: Validaciones realizadas correctamente.");
+                log($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
                 return registros;
             }
             catch (Exception ex)
             {
-                log($"Error al cargar {nombreLogico}: {ex.Message}");
+                log($"Error al cargar {logicalName}: {ex.Message}");
                 return null;
             }
         }
@@ -378,15 +378,15 @@ namespace ImplementadorCUAD.Services
             return builder.ToString();
         }
 
-        private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+        private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
         {
-            return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+            return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
         }
 
-        private static bool ValidateGeneralRules(string valor, ColumnConfiguration config, out string error)
+        private static bool ValidateGeneralRules(string value, ColumnConfiguration config, out string error)
         {
             error = string.Empty;
-            var texto = valor?.Trim() ?? string.Empty;
+            var texto = value?.Trim() ?? string.Empty;
 
             if (texto.Length == 0)
             {
@@ -425,16 +425,16 @@ namespace ImplementadorCUAD.Services
                 case "decimal":
                     if (!TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "debe ser un valor de dinero valido";
+                        error = "debe ser un value de dinero valido";
                         return false;
                     }
 
                     return true;
 
-                case "fecha":
+                case "date":
                     if (!TryParseDateFlexible(texto, out _))
                     {
-                        error = "debe ser una fecha valida";
+                        error = "debe ser una date valida";
                         return false;
                     }
 
@@ -449,16 +449,16 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private static bool TryParseDecimalFlexible(string texto, out decimal valor)
+        private static bool TryParseDecimalFlexible(string texto, out decimal value)
         {
-            return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out valor) ||
-                   decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out valor);
+            return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
+                   decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
         }
 
-        private static bool TryParseDateFlexible(string texto, out DateTime fecha)
+        private static bool TryParseDateFlexible(string texto, out DateTime date)
         {
-            return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out fecha) ||
-                   DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha);
+            return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out date) ||
+                   DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
         }
 
         private static bool HasWeirdCharacters(string texto)
@@ -466,40 +466,40 @@ namespace ImplementadorCUAD.Services
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
-        private static bool ValidateSpecificUniqueness( string nombreLogico, int numeroFila, Dictionary<string, string> fila, HashSet<string> clavesUnicas, Action<string> log)
+        private static bool ValidateSpecificUniqueness( string logicalName, int rowNumber, Dictionary<string, string> row, HashSet<string> uniqueKeys, Action<string> log)
         {
-            if (nombreLogico.Equals("Padron", StringComparison.OrdinalIgnoreCase))
+            if (logicalName.Equals("Padron", StringComparison.OrdinalIgnoreCase))
             {
-                var nroSocio = GetFirstValue(fila, "Nro Socio");
+                var nroSocio = GetFirstValue(row, "Nro Socio");
                 if (string.IsNullOrWhiteSpace(nroSocio))
                 {
-                    log($"Padron fila {numeroFila}: 'Nro Socio' vacio.");
+                    log($"Padron row {rowNumber}: 'Nro Socio' vacio.");
                     return false;
                 }
 
                 var clave = $"PADRON::{nroSocio.Trim()}";
-                if (!clavesUnicas.Add(clave))
+                if (!uniqueKeys.Add(clave))
                 {
-                    log($"Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
+                    log($"Padron row {rowNumber}: numero de socio '{nroSocio}' repetido.");
                     return false;
                 }
 
                 return true;
             }
 
-            if (nombreLogico.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
+            if (logicalName.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
             {
-                var nroConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
+                var nroConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
                 if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
-                    log($"Consumos fila {numeroFila}: codigo (nro de consumo) vacio.");
+                    log($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
                     return false;
                 }
 
                 var clave = $"CONSUMOS::{nroConsumo.Trim()}";
-                if (!clavesUnicas.Add(clave))
+                if (!uniqueKeys.Add(clave))
                 {
-                    log($"Consumos fila {numeroFila}: nro de consumo '{nroConsumo}' repetido.");
+                    log($"Consumos row {rowNumber}: nro de consumo '{nroConsumo}' repetido.");
                     return false;
                 }
 
@@ -509,11 +509,11 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+        private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
         {
             foreach (var clave in posiblesClaves)
             {
-                if (fila.TryGetValue(clave, out var encontrado))
+                if (row.TryGetValue(clave, out var encontrado))
                 {
                     value = encontrado;
                     return true;

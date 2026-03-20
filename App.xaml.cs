@@ -27,7 +27,7 @@ namespace ImplementadorCUAD
                 }
                 catch
                 {
-                    // Si falla mostrar el mensaje, no escalamos para no romper el manejador.
+                    // Si falla mostrar el message, no escalamos para no romper el manejador.
                 }
             };
 
@@ -76,7 +76,7 @@ namespace ImplementadorCUAD
                     {
                         if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
                         {
-                            vmWithConfig.InitializeAfterConnectionEstablished();
+                            vmWithConfig.InitializeAfterConnection();
                         }
                     }
                     catch (SqlException ex)
@@ -114,14 +114,14 @@ namespace ImplementadorCUAD
             };
             var result = configWindow.ShowDialog();
 
-            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnectionString))
+            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnection))
             {
                 Shutdown();
                 return;
             }
 
             // ConnectionWindow ya validó la conexión. Persistir en XML e invalidar cache.
-            var userConnectionString = configWindow.SelectedConnectionString;
+            var userConnectionString = configWindow.SelectedConnection;
             try
             {
                 new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
@@ -141,7 +141,7 @@ namespace ImplementadorCUAD
             {
                 if (mainWindow.DataContext is ViewModels.MainViewModel vm)
                 {
-                    vm.InitializeAfterConnectionEstablished();
+                    vm.InitializeAfterConnection();
                 }
             }
             catch (SqlException ex)

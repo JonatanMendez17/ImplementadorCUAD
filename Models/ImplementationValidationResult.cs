@@ -8,6 +8,6 @@ namespace ImplementadorCUAD.Models
         public List<Dictionary<string, string>> DatosConsumosDetalleValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosCatalogoServiciosValidados { get; set; } = new();
         public List<Dictionary<string, string>> DatosServiciosValidados { get; set; } = new();
-        public bool HuboCarga { get; set; }
+        public bool HasLoadedData { get; set; }
     }
 }

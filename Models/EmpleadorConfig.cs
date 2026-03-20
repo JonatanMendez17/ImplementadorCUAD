@@ -11,7 +11,7 @@ namespace ImplementadorCUAD.Models
         /// </summary>
         public string? ConnectionString { get; set; }
         /// <summary>
-        /// Nombre de base de datos cuando se usa ConexionBase (opción B).
+        /// Nombre de base de data cuando se usa ConexionBase (opción B).
         /// </summary>
         public string? BaseDatos { get; set; }
     }

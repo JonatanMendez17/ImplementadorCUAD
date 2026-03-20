@@ -9,13 +9,13 @@ namespace ImplementadorCUAD.Services
         private readonly string _rutaXml = ConnectionsConfigService.RutaConfiguracionXml;
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
-        public List<ColumnConfiguration> GetColumns(string nombreArchivo)
+        public List<ColumnConfiguration> GetColumns(string fileName)
         {
             var document = XDocument.Load(_rutaXml);
 
             var columnas = document
                 .Descendants("Archivo")
-                .Where(a => a.Attribute("nombre")?.Value == nombreArchivo)
+                .Where(a => a.Attribute("nombre")?.Value == fileName)
                 .Descendants("Columna")
                 .Select(c =>
                 {

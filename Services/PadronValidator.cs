@@ -81,16 +81,16 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
         for (int i = 0; i < result.DatosPadronValidados.Count; i++)
         {
-            var fila = result.DatosPadronValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosPadronValidados[i];
+            var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var nroSocio = GetFirstValue(fila, "Nro Socio");
-            var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría");
-            var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría");
-            var documento = GetFirstValue(fila, "Documento");
-            var beneficio = GetFirstValue(fila, "Beneficio");
+            var entidad = GetFirstValue(row, "Entidad");
+            var nroSocio = GetFirstValue(row, "Nro Socio");
+            var codigoCategoria = GetFirstValue(row, "Codigo Categoria", "Código Categoría");
+            var nombreCategoriaPadron = GetFirstValue(row, "Categoria", "Categoría");
+            var documento = GetFirstValue(row, "Documento");
+            var beneficio = GetFirstValue(row, "Beneficio");
 
             if (string.IsNullOrWhiteSpace(nroSocio))
             {
@@ -202,12 +202,12 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
             if (erroresFila.Count == 0)
             {
-                padronFiltrado.Add(fila);
+                padronFiltrado.Add(row);
             }
             else
             {
                 rechazadas++;
-                log($"Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Padron row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -240,11 +240,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -255,9 +255,9 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 }
 

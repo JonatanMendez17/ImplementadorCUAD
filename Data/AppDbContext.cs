@@ -409,7 +409,7 @@ namespace ImplementadorCUAD.Data
         {
             if (string.IsNullOrWhiteSpace(entidadNombre) && entidadId <= 0)
             {
-                throw new ArgumentException("Debe informar una entidad valida para eliminar datos.");
+                throw new ArgumentException("Debe informar una entidad valida para eliminar data.");
             }
 
             var entidadNombreNormalizada = (entidadNombre ?? string.Empty).Trim();
@@ -457,7 +457,7 @@ namespace ImplementadorCUAD.Data
         {
             if (string.IsNullOrWhiteSpace(_connectionString))
             {
-                throw new InvalidOperationException("No se encontro la cadena de conexion en base de datos");
+                throw new InvalidOperationException("No se encontro la cadena de conexion en base de data");
             }
 
             var connection = new SqlConnection(_connectionString);

@@ -12,7 +12,7 @@ namespace ImplementadorCUAD.Services
         {
             if (string.IsNullOrWhiteSpace(selection.TargetConnectionString))
             {
-                log("No se encontró base de datos para el empleador seleccionado.");
+                log("No se encontró base de data para el empleador seleccionado.");
                 reportProgress(100);
                 return;
             }
@@ -62,7 +62,7 @@ namespace ImplementadorCUAD.Services
             }
             else if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
             {
-                log("No hay registros validos de padron socios para insertar en base de datos.");
+                log("No hay registros validos de padron socios para insertar en base de data.");
             }
 
             if (consumosDetalle.Any())
@@ -71,7 +71,7 @@ namespace ImplementadorCUAD.Services
             }
             else if ((selection.ArchivosConsumosDetalle?.Count ?? 0) > 0)
             {
-                log("No hay consumos detalle validos para insertar en base de datos.");
+                log("No hay consumos detalle validos para insertar en base de data.");
             }
 
             if (consumosImportados.Any())
@@ -80,7 +80,7 @@ namespace ImplementadorCUAD.Services
             }
             else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
             {
-                log("No hay registros validos para insertar en base de datos.");
+                log("No hay registros validos para insertar en base de data.");
             }
 
             if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)

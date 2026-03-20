@@ -6,7 +6,7 @@ namespace ImplementadorCUAD
 {
     public partial class ConnectionWindow : Window
     {
-        public string? SelectedConnectionString { get; private set; }
+        public string? SelectedConnection { get; private set; }
 
         public ConnectionWindow()
         {
@@ -41,7 +41,7 @@ namespace ImplementadorCUAD
                 return;
             }
 
-            SelectedConnectionString = connectionString;
+            SelectedConnection = connectionString;
             DialogResult = true;
             Close();
         }

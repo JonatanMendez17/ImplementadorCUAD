@@ -18,7 +18,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
-        private readonly ImplementationService _implementacionService;
+        private readonly ImplementationService _implementationService;
         private ImplementationValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
@@ -29,10 +29,10 @@ namespace ImplementadorCUAD.ViewModels
         private readonly ObservableCollection<string> _archivosConsumosDetalle = new ObservableCollection<string>();
         private string? _archivoServicios;
         private string? _archivoCatalogoServicios;
-        private int _progreso;
-        private bool _estaProcesando;
-        private bool _validacionFinalizada;
-        private string? _tiempoImplementacion;
+        private int _progress;
+        private bool _isProcessing;
+        private bool _validationCompleted;
+        private string? _implementationTime;
         private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
         private DispatcherTimer? _logFlushTimer;
         private readonly List<LogEntry> _fullLogForExport = new();
@@ -143,24 +143,24 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        public string ArchivoCategoriasNombre => GetNombreArchivo(ArchivoCategorias);
-        public string ArchivoPadronNombre => GetNombreArchivo(ArchivoPadron);
-        public string ArchivoConsumosNombre => GetNombreArchivo(ArchivoConsumos);
+        public string ArchivoCategoriasNombre => GetFileName(ArchivoCategorias);
+        public string ArchivoPadronNombre => GetFileName(ArchivoPadron);
+        public string ArchivoConsumosNombre => GetFileName(ArchivoConsumos);
         public string ArchivoConsumosDetalleNombre => GetArchivosConsumosDetalleNombre();
-        public string ArchivoServiciosNombre => GetNombreArchivo(ArchivoServicios);
-        public string ArchivoCatalogoServiciosNombre => GetNombreArchivo(ArchivoCatalogoServicios);
+        public string ArchivoServiciosNombre => GetFileName(ArchivoServicios);
+        public string ArchivoCatalogoServiciosNombre => GetFileName(ArchivoCatalogoServicios);
         public bool ArchivoCategoriasCargado => !string.IsNullOrWhiteSpace(ArchivoCategorias);
         public bool ArchivoPadronCargado => !string.IsNullOrWhiteSpace(ArchivoPadron);
         public bool ArchivoConsumosCargado => !string.IsNullOrWhiteSpace(ArchivoConsumos);
         public bool ArchivoConsumosDetalleCargado => _archivosConsumosDetalle.Count > 0;
         public bool ArchivoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoServicios);
         public bool ArchivoCatalogoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoCatalogoServicios);
-        public string ArchivoCategoriasEstado => BuildEstadoArchivo(ArchivoCategoriasNombre, ArchivoCategoriasCargado);
-        public string ArchivoPadronEstado => BuildEstadoArchivo(ArchivoPadronNombre, ArchivoPadronCargado);
-        public string ArchivoConsumosEstado => BuildEstadoArchivo(ArchivoConsumosNombre, ArchivoConsumosCargado);
-        public string ArchivoConsumosDetalleEstado => BuildEstadoArchivo(ArchivoConsumosDetalleNombre, ArchivoConsumosDetalleCargado);
-        public string ArchivoServiciosEstado => BuildEstadoArchivo(ArchivoServiciosNombre, ArchivoServiciosCargado);
-        public string ArchivoCatalogoServiciosEstado => BuildEstadoArchivo(ArchivoCatalogoServiciosNombre, ArchivoCatalogoServiciosCargado);
+        public string ArchivoCategoriasEstado => BuildFileStatus(ArchivoCategoriasNombre, ArchivoCategoriasCargado);
+        public string ArchivoPadronEstado => BuildFileStatus(ArchivoPadronNombre, ArchivoPadronCargado);
+        public string ArchivoConsumosEstado => BuildFileStatus(ArchivoConsumosNombre, ArchivoConsumosCargado);
+        public string ArchivoConsumosDetalleEstado => BuildFileStatus(ArchivoConsumosDetalleNombre, ArchivoConsumosDetalleCargado);
+        public string ArchivoServiciosEstado => BuildFileStatus(ArchivoServiciosNombre, ArchivoServiciosCargado);
+        public string ArchivoCatalogoServiciosEstado => BuildFileStatus(ArchivoCatalogoServiciosNombre, ArchivoCatalogoServiciosCargado);
         public string ArchivoCategoriasIcono => ArchivoCategoriasCargado ? "✓" : "↑";
         public string ArchivoPadronIcono => ArchivoPadronCargado ? "✓" : "↑";
         public string ArchivoConsumosIcono => ArchivoConsumosCargado ? "✓" : "↑";
@@ -171,16 +171,16 @@ namespace ImplementadorCUAD.ViewModels
 
         public int Progress
         {
-            get => _progreso;
-            set => SetProperty(ref _progreso, value);
+            get => _progress;
+            set => SetProperty(ref _progress, value);
         }
 
         public bool IsProcessing
         {
-            get => _estaProcesando;
+            get => _isProcessing;
             set
             {
-                if (SetProperty(ref _estaProcesando, value))
+                if (SetProperty(ref _isProcessing, value))
                 {
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -189,14 +189,14 @@ namespace ImplementadorCUAD.ViewModels
 
         public bool ValidationCompleted
         {
-            get => _validacionFinalizada;
-            set => SetProperty(ref _validacionFinalizada, value);
+            get => _validationCompleted;
+            set => SetProperty(ref _validationCompleted, value);
         }
 
         public string? ImplementationTime
         {
-            get => _tiempoImplementacion;
-            set => SetProperty(ref _tiempoImplementacion, value);
+            get => _implementationTime;
+            set => SetProperty(ref _implementationTime, value);
         }
 
         public ObservableCollection<LogEntry> Logs { get; }
@@ -215,18 +215,18 @@ namespace ImplementadorCUAD.ViewModels
         public ICommand LimpiarConsumosDetalleArchivoCommand { get; }
         public ICommand LimpiarServiciosArchivoCommand { get; }
         public ICommand LimpiarCatalogoServiciosArchivoCommand { get; }
-        public ICommand ValidarCommand { get; }
-        public ICommand CopiarCommand { get; }
-        public ICommand ExportarLogCommand { get; }
-        public ICommand LimpiarUiCommand { get; }
-        public ICommand LimpiarBaseEntidadCommand { get; }
+        public ICommand ValidateCommand { get; }
+        public ICommand CopyCommand { get; }
+        public ICommand ExportLogCommand { get; }
+        public ICommand ClearUiCommand { get; }
+        public ICommand ClearDataCommand { get; }
 
         public MainViewModel()
         {
             _dbContextFactory = new AppDbContextFactory();
             _fileImportService = new FileImportService(_dbContextFactory);
             _generalValidationService = new GeneralValidationService(_dbContextFactory);
-            _implementacionService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
+            _implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
 
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
@@ -256,30 +256,30 @@ namespace ImplementadorCUAD.ViewModels
                 OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
                 OnPropertyChanged(nameof(ArchivoConsumosDetalleToolTip));
             };
-            SeleccionarCategoriasCommand = new RelayCommand(_ => SeleccionarArchivo("Categorias"));
-            SeleccionarPadronCommand = new RelayCommand(_ => SeleccionarArchivo("Padron"));
-            SeleccionarConsumosCommand = new RelayCommand(_ => SeleccionarArchivo("Consumos"));
-            SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SeleccionarArchivo("ConsumosDetalle"));
-            SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
-            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("CatalogoServicios"));
-            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Categorias"));
-            LimpiarPadronArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Padron"));
-            LimpiarConsumosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Consumos"));
-            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => LimpiarArchivo("ConsumosDetalle"));
-            LimpiarServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Servicios"));
-            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("CatalogoServicios"));
-            ValidarCommand = new SimpleAsyncCommand(ValidarArchivosAsync);
-            CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
-            ExportarLogCommand = new RelayCommand(_ => ExportarLog());
-            LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !IsProcessing);
-            LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
+            SeleccionarCategoriasCommand = new RelayCommand(_ => SelectFile("Categorias"));
+            SeleccionarPadronCommand = new RelayCommand(_ => SelectFile("Padron"));
+            SeleccionarConsumosCommand = new RelayCommand(_ => SelectFile("Consumos"));
+            SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SelectFile("ConsumosDetalle"));
+            SeleccionarServiciosCommand = new RelayCommand(_ => SelectFile("Servicios"));
+            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SelectFile("CatalogoServicios"));
+            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => ClearFile("Categorias"));
+            LimpiarPadronArchivoCommand = new RelayCommand(_ => ClearFile("Padron"));
+            LimpiarConsumosArchivoCommand = new RelayCommand(_ => ClearFile("Consumos"));
+            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => ClearFile("ConsumosDetalle"));
+            LimpiarServiciosArchivoCommand = new RelayCommand(_ => ClearFile("Servicios"));
+            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => ClearFile("CatalogoServicios"));
+            ValidateCommand = new SimpleAsyncCommand(ValidateFilesAsync);
+            CopyCommand = new SimpleAsyncCommand(CopyToDatabaseAsync);
+            ExportLogCommand = new RelayCommand(_ => ExportLog());
+            ClearUiCommand = new RelayCommand(_ => ClearUi(), _ => !IsProcessing);
+            ClearDataCommand = new RelayCommand(ClearData, CanClearEntityData);
         }
 
         /// <summary>
         /// Carga empleadores desde Configuracion.xml y entidades desde CUAD.
         /// Debe llamarse sólo cuando la conexión a CUAD ya fue validada.
         /// </summary>
-        public void InitializeAfterConnectionEstablished()
+        public void InitializeAfterConnection()
         {
             // 1) Empleadores desde Configuracion.xml
             var conexionesService = new ConnectionsConfigService();
@@ -331,12 +331,12 @@ namespace ImplementadorCUAD.ViewModels
             };
         }
 
-        private void SeleccionarArchivo(string tipo)
+        private void SelectFile(string type)
         {
             var dialog = new OpenFileDialog
             {
                 Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
-                Multiselect = tipo == "ConsumosDetalle"
+                Multiselect = type == "ConsumosDetalle"
             };
 
             if (dialog.ShowDialog() != true)
@@ -344,7 +344,7 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
-            switch (tipo)
+            switch (type)
             {
                 case "Categorias":
                     ArchivoCategorias = dialog.FileName;
@@ -371,9 +371,9 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private void LimpiarArchivo(string tipo)
+        private void ClearFile(string type)
         {
-            switch (tipo)
+            switch (type)
             {
                 case "Categorias":
                     ArchivoCategorias = null;
@@ -396,7 +396,7 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private async Task ValidarArchivosAsync()
+        private async Task ValidateFilesAsync()
         {
             if (IsProcessing)
             {
@@ -448,10 +448,10 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de datos al cargar o validar archivos: {ex.Message}");
+                Log($"Error de base de data al cargar o validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
-                    $"Error al consultar la base de datos (CUAD).\n\n{ex.Message}",
+                    $"Error al consultar la base de data (CUAD).\n\n{ex.Message}",
                     "Validación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -477,7 +477,7 @@ namespace ImplementadorCUAD.ViewModels
                 ScheduleDeferredLogFlush();
             }
 
-            if (!_validationResult.HuboCarga)
+            if (!_validationResult.HasLoadedData)
             {
                 ValidationCompleted = false;
                 return;
@@ -505,7 +505,7 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
                 {
-                    Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                    Log($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
                     ValidationCompleted = false;
                     return;
                 }
@@ -520,10 +520,10 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de datos al validar: {ex.Message}");
+                Log($"Error de base de data al validar: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
-                    $"Error al consultar la base de datos.\n\n{ex.Message}",
+                    $"Error al consultar la base de data.\n\n{ex.Message}",
                     "Validación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -540,7 +540,7 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private async Task CopiarABaseAsync()
+        private async Task CopyToDatabaseAsync()
         {
             if (!HasEntidadSeleccionadaReal())
             {
@@ -564,9 +564,9 @@ namespace ImplementadorCUAD.ViewModels
 
             if (string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
-                Log($"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                Log($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
                 DialogService.Show(
-                    $"No se encontró base de datos para empleador '{EmpleadorSeleccionado?.Nombre}'.",
+                    $"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre}'.",
                     "Implementación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -577,7 +577,7 @@ namespace ImplementadorCUAD.ViewModels
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
             Log($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
-            if (!ValidationCompleted || !_validationResult.HuboCarga)
+            if (!ValidationCompleted || !_validationResult.HasLoadedData)
             {
                 var resultado = DialogService.Show(
                     "Algunas validaciones no pasaron. ¿Desea implementar igualmente?",
@@ -601,7 +601,7 @@ namespace ImplementadorCUAD.ViewModels
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await _implementacionService.CopyToDatabaseAsync(
+                await _implementationService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     Log,
@@ -619,9 +619,9 @@ namespace ImplementadorCUAD.ViewModels
             catch (SqlException ex)
             {
                 cronometro.Stop();
-                Log($"Error de base de datos al implementar: {ex.Message}");
+                Log($"Error de base de data al implementar: {ex.Message}");
                 DialogService.Show(
-                    $"Error al escribir en la base de datos.\n\n{ex.Message}",
+                    $"Error al escribir en la base de data.\n\n{ex.Message}",
                     "Implementación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -642,12 +642,12 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private bool PuedeLimpiarBaseEntidad(object? parameter)
+        private bool CanClearEntityData(object? parameter)
         {
             return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !IsProcessing;
         }
 
-        private void LimpiarBaseEntidad(object? parameter)
+        private void ClearData(object? parameter)
         {
             if (!HasEntidadSeleccionadaReal())
             {
@@ -662,10 +662,10 @@ namespace ImplementadorCUAD.ViewModels
             if (!HasEmpleadorSeleccionadoReal() || string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
                 var nombreEmpleador = EmpleadorSeleccionado?.Nombre ?? "seleccionado";
-                Log($"No se encontró base de datos para empleador '{nombreEmpleador}'.");
+                Log($"No se encontró base de data para empleador '{nombreEmpleador}'.");
                 DialogService.Show(
                     string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString)
-                        ? $"No se encontró base de datos para empleador '{nombreEmpleador}'."
+                        ? $"No se encontró base de data para empleador '{nombreEmpleador}'."
                         : "Debe seleccionar un empleador para limpiar la base.",
                     "Limpieza de base",
                     MessageBoxButton.OK,
@@ -678,7 +678,7 @@ namespace ImplementadorCUAD.ViewModels
             var entidadNombre = entidadSeleccionada.Nombre ?? entidadSeleccionada.EntId.ToString();
 
             var confirmacion = DialogService.Show(
-                $"Se eliminaran los datos de la base para la Entidad '{entidadNombre}'\n\n¿Desea continuar?",
+                $"Se eliminaran los data de la base para la Entidad '{entidadNombre}'\n\n¿Desea continuar?",
                 "Confirmar limpieza",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -706,7 +706,7 @@ namespace ImplementadorCUAD.ViewModels
                 }
 
                 DialogService.Show(
-                    $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de datos",
+                    $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de data",
                     "Limpieza entidad",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -717,9 +717,9 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de datos al limpiar: {ex.Message}");
+                Log($"Error de base de data al limpiar: {ex.Message}");
                 DialogService.Show(
-                    $"Error al consultar o modificar la base de datos.\n\n{ex.Message}",
+                    $"Error al consultar o modificar la base de data.\n\n{ex.Message}",
                     "Limpieza de base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -735,20 +735,20 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private void InvalidateValidationState(string mensaje)
+        private void InvalidateValidationState(string message)
         {
-            var teniaEstado = _validationResult.HuboCarga || ValidationCompleted || Progress > 0;
+            var teniaEstado = _validationResult.HasLoadedData || ValidationCompleted || Progress > 0;
             ValidationCompleted = false;
             Progress = 0;
             _validationResult = new ImplementationValidationResult();
 
             if (teniaEstado)
             {
-                Log(mensaje);
+                Log(message);
             }
         }
 
-        private void LimpiarSoloUi()
+        private void ClearUi()
         {
             if (IsProcessing)
             {
@@ -799,7 +799,7 @@ namespace ImplementadorCUAD.ViewModels
             return string.Equals(entidadNormalizada, entidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
-        private void ExportarLog()
+        private void ExportLog()
         {
             if (_fullLogForExport.Count == 0)
             {
@@ -949,10 +949,10 @@ namespace ImplementadorCUAD.ViewModels
                 return "[WARN]";
             }
 
-            // Validación no pasó: rechazadas, no se pudo validar/cargar, o error de fila
+            // Validación no pasó: rechazadas, no se pudo validar/cargar, o error de row
             if (trimmed.IndexOf("rechazada", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 trimmed.IndexOf(" no se pudo ", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                (trimmed.IndexOf(" fila ", StringComparison.OrdinalIgnoreCase) >= 0 && trimmed.IndexOf(":", StringComparison.Ordinal) >= 0))
+                (trimmed.IndexOf(" row ", StringComparison.OrdinalIgnoreCase) >= 0 && trimmed.IndexOf(":", StringComparison.Ordinal) >= 0))
             {
                 return "[WARN]";
             }
@@ -964,24 +964,24 @@ namespace ImplementadorCUAD.ViewModels
         {
             var n = _archivosConsumosDetalle.Count;
             if (n == 0) return string.Empty;
-            if (n == 1) return GetNombreArchivo(_archivosConsumosDetalle[0]);
+            if (n == 1) return GetFileName(_archivosConsumosDetalle[0]);
             return $"{n} archivos";
         }
 
         private string? GetArchivosConsumosDetalleToolTip()
         {
             if (_archivosConsumosDetalle.Count <= 1) return null;
-            return string.Join(Environment.NewLine, _archivosConsumosDetalle.Select(p => GetNombreArchivo(p)));
+            return string.Join(Environment.NewLine, _archivosConsumosDetalle.Select(p => GetFileName(p)));
         }
 
-        private static string GetNombreArchivo(string? ruta)
+        private static string GetFileName(string? ruta)
         {
             return string.IsNullOrWhiteSpace(ruta) ? string.Empty : Path.GetFileName(ruta);
         }
 
-        private static string BuildEstadoArchivo(string nombreArchivo, bool cargado)
+        private static string BuildFileStatus(string fileName, bool loaded)
         {
-            return cargado ? $"{nombreArchivo} (Cargado)" : "Pendiente";
+            return loaded ? $"{fileName} (Cargado)" : "Pendiente";
         }
 
         private bool HasEntidadSeleccionadaReal()

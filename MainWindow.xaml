@@ -530,8 +530,8 @@
                                 <ColumnDefinition Width="4*"/>
                                 <ColumnDefinition Width="125*" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource OutlineButtonStyle}" Content="Validar Archivos" Command="{Binding ValidarCommand}" />
-                            <Button Grid.Column="2" Style="{StaticResource OutlineButtonStyle}" Content="Limpiar Entidad" Command="{Binding LimpiarBaseEntidadCommand}" Margin="8,0,0,0" />
+                            <Button Grid.Column="0" Style="{StaticResource OutlineButtonStyle}" Content="Validar Archivos" Command="{Binding ValidateCommand}" />
+                            <Button Grid.Column="2" Style="{StaticResource OutlineButtonStyle}" Content="Limpiar Entidad" Command="{Binding ClearDataCommand}" Margin="8,0,0,0" />
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -555,7 +555,7 @@
                     <Button Grid.Row="1"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Content="IMPLEMENTAR DATOS"
-                            Command="{Binding CopiarCommand}"
+                            Command="{Binding CopyCommand}"
                             Margin="0,0,0,12" Height="40" />
 
                     <TextBlock Grid.Row="2" Text="Log de validacion" Style="{StaticResource SubsectionTitleStyle}" />
@@ -614,12 +614,12 @@
                         <Button Grid.Column="0"
                                 Style="{StaticResource OutlineButtonStyle}"
                                 Content="Exportar Logs"
-                                Command="{Binding ExportarLogCommand}"
+                                Command="{Binding ExportLogCommand}"
                                 Margin="0,0,8,0" />
                         <Button Grid.Column="1"
                                 Style="{StaticResource OutlineButtonStyle}"
                                 Content="Reiniciar&#xD;&#xA;"
-                                Command="{Binding LimpiarUiCommand}"
+                                Command="{Binding ClearUiCommand}"
                                 Margin="8,0,0,0" />
                     </Grid>
 

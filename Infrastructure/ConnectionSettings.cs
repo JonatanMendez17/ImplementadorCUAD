@@ -8,7 +8,7 @@ namespace ImplementadorCUAD.Infrastructure
 
         /// Connection string de la base CUAD.
         /// Prioridad: Configuracion.xml > variable de entorno IMPLEMENTADORCUAD_CONNECTIONSTRING.
-        /// El valor se cachea tras la primera lectura; llamar InvalidateCache() si se modifica el XML en runtime.
+        /// El value se cachea tras la primera lectura; llamar InvalidateCache() si se modifica el XML en runtime.
         public static string CuadConnectionString
         {
             get
