@@ -69,7 +69,7 @@ namespace ImplementadorCUAD
                 }
             };
 
-            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger<ViewModels.MainViewModel>()));
+            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("ImplementadorCUAD")));
             MainWindow = mainWindow;
             mainWindow.Show();
 

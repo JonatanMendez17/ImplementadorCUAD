@@ -19,17 +19,15 @@ namespace ImplementadorCUAD.Services
     {
         public ILogger CreateLogger(string categoryName)
         {
-            return new UiLogger(categoryName);
+            return new UiLogger();
         }
 
         public void Dispose()
         {
         }
 
-        private sealed class UiLogger(string categoryName) : ILogger
+        private sealed class UiLogger : ILogger
         {
-            private readonly string _categoryName = categoryName;
-
             public IDisposable? BeginScope<TState>(TState state) where TState : notnull
             {
                 return null;
@@ -61,7 +59,7 @@ namespace ImplementadorCUAD.Services
                 UiLogStream.Publish(new UiLogRecord(
                     DateTime.UtcNow,
                     MapSeverity(logLevel),
-                    $"{_categoryName}: {message}"));
+                    message));
             }
 
             private static LogSeverity MapSeverity(LogLevel level)

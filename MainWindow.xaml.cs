@@ -6,7 +6,7 @@ namespace ImplementadorCUAD
 {
     public partial class MainWindow : Window
     {
-        public MainWindow() : this(new MainViewModel(App.LoggerFactory.CreateLogger<MainViewModel>()))
+        public MainWindow() : this(new MainViewModel(App.LoggerFactory.CreateLogger("ImplementadorCUAD")))
         {
         }
 
@@ -14,6 +14,7 @@ namespace ImplementadorCUAD
         {
             InitializeComponent();
             DataContext = viewModel;
+            Closed += (_, _) => viewModel.Dispose();
         }
     }
 }

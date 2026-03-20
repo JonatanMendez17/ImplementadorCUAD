@@ -7,9 +7,23 @@ namespace ImplementadorCUAD.Services
 {
     public static class DialogService
     {
-        public static MessageBoxResult Show(string message, string title, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage image = MessageBoxImage.None)
+        public static MessageBoxResult Show(
+            string message,
+            string title,
+            MessageBoxButton buttons = MessageBoxButton.OK,
+            MessageBoxImage image = MessageBoxImage.None,
+            string? primaryButtonText = null,
+            string? secondaryButtonText = null,
+            string? tertiaryButtonText = null)
         {
-            var dialog = new StyledDialogWindow(message, title, buttons, image);
+            var dialog = new StyledDialogWindow(
+                message,
+                title,
+                buttons,
+                image,
+                primaryButtonText,
+                secondaryButtonText,
+                tertiaryButtonText);
             var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                         ?? Application.Current?.MainWindow;
 
@@ -29,15 +43,28 @@ namespace ImplementadorCUAD.Services
     {
         private const double UiCornerRadius = 8;
         private readonly MessageBoxButton _buttons;
+        private readonly string? _primaryButtonText;
+        private readonly string? _secondaryButtonText;
+        private readonly string? _tertiaryButtonText;
         private readonly Button _primaryButton;
         private readonly Button _secondaryButton;
         private readonly Button _tertiaryButton;
 
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 
-        public StyledDialogWindow(string message, string title, MessageBoxButton buttons, MessageBoxImage image)
+        public StyledDialogWindow(
+            string message,
+            string title,
+            MessageBoxButton buttons,
+            MessageBoxImage image,
+            string? primaryButtonText,
+            string? secondaryButtonText,
+            string? tertiaryButtonText)
         {
             _buttons = buttons;
+            _primaryButtonText = primaryButtonText;
+            _secondaryButtonText = secondaryButtonText;
+            _tertiaryButtonText = tertiaryButtonText;
             Title = title;
             Width = 520;
             SizeToContent = SizeToContent.Height;
@@ -178,6 +205,21 @@ namespace ImplementadorCUAD.Services
                     _secondaryButton.Visibility = Visibility.Visible;
                     _tertiaryButton.Visibility = Visibility.Visible;
                     break;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_primaryButtonText))
+            {
+                _primaryButton.Content = _primaryButtonText;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_secondaryButtonText))
+            {
+                _secondaryButton.Content = _secondaryButtonText;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_tertiaryButtonText))
+            {
+                _tertiaryButton.Content = _tertiaryButtonText;
             }
         }
 

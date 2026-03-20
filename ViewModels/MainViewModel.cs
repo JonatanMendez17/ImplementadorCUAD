@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -14,13 +15,14 @@ using ImplementadorCUAD.Services;
 
 namespace ImplementadorCUAD.ViewModels
 {
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel : ViewModelBase, IDisposable
     {
         private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
         private readonly ImplementationService _implementationService;
-        private readonly ILogger<MainViewModel> _logger;
+        private readonly ILogger _logger;
+        private bool _isDisposed;
         private ImplementationValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
@@ -223,7 +225,7 @@ namespace ImplementadorCUAD.ViewModels
         public ICommand ClearUiCommand { get; }
         public ICommand ClearDataCommand { get; }
 
-        public MainViewModel(ILogger<MainViewModel> logger)
+        public MainViewModel(ILogger logger)
         {
             _logger = logger;
             _dbContextFactory = new AppDbContextFactory();
@@ -806,6 +808,8 @@ namespace ImplementadorCUAD.ViewModels
 
         private void ExportLog()
         {
+            FlushAllPendingLogs();
+
             if (_fullLogForExport.Count == 0)
             {
                 LogWarning("No hay mensajes de log para exportar.");
@@ -830,12 +834,30 @@ namespace ImplementadorCUAD.ViewModels
             {
                 File.WriteAllLines(dialog.FileName, _fullLogForExport.Select(l => l.ToExportString()));
                 LogInformation($"Log exportado a: {dialog.FileName}");
-                DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
+                var result = DialogService.Show(
+                    $"Log generado en:\n{dialog.FileName}\n\nNota: si exporta mientras la validación sigue en proceso, este archivo puede no incluir todos los logs todavía.",
+                    "Exportar log",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information,
+                    primaryButtonText: "Abrir",
+                    secondaryButtonText: "Cerrar");
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(dialog.FileName) { UseShellExecute = true });
+                }
             }
             catch (Exception ex)
             {
                 LogError($"Error al exportar el log: {ex.Message}");
                 DialogService.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void FlushAllPendingLogs()
+        {
+            while (FlushLogBuffer() > 0)
+            {
             }
         }
 
@@ -872,6 +894,11 @@ namespace ImplementadorCUAD.ViewModels
 
         private void OnUiLogReceived(UiLogRecord record)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             var timestamp = record.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff");
             var entry = new LogEntry(timestamp, record.Severity, record.Message);
             AddLogEntry(entry);
@@ -1015,6 +1042,19 @@ namespace ImplementadorCUAD.ViewModels
         private bool HasEmpleadorSeleccionadoReal()
         {
             return EmpleadorSeleccionado != null && EmpleadorSeleccionado.EmrId > 0;
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _isDisposed = true;
+            UiLogStream.LogReceived -= OnUiLogReceived;
+            _logFlushTimer?.Stop();
+            _logFlushTimer = null;
         }
     }
 }
