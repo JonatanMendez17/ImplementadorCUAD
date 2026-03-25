@@ -39,7 +39,7 @@ public sealed class ConsumosValidator
         }
         catch (Exception ex)
         {
-            log.Error($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
+            log.Error($"Consumos: no se pudo validar entidades de la base. {ex.Message}");
             result.DatosConsumosValidados = new List<Dictionary<string, string>>();
             conceptosDescuentoVigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return;
@@ -69,7 +69,7 @@ public sealed class ConsumosValidator
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en CUAD.");
+                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
             }
 
             if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
@@ -107,7 +107,7 @@ public sealed class ConsumosValidator
                 var keyConcepto = $"{entidad.Trim()}|{conceptoDescuentoText.Trim()}";
                 if (!conceptosDescuentoVigentes.Contains(keyConcepto))
                 {
-                    erroresFila.Add($"El concepto de descuento '{conceptoDescuentoText}' no existe como código de descuento vigente en CUAD para la entidad '{entidad?.Trim()}'.");
+                    erroresFila.Add($"El concepto de descuento '{conceptoDescuentoText}' no existe como código de descuento vigente en la base para la entidad '{entidad?.Trim()}'.");
                 }
             }
 

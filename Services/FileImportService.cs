@@ -19,7 +19,7 @@ namespace ImplementadorCUAD.Services
             var result = new ImplementationValidationResult();
 
             // Los nombres lógicos que se pasan a LoadFile deben coincidir
-            // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuracion.xml.
+            // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuration.xml.
             var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
                 ? null
                 : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);

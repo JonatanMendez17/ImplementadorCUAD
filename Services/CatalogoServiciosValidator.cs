@@ -23,7 +23,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         }
         catch (Exception ex)
         {
-            log.Error($"Catalogo Servicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
+            log.Error($"Catalogo Servicios: no se pudo leer el catálogo de servicios de la base. {ex.Message}");
             result.DatosCatalogoServiciosValidados = [];
             return;
         }
@@ -57,7 +57,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                 {
-                    log.Warn($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                    log.Warn($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
                     filaValida = false;
                 }
                 else
@@ -72,7 +72,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                         var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
                         if (diferencia > 0.01m)
                         {
-                            log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                            log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con la base ({refCuad.Importe}).");
                             filaValida = false;
                         }
                     }

@@ -4,7 +4,7 @@ namespace ImplementadorCUAD.Infrastructure;
 
 public interface IAppDbContextFactory
 {
-    /// Crea un contexto contra la base CUAD (lecturas de referencia: Entidad, CategoriasCuad, etc.).
+    /// Crea un contexto contra la base (lecturas: Entidad, CategoriasCuad, etc.).
     IAppDbContext Create();
 
     /// Crea un contexto contra la base indicada (destino del empleador para importación/limpieza).

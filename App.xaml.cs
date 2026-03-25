@@ -73,14 +73,14 @@ namespace ImplementadorCUAD
             MainWindow = mainWindow;
             mainWindow.Show();
 
-            var initialCuadConnection = ConnectionSettings.CuadConnectionString;
-            var hasInitialConfig = !string.IsNullOrWhiteSpace(initialCuadConnection);
+            var initialBaseConnection = ConnectionSettings.BaseConnectionString;
+            var hasInitialConfig = !string.IsNullOrWhiteSpace(initialBaseConnection);
 
             if (hasInitialConfig)
             {
                 try
                 {
-                    var testConnectionString = WithShortTimeout(initialCuadConnection, 3);
+                    var testConnectionString = WithShortTimeout(initialBaseConnection, 3);
                     using (var db = new AppDbContext(testConnectionString))
                     {
                         db.EnsureConnection();
@@ -97,8 +97,8 @@ namespace ImplementadorCUAD
                     {
                         DialogService.Show(
                             $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
-                            $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
-                            "Error al leer CUAD",
+                            $"Verifique que la base tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                            "Error al leer base",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
                         return;
@@ -121,7 +121,7 @@ namespace ImplementadorCUAD
                 }
             }
 
-            // No hay configuración válida de CUAD o la conexión falló: pedir al usuario el connection string.
+            // No hay configuración válida de la base o la conexión falló: pedir al usuario el connection string.
             var configWindow = new ConnectionWindow
             {
                 Owner = mainWindow
@@ -138,7 +138,7 @@ namespace ImplementadorCUAD
             var userConnectionString = configWindow.SelectedConnection;
             try
             {
-                new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
+                new ConnectionsConfigService().SetConexionBaseConnectionString(userConnectionString);
                 ConnectionSettings.InvalidateCache();
             }
             catch (Exception ex)
@@ -162,8 +162,8 @@ namespace ImplementadorCUAD
             {
                 DialogService.Show(
                     $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
-                    $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
-                    "Error al leer CUAD",
+                    $"Verifique que la base tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                    "Error al leer base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 return;

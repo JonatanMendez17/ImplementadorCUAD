@@ -4,21 +4,24 @@ using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD.Services
 {
-    /// Lee y actualiza la sección Conexiones de Configuracion.xml: conexión CUAD y lista de empleadores con su connection string.
+    /// Lee y actualiza la sección Conexiones de `Configuration.xml`.
+    /// - `ConexionBase`: base (solo lectura).
+    /// - `ConexionEmpleadores`: parámetros comunes para construir la conexión destino de cada empleador.
     public class ConnectionsConfigService
     {
-        public const string RutaConfiguracionXml = "Configuracion.xml";
+        public const string RutaConfiguracionXml = "Configuration.xml";
         private readonly string _rutaXml = RutaConfiguracionXml;
 
-        /// Obtiene el connection string de la base CUAD. Devuelve null si no existe la sección.
-        public string? GetCuadConnectionString()
+        /// Obtiene el connection string de la base (`ConexionBase`).
+        /// Devuelve null si el nodo no existe o no puede leerse.
+        public string? GetConexionBaseConnectionString()
         {
             try
             {
                 var document = XDocument.Load(_rutaXml);
                 var conexiones = document.Root?.Element("Conexiones");
-                var cuad = conexiones?.Element("Cuad");
-                return cuad?.Attribute("connectionString")?.Value?.Trim();
+                var conexionBase = conexiones?.Element("ConexionBase");
+                return conexionBase?.Attribute("connectionString")?.Value?.Trim();
             }
             catch
             {
@@ -37,7 +40,8 @@ namespace ImplementadorCUAD.Services
                 if (conexiones == null)
                     return resultado;
 
-                var conexionBase = conexiones.Element("ConexionBase")?.Attribute("connectionString")?.Value?.Trim();
+                    var conexionEmpleadores = conexiones.Element("ConexionEmpleadores")
+                        ?.Attribute("connectionString")?.Value?.Trim();
                 var empleadorElements = conexiones.Elements("Empleador").ToList();
 
                 foreach (var emp in empleadorElements)
@@ -54,11 +58,11 @@ namespace ImplementadorCUAD.Services
                     {
                         connectionString = connectionStringAttr;
                     }
-                    else if (!string.IsNullOrWhiteSpace(baseDatosAttr) && !string.IsNullOrWhiteSpace(conexionBase))
+                    else if (!string.IsNullOrWhiteSpace(baseDatosAttr) && !string.IsNullOrWhiteSpace(conexionEmpleadores))
                     {
                         try
                         {
-                            var builder = new SqlConnectionStringBuilder(conexionBase)
+                            var builder = new SqlConnectionStringBuilder(conexionEmpleadores)
                             {
                                 InitialCatalog = baseDatosAttr
                             };
@@ -89,9 +93,9 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        /// Actualiza la cadena de conexión de CUAD en Configuracion.xml,
-        /// agregando o modificando el nodo <Conexiones><Cuad connectionString="..." /></Conexiones>.
-        public void SetCuadConnectionString(string connectionString)
+        /// Actualiza la cadena de conexión de `ConexionBase` en `Configuration.xml`,
+        /// agregando o modificando el nodo <Conexiones><ConexionBase connectionString="..." /></Conexiones>.
+        public void SetConexionBaseConnectionString(string connectionString)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentException("La cadena de conexión no puede estar vacía.", nameof(connectionString));
@@ -110,14 +114,14 @@ namespace ImplementadorCUAD.Services
                 root.Add(conexiones);
             }
 
-            var cuad = conexiones.Element("Cuad");
-            if (cuad == null)
+            var conexionBase = conexiones.Element("ConexionBase");
+            if (conexionBase == null)
             {
-                cuad = new XElement("Cuad");
-                conexiones.AddFirst(cuad);
+                conexionBase = new XElement("ConexionBase");
+                conexiones.AddFirst(conexionBase);
             }
 
-            cuad.SetAttributeValue("connectionString", connectionString);
+            conexionBase.SetAttributeValue("connectionString", connectionString);
 
             document.Save(_rutaXml);
         }

@@ -31,7 +31,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
         catch (Exception ex)
         {
-            log.Error($"Consumos Detalle: No se pudo validar entidades de CUAD. {ex.Message}");
+            log.Error($"Consumos Detalle: No se pudo validar entidades de la base. {ex.Message}");
             result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -56,7 +56,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en CUAD.");
+                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))

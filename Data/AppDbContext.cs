@@ -11,7 +11,7 @@ namespace ImplementadorCUAD.Data
 
         public AppDbContext()
         {
-            _connectionString = ConnectionSettings.CuadConnectionString;
+            _connectionString = ConnectionSettings.BaseConnectionString;
         }
 
         public AppDbContext(string connectionString)
@@ -66,7 +66,7 @@ namespace ImplementadorCUAD.Data
             var resultado = new List<CategoriaCuadRef>();
 
             using var connection = CreateOpenConnection();
-            // Las categorias de CUAD se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
+            // Las categorías de la base se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
             using var command = new SqlCommand(
                 @"SELECT 
                          mc.Mca_Id,
@@ -98,7 +98,7 @@ namespace ImplementadorCUAD.Data
         }
 
         /// <summary>
-        /// Devuelve las combinaciones (Entidad, CodigoCategoria) que tienen código de cuota social vigente en CUAD.
+        /// Devuelve las combinaciones (Entidad, CodigoCategoria) que tienen código de cuota social vigente en la base.
         /// La información se obtiene desde las tablas físicas Mutual, Mutual_Categoria y Mutual_Categoria_Codigo.
         /// </summary>
         public HashSet<string> GetCategoriasConCuotaSocialVigente()
@@ -140,7 +140,7 @@ namespace ImplementadorCUAD.Data
 
         /// <summary>
         /// Devuelve las combinaciones (Entidad, ConceptoDescuento) que tienen código de descuento vigente
-        /// para consumos en CUAD. La información se obtiene desde las tablas físicas Mutual y Mutual_Servicio_Empleador.
+        /// para consumos en la base. La información se obtiene desde las tablas físicas Mutual y Mutual_Servicio_Empleador.
         /// </summary>
         public HashSet<string> GetConceptosDescuentoVigentesParaConsumos()
         {

@@ -51,13 +51,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
                 if (predeterminadas > 1)
                 {
-                    log.Warn($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
+                    log.Warn($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en la base.");
                 }
             }
         }
         catch (Exception ex)
         {
-            log.Error($"Categorias Socios: No se pudo leer categorias de CUAD. {ex.Message}");
+            log.Error($"Categorias Socios: No se pudo leer categorías de la base. {ex.Message}");
             categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
             categoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
@@ -76,7 +76,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         }
         catch (Exception ex)
         {
-            log.Error($"Padron socios: no se pudo abrir conexión CUAD para validar Empleado/Persona. {ex.Message}");
+            log.Error($"Padron socios: no se pudo abrir conexión a la base para validar Empleado/Persona. {ex.Message}");
         }
 
         for (int i = 0; i < result.DatosPadronValidados.Count; i++)
@@ -133,20 +133,20 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
                     if (categoriaCuad == null)
                     {
-                        erroresFila.Add($"La categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
+                        erroresFila.Add($"La categoria '{codigoCategoria}' no existe en la base para la entidad '{entidadClave}'.");
                     }
                     else if (categoriasConCuotaSocial.Count > 0)
                     {
                         var keyCuota = $"{entidadClave}|{codigoNorm}";
                         if (!categoriasConCuotaSocial.Contains(keyCuota))
                         {
-                            erroresFila.Add($"La categoria '{codigoCategoria}' de la entidad '{entidadClave}' no tiene código de cuota social vigente en CUAD.");
+                            erroresFila.Add($"La categoria '{codigoCategoria}' de la entidad '{entidadClave}' no tiene código de cuota social vigente en la base.");
                         }
                     }
                 }
                 else
                 {
-                    erroresFila.Add($"La entidad '{entidad}' no tiene categorias definidas en CUAD.");
+                    erroresFila.Add($"La entidad '{entidad}' no tiene categorías definidas en la base.");
                 }
             }
 
@@ -170,7 +170,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 {
                     if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
                     {
-                        erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra CUAD.");
+                        erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra la base.");
                     }
                     else
                     {
@@ -178,7 +178,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                         {
                             if (dbValidacionEmpleado == null)
                             {
-                                erroresFila.Add("No hay conexión disponible a CUAD para validar Empleado/Persona.");
+                                erroresFila.Add("No hay conexión disponible a la base para validar Empleado/Persona.");
                             }
                             else
                             {
@@ -189,14 +189,14 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                         }
                         catch (Exception ex)
                         {
-                            erroresFila.Add($"No se pudo validar contra CUAD el socio '{nroSocio}' y documento '{documento}': {ex.Message}");
+                            erroresFila.Add($"No se pudo validar contra la base el socio '{nroSocio}' y documento '{documento}': {ex.Message}");
                         }
                     }
                 }
 
                 if (empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) && !value.Existe)
                 {
-                    erroresFila.Add($"No existe empleado en CUAD para Nro Socio '{nroSocio}' y Documento '{documento}'.");
+                    erroresFila.Add($"No existe empleado en la base para Nro Socio '{nroSocio}' y Documento '{documento}'.");
                 }
             }
 

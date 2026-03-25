@@ -243,7 +243,7 @@ namespace ImplementadorCUAD.ViewModels
             Progress = 0;
 
             // Inicializar colecciones con valores por defecto; se completan
-            // cuando la conexión a CUAD ya fue validada e inicializada.
+            // cuando la conexión a la base ya fue validada e inicializada.
             Empleador = new ObservableCollection<Empleador>
             {
                 new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" }
@@ -285,12 +285,12 @@ namespace ImplementadorCUAD.ViewModels
         }
 
         /// <summary>
-        /// Carga empleadores desde Configuracion.xml y entidades desde CUAD.
-        /// Debe llamarse sólo cuando la conexión a CUAD ya fue validada.
+        /// Carga empleadores desde `Configuration.xml` y entidades desde la base.
+        /// Debe llamarse sólo cuando la conexión a la base ya fue validada.
         /// </summary>
         public void InitializeAfterConnection()
         {
-            // 1) Empleadores desde Configuracion.xml
+            // 1) Empleadores desde Configuration.xml
             var conexionesService = new ConnectionsConfigService();
             var empleadoresConfig = conexionesService.GetEmpleadores();
 
@@ -310,7 +310,7 @@ namespace ImplementadorCUAD.ViewModels
                 idx++;
             }
 
-            // 2) Entidades desde CUAD usando la configuración actual
+            // 2) Entidades desde la base usando la configuración actual
             using (var db = _dbContextFactory.Create())
             {
                 var entidades = db.GetEntidad();
@@ -460,7 +460,7 @@ namespace ImplementadorCUAD.ViewModels
                 LogError($"Error de base de data al cargar o validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
-                    $"Error al consultar la base de data (CUAD).\n\n{ex.Message}",
+                    $"Error al consultar la base de data (base).\n\n{ex.Message}",
                     "Validación",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

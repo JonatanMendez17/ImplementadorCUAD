@@ -3,9 +3,9 @@
   <!--CONFIGURACIÓN DE COLUMNAS PARA ARCHIVOS
   Esto permite adaptar la importación a diferentes formatos de archivo sin necesidad de modificar el código de la aplicación.
 
-  1. Los archivos que se cargan en la aplicación deben contener, como mínimo, las columnas definidas en esta configuración.
+  1. Los archivos que se cargan en la aplicación deben contener las columnas definidas en esta configuración.
   2. Si una columna no está presente en el archivo a cargar, se puede deshabilitar comentando su columna en este archivo de configuración.
-  3. Si el archivo contiene un nombre de columna diferente al esperado, se agregar como un nuevo alias dentro este archivo configuración. -->-->
+  3. Si el archivo contiene un nombre de columna diferente al esperado, se debe agregar un nuevo alias. -->-->
 
 
   <!-- Archivo de categorías de socios:-->
@@ -48,7 +48,7 @@
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
         <Alias>Nro Socio</Alias>
       </Columna>
-      <Columna nombre="Fecha Alta Socio" tipo="fecha" largoMaximo="20">
+      <Columna nombre="Fecha Alta Socio" tipo="date" largoMaximo="20">
         <Alias>Fecha Alta Socio</Alias>
       </Columna>
       <Columna nombre="Documento" tipo="texto" largoMaximo="20">
@@ -117,7 +117,7 @@
       <Columna nombre="Nro Cuota" tipo="int" largoMaximo="5">
         <Alias>Nro Cuota</Alias>
       </Columna>
-      <Columna nombre="Fecha Vencimiento" tipo="fecha" largoMaximo="20">
+      <Columna nombre="Fecha Vencimiento" tipo="date" largoMaximo="20">
         <Alias>Fecha Vencimiento</Alias>
       </Columna>
       <Columna nombre="Monto" tipo="decimal" largoMaximo="15">
@@ -177,13 +177,13 @@
   </Archivo>
 
   <!-- CONEXIONES A BASES DE DATOS
-  Cuad: base CUAD (solo lectura)
-  ConexionBase: servidor y autenticación comunes. Se combina con baseDatos de cada empleador.
+  ConexionBase: base (solo lectura). De ahí se obtienen entidades, categorías y catálogo.
+  ConexionEmpleadores: servidor y autenticación comunes. Se combina con baseDatos de cada empleador.
   Empleador: cada uno apunta a su base (baseDatos) donde se importan los 6 archivos.-->
   
   <Conexiones>
-    <Cuad connectionString="Server=localhost;Database=CUAD;Trusted_Connection=True;TrustServerCertificate=True;" />
-    <ConexionBase connectionString="Server=localhost;Trusted_Connection=True;TrustServerCertificate=True;" />
+    <ConexionBase connectionString="Server=localhost;Database=CUAD;Trusted_Connection=True;TrustServerCertificate=True;" />
+    <ConexionEmpleadores connectionString="Server=localhost;Trusted_Connection=True;TrustServerCertificate=True;" />
       <Empleador nombre="BDI" baseDatos="BDI_Test" />
       <Empleador nombre="ACTIVOS" baseDatos="BDI_Activos" />
       <Empleador nombre="PASIVOS" baseDatos="BDI_Pasivos" />
