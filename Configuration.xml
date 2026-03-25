@@ -3,9 +3,9 @@
   <!--CONFIGURACIÓN DE COLUMNAS PARA ARCHIVOS
   Esto permite adaptar la importación a diferentes formatos de archivo sin necesidad de modificar el código de la aplicación.
 
-  1. Los archivos que se cargan en la aplicación deben contener, como mínimo, las columnas definidas en esta configuración.
+  1. Los archivos que se cargan en la aplicación deben contener las columnas definidas en esta configuración.
   2. Si una columna no está presente en el archivo a cargar, se puede deshabilitar comentando su columna en este archivo de configuración.
-  3. Si el archivo contiene un nombre de columna diferente al esperado, se agregar como un nuevo alias dentro este archivo configuración. -->-->
+  3. Si el archivo contiene un nombre de columna diferente al esperado, se debe agregar un nuevo alias. -->-->
 
 
   <!-- Archivo de categorías de socios:-->

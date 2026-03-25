@@ -285,12 +285,12 @@ namespace ImplementadorCUAD.ViewModels
         }
 
         /// <summary>
-        /// Carga empleadores desde Configuracion.xml y entidades desde CUAD.
+        /// Carga empleadores desde Configuration.xml y entidades desde CUAD.
         /// Debe llamarse sólo cuando la conexión a CUAD ya fue validada.
         /// </summary>
         public void InitializeAfterConnection()
         {
-            // 1) Empleadores desde Configuracion.xml
+            // 1) Empleadores desde Configuration.xml
             var conexionesService = new ConnectionsConfigService();
             var empleadoresConfig = conexionesService.GetEmpleadores();
 

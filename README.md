@@ -6,17 +6,17 @@ Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD 
 
 - .NET SDK 8.0 o superior
 - SQL Server accesible desde la máquina donde corre la aplicación
-- Configuración de conexiones en `Configuracion.xml` (sección `<Conexiones>`)
+- Configuración de conexiones en `Configuration.xml` (sección `<Conexiones>`)
 
 ## Ejecución
 
 1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio.
 2. Restaurar paquetes NuGet y compilar la solución.
-3. Configurar `Configuracion.xml` con las bases CUAD y empleadores.
+3. Configurar `Configuration.xml` con las bases CUAD y empleadores.
 4. Ejecutar el proyecto `ImplementadorCUAD` como proyecto de inicio.
 
 ## Configuración
-### Conexiones a bases de datos (`Configuracion.xml`)
+### Conexiones a bases de datos (`Configuration.xml`)
 
 En la sección `<Conexiones>` se definen:
 
@@ -28,7 +28,7 @@ También se puede indicar un connection string completo por empleador con el atr
 Si no existe la sección `<Conexiones>` o no hay empleadores configurados, el desplegable de empleador quedará vacío (solo "Seleccionar") y no se podrá
 implementar ni limpiar hasta configurar al menos un empleador.
 
-### Columnas de los archivos (`Configuracion.xml`)
+### Columnas de los archivos (`Configuration.xml`)
 
 En el mismo archivo se definen, por tipo de archivo (Categorías, Padrón, Consumos, etc.), las columnas esperadas, alias y reglas (tipo, largo, requerida).
 Si una columna no viene en el archivo, se puede comentar en la configuración para que la aplicación no la exija.

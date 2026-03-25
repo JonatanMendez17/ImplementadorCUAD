@@ -4,10 +4,10 @@ using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD.Services
 {
-    /// Lee y actualiza la sección Conexiones de Configuracion.xml: conexión CUAD y lista de empleadores con su connection string.
+    /// Lee y actualiza la sección Conexiones de Configuration.xml: conexión CUAD y lista de empleadores con su connection string.
     public class ConnectionsConfigService
     {
-        public const string RutaConfiguracionXml = "Configuracion.xml";
+        public const string RutaConfiguracionXml = "Configuration.xml";
         private readonly string _rutaXml = RutaConfiguracionXml;
 
         /// Obtiene el connection string de la base CUAD. Devuelve null si no existe la sección.
@@ -89,7 +89,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        /// Actualiza la cadena de conexión de CUAD en Configuracion.xml,
+        /// Actualiza la cadena de conexión de CUAD en Configuration.xml,
         /// agregando o modificando el nodo <Conexiones><Cuad connectionString="..." /></Conexiones>.
         public void SetCuadConnectionString(string connectionString)
         {

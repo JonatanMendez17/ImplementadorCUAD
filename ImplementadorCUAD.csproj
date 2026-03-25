@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Configuracion.xml">
+    <None Update="Configuration.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
