@@ -6,6 +6,7 @@ using ExcelDataReader;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.FileIO;
 
 namespace ImplementadorCUAD.Services
 {
@@ -213,6 +214,12 @@ namespace ImplementadorCUAD.Services
                     return null;
                 }
 
+                var extension = Path.GetExtension(filePath).ToLowerInvariant();
+                if (extension == ".csv" || extension == ".txt")
+                {
+                    return LoadDelimitedFile(logicalName, filePath, columnasConfig, log, progress);
+                }
+
                 using var enumerator = EnumerateFileLines(filePath).GetEnumerator();
 
                 if (!enumerator.MoveNext())
@@ -322,6 +329,154 @@ namespace ImplementadorCUAD.Services
                 _logger?.LogError(ex, "Error al cargar {LogicalName}", logicalName);
                 return null;
             }
+        }
+
+        private static char DetectDelimiter(string filePath)
+        {
+            // Heurística: elegir el delimitador que genere más campos en el header.
+            var commaCount = CountHeaderFields(filePath, ',');
+            var semiCount = CountHeaderFields(filePath, ';');
+
+            return semiCount > commaCount ? ';' : ',';
+        }
+
+        private static int CountHeaderFields(string filePath, char delimiter)
+        {
+            using var reader = new StreamReader(filePath, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            using var parser = new TextFieldParser(reader)
+            {
+                TextFieldType = FieldType.Delimited,
+                HasFieldsEnclosedInQuotes = true,
+                TrimWhiteSpace = true
+            };
+
+            parser.SetDelimiters(delimiter.ToString());
+
+            if (parser.EndOfData)
+                return 0;
+
+            var fields = parser.ReadFields();
+            return fields?.Length ?? 0;
+        }
+
+        private List<Dictionary<string, string>>? LoadDelimitedFile(
+            string logicalName,
+            string filePath,
+            List<ColumnConfiguration> columnasConfig,
+            IAppLogger log,
+            IProgress<int>? progress)
+        {
+            using var reader = new StreamReader(filePath, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            using var parser = new TextFieldParser(reader)
+            {
+                TextFieldType = FieldType.Delimited,
+                HasFieldsEnclosedInQuotes = true,
+                TrimWhiteSpace = true
+            };
+
+            var delimiter = DetectDelimiter(filePath);
+            parser.SetDelimiters(delimiter.ToString());
+
+            if (parser.EndOfData)
+            {
+                log.Error($"El Archivo {logicalName} se encuentra vacio.");
+                return null;
+            }
+
+            var headerFields = parser.ReadFields() ?? Array.Empty<string>();
+            var encabezados = headerFields.Select(v => (v ?? string.Empty).Trim()).ToList();
+
+            var indicePorEncabezadoNormalizado = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < encabezados.Count; i++)
+            {
+                var normalizado = NormalizeHeader(encabezados[i]);
+                if (!indicePorEncabezadoNormalizado.ContainsKey(normalizado))
+                {
+                    indicePorEncabezadoNormalizado[normalizado] = i;
+                }
+            }
+
+            var indiceColumnaPorClave = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var config in columnasConfig)
+            {
+                var indice = ResolveColumnIndex(config, indicePorEncabezadoNormalizado);
+                indiceColumnaPorClave[config.Clave] = indice;
+
+                if (!indice.HasValue && config.Requerida)
+                {
+                    log.Error($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
+                    return null;
+                }
+            }
+
+            var registros = new List<Dictionary<string, string>>();
+            var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var filasAceptadas = 0;
+            var filasRechazadas = 0;
+            var totalFilasDatos = 0;
+            var filaNumero = 1;
+
+            while (!parser.EndOfData)
+            {
+                filaNumero++;
+                var fields = parser.ReadFields() ?? Array.Empty<string>();
+
+                // Si la row está completamente vacía (todas las columnas vacías o en blanco), se omite.
+                if (fields.All(v => string.IsNullOrWhiteSpace(v)))
+                {
+                    continue;
+                }
+
+                var row = new Dictionary<string, string>();
+                var erroresFila = new List<string>();
+
+                for (int j = 0; j < columnasConfig.Count; j++)
+                {
+                    var config = columnasConfig[j];
+                    var indiceColumna = indiceColumnaPorClave[config.Clave];
+                    var value = indiceColumna.HasValue && indiceColumna.Value < fields.Length
+                        ? fields[indiceColumna.Value]
+                        : string.Empty;
+
+                    if (!ValidateGeneralRules(value, config, out var error))
+                    {
+                        erroresFila.Add($"columna '{config.Clave}': {error}");
+                    }
+
+                    row[config.Clave] = value;
+                }
+
+                var filaEsValida = erroresFila.Count == 0;
+
+                if (filaEsValida)
+                {
+                    if (ValidateSpecificUniqueness(logicalName, filaNumero, row, uniqueKeys, log))
+                    {
+                        registros.Add(row);
+                        filasAceptadas++;
+                    }
+                    else
+                    {
+                        filasRechazadas++;
+                    }
+                }
+                else
+                {
+                    log.Warn($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
+                    filasRechazadas++;
+                }
+
+                totalFilasDatos++;
+
+                if (totalFilasDatos % 1000 == 0 && progress is not null)
+                {
+                    progress.Report(0);
+                }
+            }
+
+            log.Info($"{logicalName}: Validaciones realizadas correctamente.");
+            log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+            return registros;
         }
 
         private static int? ResolveColumnIndex( ColumnConfiguration config, Dictionary<string, int> indicePorEncabezadoNormalizado)
@@ -444,7 +599,7 @@ namespace ImplementadorCUAD.Services
 
                     return true;
 
-                case "texto":
+                case "string":
                     return true;
 
                 default:

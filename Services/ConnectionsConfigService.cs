@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using ImplementadorCUAD.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 
 namespace ImplementadorCUAD.Services
 {
@@ -11,6 +12,12 @@ namespace ImplementadorCUAD.Services
     {
         public const string RutaConfiguracionXml = "Configuration.xml";
         private readonly string _rutaXml = RutaConfiguracionXml;
+        private readonly ILogger<ConnectionsConfigService>? _logger;
+
+        public ConnectionsConfigService(ILogger<ConnectionsConfigService>? logger = null)
+        {
+            _logger = logger;
+        }
 
         /// Obtiene el connection string de la base (`ConexionBase`).
         /// Devuelve null si el nodo no existe o no puede leerse.
@@ -23,8 +30,11 @@ namespace ImplementadorCUAD.Services
                 var conexionBase = conexiones?.Element("ConexionBase");
                 return conexionBase?.Attribute("connectionString")?.Value?.Trim();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex,
+                    "Error leyendo {ConfigXmlPath} - metodo {Method}.",
+                    _rutaXml, nameof(GetConexionBaseConnectionString));
                 return null;
             }
         }
@@ -87,8 +97,11 @@ namespace ImplementadorCUAD.Services
 
                 return resultado;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex,
+                    "Error leyendo {ConfigXmlPath} - metodo {Method}.",
+                    _rutaXml, nameof(GetEmpleadores));
                 return resultado;
             }
         }

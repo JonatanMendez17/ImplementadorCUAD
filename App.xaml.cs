@@ -26,6 +26,8 @@ namespace ImplementadorCUAD
                     .AddDebug()
                     .AddProvider(new UiLoggerProvider());
             });
+            
+            ConnectionSettings.SetLoggerFactory(LoggerFactory);
 
             // Manejo global para evitar cierres abruptos sin informar al usuario.
             DispatcherUnhandledException += (_, args) =>

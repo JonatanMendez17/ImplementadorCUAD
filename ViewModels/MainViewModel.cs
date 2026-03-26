@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -38,13 +37,9 @@ namespace ImplementadorCUAD.ViewModels
         private bool _isProcessing;
         private bool _validationCompleted;
         private string? _implementationTime;
-        private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
+        private MainLogController _logController;
+        private readonly MainWorkflowService _workflowService;
         private DispatcherTimer? _logFlushTimer;
-        private readonly List<LogEntry> _fullLogForExport = new();
-        private bool _logTruncationMessageShown;
-
-        private const int MaxVisibleLogEntries = 50;
-        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, LogSeverity.Information, "Para ver todo el log, exporte a archivo.");
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -238,6 +233,8 @@ namespace ImplementadorCUAD.ViewModels
             UiLogStream.LogReceived += OnUiLogReceived;
 
             Logs = new ObservableCollection<LogEntry>();
+            _logController = new MainLogController(Logs);
+            _workflowService = new MainWorkflowService(_fileImportService, _generalValidationService, _implementationService, _dbContextFactory);
             LogRaw("Esperando carga de archivos para validacion...");
 
             Progress = 0;
@@ -412,10 +409,7 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
-            Logs.Clear();
-            _fullLogForExport.Clear();
-            _logTruncationMessageShown = false;
-            while (_logBuffer.TryDequeue(out _)) { }
+            _logController.Clear();
 
             if (!HasEntidadSeleccionadaReal())
             {
@@ -452,8 +446,15 @@ namespace ImplementadorCUAD.ViewModels
                 var selection = BuildSelection();
                 var progress = new Progress<int>(p => Progress = p);
 
-                _validationResult = await Task.Run(
-                    () => _fileImportService.ValidateAndLoadFiles(selection, _appLogger, progress));
+                var outcome = await _workflowService.ValidateAsync(
+                    selection,
+                    EntidadSeleccionada,
+                    EmpleadorSeleccionado,
+                    _appLogger,
+                    progress);
+
+                _validationResult = outcome.ValidationResult;
+                ValidationCompleted = outcome.ValidationCompleted;
             }
             catch (SqlException ex)
             {
@@ -490,62 +491,6 @@ namespace ImplementadorCUAD.ViewModels
             {
                 ValidationCompleted = false;
                 return;
-            }
-
-            try
-            {
-                var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
-                    _validationResult,
-                    _appLogger,
-                    out var entidadComun);
-
-                if (!entidadConsistente)
-                {
-                    ValidationCompleted = false;
-                    return;
-                }
-
-                if (!MatchesSelectedEntidad(entidadComun))
-                {
-                    LogError($"La entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
-                    ValidationCompleted = false;
-                    return;
-                }
-
-                if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
-                {
-                    LogWarning($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
-                    ValidationCompleted = false;
-                    return;
-                }
-
-                var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
-                    entidadComun,
-                    EmpleadorSeleccionado,
-                    EmpleadorSeleccionado?.ConnectionString,
-                    _appLogger);
-
-                ValidationCompleted = sinDatosPrevios;
-            }
-            catch (SqlException ex)
-            {
-                LogError($"Error de base de data al validar: {ex.Message}");
-                ValidationCompleted = false;
-                DialogService.Show(
-                    $"Error al consultar la base de data.\n\n{ex.Message}",
-                    "Validación",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                LogError($"Error al validar: {ex.Message}");
-                ValidationCompleted = false;
-                DialogService.Show(
-                    $"Error inesperado al validar.\n\n{ex.Message}",
-                    "Validación",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
             }
         }
 
@@ -610,7 +555,7 @@ namespace ImplementadorCUAD.ViewModels
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await _implementationService.CopyToDatabaseAsync(
+                await _workflowService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     _appLogger,
@@ -700,10 +645,10 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                using var db = _dbContextFactory.Create(EmpleadorSeleccionado?.ConnectionString);
-                var eliminados = db.DeleteImportedDataForEntidad(
-                    entidadSeleccionada.Nombre ?? string.Empty,
-                    entidadSeleccionada.EntId);
+                var eliminados = _workflowService.ClearEntityForEmpleador(
+                    entidadSeleccionada,
+                    EmpleadorSeleccionado!,
+                    _appLogger);
 
                 var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
                 LogInformation($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
@@ -777,10 +722,7 @@ namespace ImplementadorCUAD.ViewModels
             ImplementationTime = null;
             _validationResult = new ImplementationValidationResult();
 
-            Logs.Clear();
-            _fullLogForExport.Clear();
-            _logTruncationMessageShown = false;
-            while (_logBuffer.TryDequeue(out _)) { }
+            _logController.Clear();
             LogRaw("Esperando carga de archivos para validacion...");
         }
 
@@ -812,7 +754,7 @@ namespace ImplementadorCUAD.ViewModels
         {
             FlushAllPendingLogs();
 
-            if (_fullLogForExport.Count == 0)
+            if (_logController.FullLogForExport.Count == 0)
             {
                 LogWarning("No hay mensajes de log para exportar.");
                 return;
@@ -834,7 +776,7 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                File.WriteAllLines(dialog.FileName, _fullLogForExport.Select(l => l.ToExportString()));
+                File.WriteAllLines(dialog.FileName, _logController.FullLogForExport.Select(l => l.ToExportString()));
                 LogInformation($"Log exportado a: {dialog.FileName}");
                 var result = DialogService.Show(
                     $"Log generado en:\n{dialog.FileName}\n\nNota: si exporta mientras la validación sigue en proceso, este archivo puede no incluir todos los logs todavía.",
@@ -858,9 +800,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private void FlushAllPendingLogs()
         {
-            while (FlushLogBuffer() > 0)
-            {
-            }
+            _logController.FlushAllPendingLogs();
         }
 
         private void LogInformation(string message)
@@ -919,58 +859,17 @@ namespace ImplementadorCUAD.ViewModels
 
         private void AddLogEntry(LogEntry entry)
         {
-            var dispatcher = Application.Current?.Dispatcher;
-            if (dispatcher != null && !dispatcher.CheckAccess())
-            {
-                _logBuffer.Enqueue(entry);
-            }
-            else
-            {
-                _fullLogForExport.Add(entry);
-                if (_logTruncationMessageShown)
-                    return;
-                if (Logs.Count < MaxVisibleLogEntries)
-                    Logs.Add(entry);
-                else
-                {
-                    Logs.Add(LogTruncationPlaceholder);
-                    _logTruncationMessageShown = true;
-                }
-            }
+            _logController.AddLogEntry(entry);
         }
-
-        private const int MaxLogEntriesPerFlush = 200;
 
         private int FlushLogBuffer()
         {
-            var count = 0;
-            while (count < MaxLogEntriesPerFlush && _logBuffer.TryDequeue(out var entry))
-            {
-                _fullLogForExport.Add(entry);
-                if (!_logTruncationMessageShown)
-                {
-                    if (Logs.Count < MaxVisibleLogEntries)
-                        Logs.Add(entry);
-                    else
-                    {
-                        Logs.Add(LogTruncationPlaceholder);
-                        _logTruncationMessageShown = true;
-                    }
-                }
-                count++;
-            }
-            return count;
+            return _logController.FlushLogBuffer();
         }
 
         private void ScheduleDeferredLogFlush()
         {
-            Application.Current?.Dispatcher.BeginInvoke(new Action(DeferredFlushNext), DispatcherPriority.Background);
-        }
-
-        private void DeferredFlushNext()
-        {
-            if (FlushLogBuffer() >= MaxLogEntriesPerFlush)
-                ScheduleDeferredLogFlush();
+            _logController.ScheduleDeferredLogFlush();
         }
 
         public sealed class LogEntry
