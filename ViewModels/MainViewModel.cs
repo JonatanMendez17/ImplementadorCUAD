@@ -11,6 +11,7 @@ using ImplementadorCUAD.Commands;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services;
+using ImplementadorCUAD.ViewModels.Coordinators;
 
 namespace ImplementadorCUAD.ViewModels
 {
@@ -18,9 +19,6 @@ namespace ImplementadorCUAD.ViewModels
     {
         #region Fields
         private readonly IAppDbContextFactory _dbContextFactory;
-        private readonly FileImportService _fileImportService;
-        private readonly GeneralValidationService _generalValidationService;
-        private readonly ImplementationService _implementationService;
         private readonly IAppLogger _appLogger;
         private readonly ILogger _logger;
         private bool _isDisposed;
@@ -33,9 +31,17 @@ namespace ImplementadorCUAD.ViewModels
         private bool _isProcessing;
         private bool _validationCompleted;
         private string? _implementationTime;
-        private MainLogController _logController;
-        private readonly MainWorkflowService _workflowService;
+        private readonly MainWorkflowFacade _workflowFacade;
+        private readonly FileSelectionCoordinator _fileSelectionCoordinator;
+        private readonly LogUiController _logUiController;
         private DispatcherTimer? _logFlushTimer;
+        private readonly AsyncRelayCommand _selectFileCommandImpl;
+        private readonly AsyncRelayCommand _clearFileCommandImpl;
+        private readonly AsyncRelayCommand _validateCommandImpl;
+        private readonly AsyncRelayCommand _copyCommandImpl;
+        private readonly AsyncRelayCommand _exportLogCommandImpl;
+        private readonly AsyncRelayCommand _clearUiCommandImpl;
+        private readonly AsyncRelayCommand _clearDataCommandImpl;
 
         // Keys de tipos de archivo soportados por la pantalla.
         private const string FileCategorias = "Categorias";
@@ -68,7 +74,7 @@ namespace ImplementadorCUAD.ViewModels
                 if (SetProperty(ref _entidadSeleccionada, value))
                 {
                     InvalidateValidationState("Se actualizo la entidad seleccionada. Se reinicio el estado de validacion.");
-                    CommandManager.InvalidateRequerySuggested();
+                    RefreshCommandStates();
                 }
             }
         }
@@ -86,7 +92,7 @@ namespace ImplementadorCUAD.ViewModels
             {
                 if (SetProperty(ref _isProcessing, value))
                 {
-                    CommandManager.InvalidateRequerySuggested();
+                    RefreshCommandStates();
                 }
             }
         }
@@ -123,16 +129,21 @@ namespace ImplementadorCUAD.ViewModels
             _logger = logger;
             _dbContextFactory = new AppDbContextFactory();
             var loggerFactory = App.LoggerFactory;
-            _fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
-            _generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
-            _implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
-            _appLogger = new AppLoggerAdapter(LogInformation, LogWarning, LogError);
+            var fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
+            var generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
+            var implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
             UiLogStream.LogReceived += OnUiLogReceived;
 
             Logs = new ObservableCollection<LogEntry>();
-            _logController = new MainLogController(Logs);
-            _workflowService = new MainWorkflowService(_fileImportService, _generalValidationService, _implementationService, _dbContextFactory);
-            LogRaw("Esperando carga de archivos para validacion...");
+            var logController = new MainLogController(Logs);
+            _logUiController = new LogUiController(logController, _logger);
+            _appLogger = new AppLoggerAdapter(
+                _logUiController.LogInformation,
+                _logUiController.LogWarning,
+                _logUiController.LogError);
+            var workflowService = new MainWorkflowService(fileImportService, generalValidationService, implementationService, _dbContextFactory);
+            _workflowFacade = new MainWorkflowFacade(workflowService);
+            _logUiController.LogRaw("Esperando carga de archivos para validacion...");
 
             Progress = 0;
 
@@ -155,18 +166,34 @@ namespace ImplementadorCUAD.ViewModels
             RegisterFileItem(new FileInputItemViewModel(FileConsumosDetalle, "Consumos Detalle", true));
             RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", false));
             RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", false));
+            _fileSelectionCoordinator = new FileSelectionCoordinator(
+                _fileItemsByKey,
+                FileCategorias,
+                FilePadron,
+                FileConsumos,
+                FileConsumosDetalle,
+                FileServicios,
+                FileCatalogoServicios);
+
+            _selectFileCommandImpl = AsyncRelayCommand.Create(SelectFileFromParameter);
+            _clearFileCommandImpl = AsyncRelayCommand.Create(ClearFileFromParameter);
+            _validateCommandImpl = new AsyncRelayCommand(_ => ValidateFilesAsync());
+            _copyCommandImpl = new AsyncRelayCommand(_ => CopyToDatabaseAsync());
+            _exportLogCommandImpl = AsyncRelayCommand.Create(_ => ExportLog());
+            _clearUiCommandImpl = AsyncRelayCommand.Create(_ => ClearUi(), _ => !IsProcessing);
+            _clearDataCommandImpl = AsyncRelayCommand.Create(ClearData, CanClearEntityData);
+
+            SelectFileCommand = _selectFileCommandImpl;
+            ClearFileCommand = _clearFileCommandImpl;
+            AssignFileItemCommands();
+            ValidateCommand = _validateCommandImpl;
+            CopyCommand = _copyCommandImpl;
+            ExportLogCommand = _exportLogCommandImpl;
+            ClearUiCommand = _clearUiCommandImpl;
+            ClearDataCommand = _clearDataCommandImpl;
 
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
-
-            SelectFileCommand = new RelayCommand(SelectFileFromParameter);
-            ClearFileCommand = new RelayCommand(ClearFileFromParameter);
-            AssignFileItemCommands();
-            ValidateCommand = new SimpleAsyncCommand(ValidateFilesAsync);
-            CopyCommand = new SimpleAsyncCommand(CopyToDatabaseAsync);
-            ExportLogCommand = new RelayCommand(_ => ExportLog());
-            ClearUiCommand = new RelayCommand(_ => ClearUi(), _ => !IsProcessing);
-            ClearDataCommand = new RelayCommand(ClearData, CanClearEntityData);
         }
         #endregion
 
@@ -218,41 +245,14 @@ namespace ImplementadorCUAD.ViewModels
         /// </summary>
         private ImplementationFileSelection BuildSelection()
         {
-            return new ImplementationFileSelection
-            {
-                ArchivoCategorias = GetSinglePath(FileCategorias),
-                ArchivoPadron = GetSinglePath(FilePadron),
-                ArchivoConsumos = GetSinglePath(FileConsumos),
-                ArchivosConsumosDetalle = GetPaths(FileConsumosDetalle),
-                ArchivoServicios = GetSinglePath(FileServicios),
-                ArchivoCatalogoServicios = GetSinglePath(FileCatalogoServicios),
-                TargetConnectionString = EmpleadorSeleccionado?.ConnectionString
-            };
+            return _fileSelectionCoordinator.BuildSelection(EmpleadorSeleccionado?.ConnectionString);
         }
         #endregion
 
         #region File Commands
         private void SelectFile(string type)
         {
-            var item = GetFileItem(type);
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
-                Multiselect = item.IsMultiple
-            };
-
-            if (dialog.ShowDialog() != true)
-            {
-                return;
-            }
-
-            if (item.IsMultiple)
-            {
-                item.SetFromDialogSelection(dialog.FileNames);
-                return;
-            }
-
-            SetSingleFilePath(type, dialog.FileName);
+            _fileSelectionCoordinator.SelectFile(type);
         }
 
         private void SelectFileFromParameter(object? parameter)
@@ -267,14 +267,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private void ClearFile(string type)
         {
-            var item = GetFileItem(type);
-            if (item.IsMultiple)
-            {
-                item.Clear();
-                return;
-            }
-
-            SetSingleFilePath(type, null);
+            _fileSelectionCoordinator.ClearFile(type);
         }
 
         private void ClearFileFromParameter(object? parameter)
@@ -296,7 +289,7 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
-            _logController.Clear();
+            _logUiController.Clear();
 
             if (!HasEntidadSeleccionadaReal())
             {
@@ -325,7 +318,7 @@ namespace ImplementadorCUAD.ViewModels
             {
                 Interval = TimeSpan.FromMilliseconds(150)
             };
-            _logFlushTimer.Tick += (_, _) => FlushLogBuffer();
+            _logFlushTimer.Tick += (_, _) => _logUiController.FlushLogBuffer();
             _logFlushTimer.Start();
 
             try
@@ -333,7 +326,7 @@ namespace ImplementadorCUAD.ViewModels
                 var selection = BuildSelection();
                 var progress = new Progress<int>(p => Progress = p);
 
-                var outcome = await _workflowService.ValidateAsync(
+                var outcome = await _workflowFacade.ValidateAsync(
                     selection,
                     EntidadSeleccionada,
                     EmpleadorSeleccionado,
@@ -345,7 +338,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                LogError($"Error de base de data al cargar o validar archivos: {ex.Message}");
+                _logUiController.LogError($"Error de base de data al cargar o validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error al consultar la base de data (base).\n\n{ex.Message}",
@@ -356,7 +349,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                LogError($"Error al validar archivos: {ex.Message}");
+                _logUiController.LogError($"Error al validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error inesperado al validar.\n\n{ex.Message}",
@@ -369,9 +362,9 @@ namespace ImplementadorCUAD.ViewModels
             {
                 _logFlushTimer.Stop();
                 _logFlushTimer = null;
-                FlushLogBuffer();
+                _logUiController.FlushLogBuffer();
                 IsProcessing = false;
-                ScheduleDeferredLogFlush();
+                _logUiController.ScheduleDeferredLogFlush();
             }
 
             if (!_validationResult.HasLoadedData)
@@ -405,7 +398,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
-                LogWarning($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                _logUiController.LogWarning($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
                 DialogService.Show(
                     $"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre}'.",
                     "Implementación",
@@ -416,7 +409,7 @@ namespace ImplementadorCUAD.ViewModels
 
             var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            LogInformation($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+            _logUiController.LogInformation($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
             if (!ValidationCompleted || !_validationResult.HasLoadedData)
             {
@@ -428,11 +421,11 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (resultado != MessageBoxResult.Yes)
                 {
-                    LogWarning("Implementación cancelada por el usuario.");
+                    _logUiController.LogWarning("Implementación cancelada por el usuario.");
                     return;
                 }
 
-                LogWarning("El usuario confirmo implementar con validaciones pendientes.");
+                _logUiController.LogWarning("El usuario confirmo implementar con validaciones pendientes.");
             }
 
             IsProcessing = true;
@@ -442,7 +435,7 @@ namespace ImplementadorCUAD.ViewModels
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await _workflowService.CopyToDatabaseAsync(
+                await _workflowFacade.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     _appLogger,
@@ -460,7 +453,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (SqlException ex)
             {
                 cronometro.Stop();
-                LogError($"Error de base de data al implementar: {ex.Message}");
+                _logUiController.LogError($"Error de base de data al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error al escribir en la base de data.\n\n{ex.Message}",
                     "Implementación",
@@ -470,7 +463,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (Exception ex)
             {
                 cronometro.Stop();
-                LogError($"Error al implementar: {ex.Message}");
+                _logUiController.LogError($"Error al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error inesperado al implementar.\n\n{ex.Message}",
                     "Implementación",
@@ -503,7 +496,7 @@ namespace ImplementadorCUAD.ViewModels
             if (!HasEmpleadorSeleccionadoReal() || string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
                 var nombreEmpleador = EmpleadorSeleccionado?.Nombre ?? "seleccionado";
-                LogWarning($"No se encontró base de data para empleador '{nombreEmpleador}'.");
+                _logUiController.LogWarning($"No se encontró base de data para empleador '{nombreEmpleador}'.");
                 DialogService.Show(
                     string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString)
                         ? $"No se encontró base de data para empleador '{nombreEmpleador}'."
@@ -526,24 +519,24 @@ namespace ImplementadorCUAD.ViewModels
 
             if (confirmacion != MessageBoxResult.Yes)
             {
-                LogWarning("Limpieza de base cancelada por el usuario.");
+                _logUiController.LogWarning("Limpieza de base cancelada por el usuario.");
                 return;
             }
 
             try
             {
-                var eliminados = _workflowService.ClearEntityForEmpleador(
+                var eliminados = _workflowFacade.ClearEntityForEmpleador(
                     entidadSeleccionada,
                     EmpleadorSeleccionado!,
                     _appLogger);
 
                 var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
-                LogInformation($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
-                LogInformation($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
+                _logUiController.LogInformation($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
+                _logUiController.LogInformation($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
 
                 if (totalEliminado == 0)
                 {
-                    LogWarning("No se encontraron registros para eliminar con la entidad seleccionada.");
+                    _logUiController.LogWarning("No se encontraron registros para eliminar con la entidad seleccionada.");
                 }
 
                 DialogService.Show(
@@ -558,7 +551,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                LogError($"Error de base de data al limpiar: {ex.Message}");
+                _logUiController.LogError($"Error de base de data al limpiar: {ex.Message}");
                 DialogService.Show(
                     $"Error al consultar o modificar la base de data.\n\n{ex.Message}",
                     "Limpieza de base",
@@ -567,7 +560,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                LogError($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
+                _logUiController.LogError($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
                 DialogService.Show(
                     $"No se pudo limpiar la base.\n\n{ex.Message}",
                     "Limpieza de base",
@@ -587,7 +580,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (teniaEstado)
             {
-                LogInformation(message);
+                _logUiController.LogInformation(message);
             }
         }
 
@@ -606,8 +599,8 @@ namespace ImplementadorCUAD.ViewModels
             ImplementationTime = null;
             _validationResult = new ImplementationValidationResult();
 
-            _logController.Clear();
-            LogRaw("Esperando carga de archivos para validacion...");
+            _logUiController.Clear();
+            _logUiController.LogRaw("Esperando carga de archivos para validacion...");
         }
 
         /// <summary>
@@ -615,45 +608,16 @@ namespace ImplementadorCUAD.ViewModels
         /// </summary>
         private void ClearAllFileInputs()
         {
-            SetSingleFilePath(FileCategorias, null);
-            SetSingleFilePath(FilePadron, null);
-            SetSingleFilePath(FileConsumos, null);
-            GetFileItem(FileConsumosDetalle).Clear();
-            SetSingleFilePath(FileServicios, null);
-            SetSingleFilePath(FileCatalogoServicios, null);
-        }
-
-        private bool MatchesSelectedEntidad(string entidadComun)
-        {
-            var entidadSeleccionada = EntidadSeleccionada;
-            if (entidadSeleccionada == null || entidadSeleccionada.EntId <= 0 || string.IsNullOrWhiteSpace(entidadComun))
-            {
-                return false;
-            }
-
-            var entidadNormalizada = entidadComun.Trim();
-
-            if (!string.IsNullOrWhiteSpace(entidadSeleccionada.Nombre) &&
-                string.Equals(entidadNormalizada, entidadSeleccionada.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (int.TryParse(entidadNormalizada, out var entidadId))
-            {
-                return entidadId == entidadSeleccionada.EntId;
-            }
-
-            return string.Equals(entidadNormalizada, entidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
+            _fileSelectionCoordinator.ClearAllFileInputs();
         }
 
         private void ExportLog()
         {
-            FlushAllPendingLogs();
+            _logUiController.FlushAllPendingLogs();
 
-            if (_logController.FullLogForExport.Count == 0)
+            if (_logUiController.FullLogForExport.Count == 0)
             {
-                LogWarning("No hay mensajes de log para exportar.");
+                _logUiController.LogWarning("No hay mensajes de log para exportar.");
                 return;
             }
 
@@ -673,8 +637,8 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                File.WriteAllLines(dialog.FileName, _logController.FullLogForExport.Select(l => l.ToExportString()));
-                LogInformation($"Log exportado a: {dialog.FileName}");
+                File.WriteAllLines(dialog.FileName, _logUiController.FullLogForExport.Select(l => l.ToExportString()));
+                _logUiController.LogInformation($"Log exportado a: {dialog.FileName}");
                 var result = DialogService.Show(
                     $"Log generado en:\n{dialog.FileName}\n\nNota: si exporta mientras la validación sigue en proceso, este archivo puede no incluir todos los logs todavía.",
                     "Exportar log",
@@ -690,83 +654,14 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                LogError($"Error al exportar el log: {ex.Message}");
+                _logUiController.LogError($"Error al exportar el log: {ex.Message}");
                 DialogService.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void FlushAllPendingLogs()
-        {
-            _logController.FlushAllPendingLogs();
-        }
-
-        private void LogInformation(string message)
-        {
-            Log(message, LogSeverity.Information);
-        }
-
-        private void LogWarning(string message)
-        {
-            Log(message, LogSeverity.Warning);
-        }
-
-        private void LogError(string message)
-        {
-            Log(message, LogSeverity.Error);
-        }
-
-        private void LogRaw(string message)
-        {
-            var entry = new LogEntry(null, LogSeverity.Information, message);
-            AddLogEntry(entry);
-        }
-
-        private void Log(string message, LogSeverity severity)
-        {
-            WriteToILogger(message, severity);
-        }
-
         private void OnUiLogReceived(UiLogRecord record)
         {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            var timestamp = record.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var entry = new LogEntry(timestamp, record.Severity, record.Message);
-            AddLogEntry(entry);
-        }
-
-        private void WriteToILogger(string message, LogSeverity severity)
-        {
-            switch (severity)
-            {
-                case LogSeverity.Warning:
-                    _logger.LogWarning("{Message}", message);
-                    break;
-                case LogSeverity.Error:
-                    _logger.LogError("{Message}", message);
-                    break;
-                default:
-                    _logger.LogInformation("{Message}", message);
-                    break;
-            }
-        }
-
-        private void AddLogEntry(LogEntry entry)
-        {
-            _logController.AddLogEntry(entry);
-        }
-
-        private int FlushLogBuffer()
-        {
-            return _logController.FlushLogBuffer();
-        }
-
-        private void ScheduleDeferredLogFlush()
-        {
-            _logController.ScheduleDeferredLogFlush();
+            _logUiController.OnUiLogReceived(_isDisposed, record);
         }
         #endregion
 
@@ -819,25 +714,6 @@ namespace ImplementadorCUAD.ViewModels
             return _fileItemsByKey[key];
         }
 
-        private string? GetSinglePath(string key)
-        {
-            return GetFileItem(key).SinglePath;
-        }
-
-        private List<string> GetPaths(string key)
-        {
-            return GetFileItem(key).Paths.ToList();
-        }
-
-        private void SetSingleFilePath(string key, string? value)
-        {
-            var item = GetFileItem(key);
-            if (!item.IsMultiple)
-            {
-                item.SinglePath = value;
-            }
-        }
-
         /// <summary>
         /// Asigna comandos genéricos (select/clear) a cada item usando su Key como parámetro.
         /// </summary>
@@ -848,6 +724,17 @@ namespace ImplementadorCUAD.ViewModels
                 item.SelectCommand = SelectFileCommand;
                 item.ClearCommand = ClearFileCommand;
             }
+        }
+
+        private void RefreshCommandStates()
+        {
+            _selectFileCommandImpl.RaiseCanExecuteChanged();
+            _clearFileCommandImpl.RaiseCanExecuteChanged();
+            _validateCommandImpl.RaiseCanExecuteChanged();
+            _copyCommandImpl.RaiseCanExecuteChanged();
+            _exportLogCommandImpl.RaiseCanExecuteChanged();
+            _clearUiCommandImpl.RaiseCanExecuteChanged();
+            _clearDataCommandImpl.RaiseCanExecuteChanged();
         }
 
         private bool HasEntidadSeleccionadaReal()
