@@ -4,6 +4,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Presentation;
+using ImplementadorCUAD.Presentation.Dialogs;
 using ImplementadorCUAD.Services;
 
 namespace ImplementadorCUAD

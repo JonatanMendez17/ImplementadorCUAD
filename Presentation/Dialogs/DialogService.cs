@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Presentation.Dialogs
 {
     public static class DialogService
     {

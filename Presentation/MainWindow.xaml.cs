@@ -2,7 +2,7 @@ using System.Windows;
 using Microsoft.Extensions.Logging;
 using ImplementadorCUAD.ViewModels;
 
-namespace ImplementadorCUAD
+namespace ImplementadorCUAD.Presentation
 {
     public partial class MainWindow : Window
     {

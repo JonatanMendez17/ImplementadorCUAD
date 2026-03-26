@@ -1,8 +1,7 @@
 using System.Windows;
 using ImplementadorCUAD.Data;
-using ImplementadorCUAD.Services;
 
-namespace ImplementadorCUAD
+namespace ImplementadorCUAD.Presentation.Dialogs
 {
     public partial class ConnectionWindow : Window
     {
