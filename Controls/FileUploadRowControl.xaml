@@ -11,6 +11,7 @@
         <Button Grid.Column="0"
                 Style="{StaticResource FileRowButtonStyle}"
                 Command="{Binding SelectCommand, ElementName=Root}"
+                CommandParameter="{Binding SelectCommandParameter}"
                 Margin="0,0,4,0"
                 ToolTip="{Binding ToolTipText, ElementName=Root}">
             <Grid>
@@ -43,6 +44,7 @@
         <Button Grid.Column="1"
                 Style="{StaticResource OutlineButtonStyle}"
                 Command="{Binding ClearCommand, ElementName=Root}"
+                CommandParameter="{Binding ClearCommandParameter}"
                 Content="✕"
                 FontSize="12"
                 Padding="0"

@@ -16,6 +16,7 @@ namespace ImplementadorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase, IDisposable
     {
+        #region Fields
         private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
@@ -36,12 +37,16 @@ namespace ImplementadorCUAD.ViewModels
         private readonly MainWorkflowService _workflowService;
         private DispatcherTimer? _logFlushTimer;
 
+        // Keys de tipos de archivo soportados por la pantalla.
         private const string FileCategorias = "Categorias";
         private const string FilePadron = "Padron";
         private const string FileConsumos = "Consumos";
         private const string FileConsumosDetalle = "ConsumosDetalle";
         private const string FileServicios = "Servicios";
         private const string FileCatalogoServicios = "CatalogoServicios";
+        #endregion
+
+        #region Bindable Properties
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -103,24 +108,16 @@ namespace ImplementadorCUAD.ViewModels
         public ObservableCollection<Entidad> Entidad { get; }
         public ObservableCollection<FileInputItemViewModel> FileInputs { get; }
 
-        public ICommand SeleccionarCategoriasCommand { get; }
-        public ICommand SeleccionarPadronCommand { get; }
-        public ICommand SeleccionarConsumosCommand { get; }
-        public ICommand SeleccionarConsumosDetalleCommand { get; }
-        public ICommand SeleccionarServiciosCommand { get; }
-        public ICommand SeleccionarCatalogoServiciosCommand { get; }
-        public ICommand LimpiarCategoriasArchivoCommand { get; }
-        public ICommand LimpiarPadronArchivoCommand { get; }
-        public ICommand LimpiarConsumosArchivoCommand { get; }
-        public ICommand LimpiarConsumosDetalleArchivoCommand { get; }
-        public ICommand LimpiarServiciosArchivoCommand { get; }
-        public ICommand LimpiarCatalogoServiciosArchivoCommand { get; }
+        public ICommand SelectFileCommand { get; }
+        public ICommand ClearFileCommand { get; }
         public ICommand ValidateCommand { get; }
         public ICommand CopyCommand { get; }
         public ICommand ExportLogCommand { get; }
         public ICommand ClearUiCommand { get; }
         public ICommand ClearDataCommand { get; }
+        #endregion
 
+        #region Constructor
         public MainViewModel(ILogger logger)
         {
             _logger = logger;
@@ -162,18 +159,8 @@ namespace ImplementadorCUAD.ViewModels
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
-            SeleccionarCategoriasCommand = new RelayCommand(_ => SelectFile(FileCategorias));
-            SeleccionarPadronCommand = new RelayCommand(_ => SelectFile(FilePadron));
-            SeleccionarConsumosCommand = new RelayCommand(_ => SelectFile(FileConsumos));
-            SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SelectFile(FileConsumosDetalle));
-            SeleccionarServiciosCommand = new RelayCommand(_ => SelectFile(FileServicios));
-            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SelectFile(FileCatalogoServicios));
-            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => ClearFile(FileCategorias));
-            LimpiarPadronArchivoCommand = new RelayCommand(_ => ClearFile(FilePadron));
-            LimpiarConsumosArchivoCommand = new RelayCommand(_ => ClearFile(FileConsumos));
-            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => ClearFile(FileConsumosDetalle));
-            LimpiarServiciosArchivoCommand = new RelayCommand(_ => ClearFile(FileServicios));
-            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => ClearFile(FileCatalogoServicios));
+            SelectFileCommand = new RelayCommand(SelectFileFromParameter);
+            ClearFileCommand = new RelayCommand(ClearFileFromParameter);
             AssignFileItemCommands();
             ValidateCommand = new SimpleAsyncCommand(ValidateFilesAsync);
             CopyCommand = new SimpleAsyncCommand(CopyToDatabaseAsync);
@@ -181,7 +168,9 @@ namespace ImplementadorCUAD.ViewModels
             ClearUiCommand = new RelayCommand(_ => ClearUi(), _ => !IsProcessing);
             ClearDataCommand = new RelayCommand(ClearData, CanClearEntityData);
         }
+        #endregion
 
+        #region Initialization / Selection
         /// <summary>
         /// Carga empleadores desde `Configuration.xml` y entidades desde la base.
         /// Debe llamarse sólo cuando la conexión a la base ya fue validada.
@@ -224,6 +213,9 @@ namespace ImplementadorCUAD.ViewModels
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
         }
 
+        /// <summary>
+        /// Convierte el estado actual de FileInputs al modelo usado por los servicios.
+        /// </summary>
         private ImplementationFileSelection BuildSelection()
         {
             return new ImplementationFileSelection
@@ -237,7 +229,9 @@ namespace ImplementadorCUAD.ViewModels
                 TargetConnectionString = EmpleadorSeleccionado?.ConnectionString
             };
         }
+        #endregion
 
+        #region File Commands
         private void SelectFile(string type)
         {
             var item = GetFileItem(type);
@@ -261,6 +255,16 @@ namespace ImplementadorCUAD.ViewModels
             SetSingleFilePath(type, dialog.FileName);
         }
 
+        private void SelectFileFromParameter(object? parameter)
+        {
+            if (parameter is not string key || string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            SelectFile(key);
+        }
+
         private void ClearFile(string type)
         {
             var item = GetFileItem(type);
@@ -273,6 +277,18 @@ namespace ImplementadorCUAD.ViewModels
             SetSingleFilePath(type, null);
         }
 
+        private void ClearFileFromParameter(object? parameter)
+        {
+            if (parameter is not string key || string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            ClearFile(key);
+        }
+        #endregion
+
+        #region Main Workflows
         private async Task ValidateFilesAsync()
         {
             if (IsProcessing)
@@ -559,7 +575,9 @@ namespace ImplementadorCUAD.ViewModels
                     MessageBoxImage.Error);
             }
         }
+        #endregion
 
+        #region UI State / Logging
         private void InvalidateValidationState(string message)
         {
             var teniaEstado = _validationResult.HasLoadedData || ValidationCompleted || Progress > 0;
@@ -582,12 +600,7 @@ namespace ImplementadorCUAD.ViewModels
 
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
-            SetSingleFilePath(FileCategorias, null);
-            SetSingleFilePath(FilePadron, null);
-            SetSingleFilePath(FileConsumos, null);
-            GetFileItem(FileConsumosDetalle).Clear();
-            SetSingleFilePath(FileServicios, null);
-            SetSingleFilePath(FileCatalogoServicios, null);
+            ClearAllFileInputs();
             ValidationCompleted = false;
             Progress = 0;
             ImplementationTime = null;
@@ -595,6 +608,19 @@ namespace ImplementadorCUAD.ViewModels
 
             _logController.Clear();
             LogRaw("Esperando carga de archivos para validacion...");
+        }
+
+        /// <summary>
+        /// Limpia todos los archivos seleccionados en la UI.
+        /// </summary>
+        private void ClearAllFileInputs()
+        {
+            SetSingleFilePath(FileCategorias, null);
+            SetSingleFilePath(FilePadron, null);
+            SetSingleFilePath(FileConsumos, null);
+            GetFileItem(FileConsumosDetalle).Clear();
+            SetSingleFilePath(FileServicios, null);
+            SetSingleFilePath(FileCatalogoServicios, null);
         }
 
         private bool MatchesSelectedEntidad(string entidadComun)
@@ -742,7 +768,9 @@ namespace ImplementadorCUAD.ViewModels
         {
             _logController.ScheduleDeferredLogFlush();
         }
+        #endregion
 
+        #region Nested Types
         public sealed class LogEntry
         {
             public LogEntry(string? timestamp, LogSeverity severity, string messageBody)
@@ -766,7 +794,9 @@ namespace ImplementadorCUAD.ViewModels
                     : $"{Timestamp} - {Message}";
             }
         }
+        #endregion
 
+        #region Helpers
         private static string GetPrefix(LogSeverity severity)
         {
             return severity switch
@@ -808,20 +838,16 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
+        /// <summary>
+        /// Asigna comandos genéricos (select/clear) a cada item usando su Key como parámetro.
+        /// </summary>
         private void AssignFileItemCommands()
         {
-            GetFileItem(FileCategorias).SelectCommand = SeleccionarCategoriasCommand;
-            GetFileItem(FileCategorias).ClearCommand = LimpiarCategoriasArchivoCommand;
-            GetFileItem(FilePadron).SelectCommand = SeleccionarPadronCommand;
-            GetFileItem(FilePadron).ClearCommand = LimpiarPadronArchivoCommand;
-            GetFileItem(FileConsumos).SelectCommand = SeleccionarConsumosCommand;
-            GetFileItem(FileConsumos).ClearCommand = LimpiarConsumosArchivoCommand;
-            GetFileItem(FileConsumosDetalle).SelectCommand = SeleccionarConsumosDetalleCommand;
-            GetFileItem(FileConsumosDetalle).ClearCommand = LimpiarConsumosDetalleArchivoCommand;
-            GetFileItem(FileCatalogoServicios).SelectCommand = SeleccionarCatalogoServiciosCommand;
-            GetFileItem(FileCatalogoServicios).ClearCommand = LimpiarCatalogoServiciosArchivoCommand;
-            GetFileItem(FileServicios).SelectCommand = SeleccionarServiciosCommand;
-            GetFileItem(FileServicios).ClearCommand = LimpiarServiciosArchivoCommand;
+            foreach (var item in FileInputs)
+            {
+                item.SelectCommand = SelectFileCommand;
+                item.ClearCommand = ClearFileCommand;
+            }
         }
 
         private bool HasEntidadSeleccionadaReal()
@@ -833,7 +859,9 @@ namespace ImplementadorCUAD.ViewModels
         {
             return EmpleadorSeleccionado != null && EmpleadorSeleccionado.EmrId > 0;
         }
+        #endregion
 
+        #region IDisposable
         public void Dispose()
         {
             if (_isDisposed)
@@ -846,6 +874,7 @@ namespace ImplementadorCUAD.ViewModels
             _logFlushTimer?.Stop();
             _logFlushTimer = null;
         }
+        #endregion
     }
 }
 

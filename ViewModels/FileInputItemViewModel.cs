@@ -22,6 +22,8 @@ public sealed class FileInputItemViewModel : ViewModelBase
     public ObservableCollection<string> Paths { get; }
     public ICommand? SelectCommand { get; set; }
     public ICommand? ClearCommand { get; set; }
+    public object SelectCommandParameter => Key;
+    public object ClearCommandParameter => Key;
 
     public string? SinglePath
     {
