@@ -725,11 +725,6 @@ namespace Implementador.ViewModels
             item.Paths.CollectionChanged += (_, _) => item.RaiseDerivedProperties();
         }
 
-        private FileInputItemViewModel GetFileItem(string key)
-        {
-            return _fileItemsByKey[key];
-        }
-
         /// <summary>
         /// Asigna comandos genéricos (select/clear) a cada item usando su Key como parámetro.
         /// </summary>
