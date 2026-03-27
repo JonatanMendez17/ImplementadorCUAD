@@ -103,6 +103,18 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = true;
             }
 
+            if (!string.IsNullOrWhiteSpace(selection.EntidadEsperada) && result.HasLoadedData)
+            {
+                var entidadDetectada = DetectarEntidadEnArchivos(result);
+                if (!string.IsNullOrWhiteSpace(entidadDetectada) &&
+                    !string.Equals(entidadDetectada, selection.EntidadEsperada.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    log.Error($"La entidad en los archivos ('{entidadDetectada}') no coincide con la entidad seleccionada ('{selection.EntidadEsperada}'). Corrija la selección e intente nuevamente.");
+                    result.HasLoadedData = false;
+                    return result;
+                }
+            }
+
             ValidateOptionalServiceFilesAgainstSchema(result, log);
             var includeCatalogoServiciosRef = result.DatosCatalogoServiciosValidados.Count > 0;
             var snapshot = LoadReferenceData(log, includeCatalogoServiciosRef, out var snapshotLoaded);
@@ -145,6 +157,32 @@ namespace Implementador.Application.Import
             }
 
             return result;
+        }
+
+        private static string? DetectarEntidadEnArchivos(ImplementationValidationResult result)
+        {
+            var datasets = new[]
+            {
+                result.DatosPadronValidados,
+                result.DatosCategoriasValidadas,
+                result.DatosConsumosValidados,
+                result.DatosConsumosDetalleValidados,
+                result.DatosCatalogoServiciosValidados,
+                result.DatosServiciosValidados,
+            };
+
+            foreach (var dataset in datasets)
+            {
+                var primera = dataset.FirstOrDefault();
+                if (primera != null &&
+                    primera.TryGetValue("Entidad", out var entidad) &&
+                    !string.IsNullOrWhiteSpace(entidad))
+                {
+                    return entidad.Trim();
+                }
+            }
+
+            return null;
         }
 
         private void ValidateOptionalServiceFilesAgainstSchema(ImplementationValidationResult result, IAppLogger log)

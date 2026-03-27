@@ -32,6 +32,8 @@ namespace Implementador.Application.Workflows
             IAppLogger log,
             IProgress<int>? progress = null)
         {
+            selection.EntidadEsperada = entidadSeleccionada?.Nombre;
+
             var validationResult = await Task.Run(
                 () => _fileImportService.ValidateAndLoadFiles(selection, log, progress)).ConfigureAwait(false);
 
@@ -47,13 +49,6 @@ namespace Implementador.Application.Workflows
 
             if (!entidadConsistente)
                 return new ValidationOutcome(validationResult, false);
-
-            if (!MatchesSelectedEntidad(entidadComun, entidadSeleccionada))
-            {
-                log.Error(
-                    $"La entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
-                return new ValidationOutcome(validationResult, false);
-            }
 
             if (empleadorSeleccionado != null
                 && empleadorSeleccionado.EmrId > 0
@@ -96,28 +91,7 @@ namespace Implementador.Application.Workflows
             return eliminados;
         }
 
-        private static bool MatchesSelectedEntidad(string entidadComun, Entidad? entidadSeleccionada)
-        {
-            if (entidadSeleccionada == null || entidadSeleccionada.EntId <= 0 || string.IsNullOrWhiteSpace(entidadComun))
-                return false;
-
-            var entidadNormalizada = entidadComun.Trim();
-
-            if (!string.IsNullOrWhiteSpace(entidadSeleccionada.Nombre)
-                && string.Equals(entidadNormalizada, entidadSeleccionada.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (int.TryParse(entidadNormalizada, out var entidadId))
-            {
-                return entidadId == entidadSeleccionada.EntId;
-            }
-
-            return string.Equals(entidadNormalizada, entidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        public sealed record ValidationOutcome(ImplementationValidationResult ValidationResult, bool ValidationCompleted);
+public sealed record ValidationOutcome(ImplementationValidationResult ValidationResult, bool ValidationCompleted);
     }
 }
 
