@@ -115,7 +115,7 @@ namespace Implementador.Application.Import
                 return result;
             }
             var padronValidator = new PadronValidator(_dbContextFactory);
-            var consumosValidator = new ConsumosValidator(_dbContextFactory);
+            var consumosValidator = new ConsumosValidator();
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
@@ -274,97 +274,29 @@ namespace Implementador.Application.Import
                 var encabezados = enumerator.Current.Split(',')
                     .Select(v => v.Trim())
                     .ToList();
-                var indicePorEncabezadoNormalizado = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                for (int i = 0; i < encabezados.Count; i++)
+                var indicePorEncabezadoNormalizado = BuildNormalizedHeaderIndex(encabezados);
+                var indiceColumnaPorClave = BuildConfiguredColumnIndexes(logicalName, columnasConfig, indicePorEncabezadoNormalizado, log);
+                if (indiceColumnaPorClave is null)
                 {
-                    var normalizado = NormalizeHeader(encabezados[i]);
-                    if (!indicePorEncabezadoNormalizado.ContainsKey(normalizado))
+                    return null;
+                }
+
+                IEnumerable<string[]> EnumerateRawRows(IEnumerator<string> linesEnumerator)
+                {
+                    while (linesEnumerator.MoveNext())
                     {
-                        indicePorEncabezadoNormalizado[normalizado] = i;
+                        yield return linesEnumerator.Current.Split(',');
                     }
                 }
 
-                var indiceColumnaPorClave = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
-                foreach (var config in columnasConfig)
-                {
-                    var indice = ResolveColumnIndex(config, indicePorEncabezadoNormalizado);
-                    indiceColumnaPorClave[config.Clave] = indice;
-
-                    if (!indice.HasValue && config.Requerida)
-                    {
-                        log.Error($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
-                        return null;
-                    }
-                }
-
-                var registros = new List<Dictionary<string, string>>();
-                var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var filasAceptadas = 0;
-                var filasRechazadas = 0;
-                var totalFilasDatos = 0;
-                var filaNumero = 1;
-
-                while (enumerator.MoveNext())
-                {
-                    filaNumero++;
-                    var valores = enumerator.Current.Split(',');
-
-                    // Si la row está completamente vacía (todas las columnas vacías o en blanco), se omite.
-                    if (valores.All(v => string.IsNullOrWhiteSpace(v)))
-                    {
-                        continue;
-                    }
-
-                    var row = new Dictionary<string, string>();
-                    var erroresFila = new List<string>();
-
-                    for (int j = 0; j < columnasConfig.Count; j++)
-                    {
-                        var config = columnasConfig[j];
-                        var indiceColumna = indiceColumnaPorClave[config.Clave];
-                        var value = indiceColumna.HasValue && indiceColumna.Value < valores.Length
-                            ? valores[indiceColumna.Value]
-                            : string.Empty;
-
-                        if (!ValidateGeneralRules(value, config, out var error))
-                        {
-                            erroresFila.Add($"columna '{config.Clave}': {error}");
-                        }
-
-                        row[config.Clave] = value;
-                    }
-
-                    var filaEsValida = erroresFila.Count == 0;
-
-                    if (filaEsValida)
-                    {
-                        if (ValidateSpecificUniqueness(logicalName, filaNumero, row, uniqueKeys, log))
-                        {
-                            registros.Add(row);
-                            filasAceptadas++;
-                        }
-                        else
-                        {
-                            filasRechazadas++;
-                        }
-                    }
-                    else
-                    {
-                        log.Warn($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
-                        filasRechazadas++;
-                    }
-
-                    totalFilasDatos++;
-
-                    if (totalFilasDatos % 1000 == 0 && progress is not null)
-                    {
-                        progress.Report(0);
-                    }
-                }
-
-                log.Info($"{logicalName}: Validaciones realizadas correctamente.");
-                log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
-                return registros;
+                return ProcessRows(
+                    logicalName,
+                    columnasConfig,
+                    indiceColumnaPorClave,
+                    EnumerateRawRows(enumerator),
+                    firstDataRowNumber: 2,
+                    log,
+                    progress);
             }
             catch (Exception ex)
             {
@@ -429,6 +361,33 @@ namespace Implementador.Application.Import
             var headerFields = parser.ReadFields() ?? Array.Empty<string>();
             var encabezados = headerFields.Select(v => (v ?? string.Empty).Trim()).ToList();
 
+            var indicePorEncabezadoNormalizado = BuildNormalizedHeaderIndex(encabezados);
+            var indiceColumnaPorClave = BuildConfiguredColumnIndexes(logicalName, columnasConfig, indicePorEncabezadoNormalizado, log);
+            if (indiceColumnaPorClave is null)
+            {
+                return null;
+            }
+
+            IEnumerable<string[]> EnumerateDelimitedRows()
+            {
+                while (!parser.EndOfData)
+                {
+                    yield return parser.ReadFields() ?? Array.Empty<string>();
+                }
+            }
+
+            return ProcessRows(
+                logicalName,
+                columnasConfig,
+                indiceColumnaPorClave,
+                EnumerateDelimitedRows(),
+                firstDataRowNumber: 2,
+                log,
+                progress);
+        }
+
+        private static Dictionary<string, int> BuildNormalizedHeaderIndex(IReadOnlyList<string> encabezados)
+        {
             var indicePorEncabezadoNormalizado = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < encabezados.Count; i++)
             {
@@ -439,6 +398,15 @@ namespace Implementador.Application.Import
                 }
             }
 
+            return indicePorEncabezadoNormalizado;
+        }
+
+        private static Dictionary<string, int?>? BuildConfiguredColumnIndexes(
+            string logicalName,
+            List<ColumnConfiguration> columnasConfig,
+            Dictionary<string, int> indicePorEncabezadoNormalizado,
+            IAppLogger log)
+        {
             var indiceColumnaPorClave = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
             foreach (var config in columnasConfig)
             {
@@ -452,20 +420,31 @@ namespace Implementador.Application.Import
                 }
             }
 
+            return indiceColumnaPorClave;
+        }
+
+        private List<Dictionary<string, string>> ProcessRows(
+            string logicalName,
+            List<ColumnConfiguration> columnasConfig,
+            Dictionary<string, int?> indiceColumnaPorClave,
+            IEnumerable<string[]> rows,
+            int firstDataRowNumber,
+            IAppLogger log,
+            IProgress<int>? progress)
+        {
             var registros = new List<Dictionary<string, string>>();
             var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var filasAceptadas = 0;
             var filasRechazadas = 0;
             var totalFilasDatos = 0;
-            var filaNumero = 1;
+            var filaNumero = firstDataRowNumber - 1;
 
-            while (!parser.EndOfData)
+            foreach (var values in rows)
             {
                 filaNumero++;
-                var fields = parser.ReadFields() ?? Array.Empty<string>();
 
                 // Si la row está completamente vacía (todas las columnas vacías o en blanco), se omite.
-                if (fields.All(v => string.IsNullOrWhiteSpace(v)))
+                if (values.All(v => string.IsNullOrWhiteSpace(v)))
                 {
                     continue;
                 }
@@ -477,8 +456,8 @@ namespace Implementador.Application.Import
                 {
                     var config = columnasConfig[j];
                     var indiceColumna = indiceColumnaPorClave[config.Clave];
-                    var value = indiceColumna.HasValue && indiceColumna.Value < fields.Length
-                        ? fields[indiceColumna.Value]
+                    var value = indiceColumna.HasValue && indiceColumna.Value < values.Length
+                        ? values[indiceColumna.Value]
                         : string.Empty;
 
                     if (!ValidateGeneralRules(value, config, out var error))

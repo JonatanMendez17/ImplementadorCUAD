@@ -85,7 +85,7 @@ namespace Implementador.Application.Implementation
 
             if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)
             {
-                log.Info($"Resumen implementacion: Importar_Padron_socios={insertadosPadron}, Importar_Consumos_Cab={insertadosConsumosDetalle}, Importar_Consumo_Det={insertadosConsumos}.");
+                log.Info($"Resumen implementacion: Importar_Padron_socios={insertadosPadron}, Importar_Consumos_Cab={insertadosConsumos}, Importar_Consumo_Det={insertadosConsumosDetalle}.");
             }
             else
             {

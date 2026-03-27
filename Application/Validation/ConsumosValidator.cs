@@ -8,10 +8,6 @@ namespace Implementador.Application.Validation;
 
 public sealed class ConsumosValidator : RowValidatorBase
 {
-    public ConsumosValidator(IAppDbContextFactory dbContextFactory)
-    {
-    }
-
     public void Apply(ImplementationValidationResult result, IAppLogger log, ValidationReferenceData? snapshot = null)
     {
         if (result.DatosConsumosValidados.Count == 0)

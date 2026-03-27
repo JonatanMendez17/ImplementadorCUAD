@@ -274,27 +274,29 @@ namespace Implementador.Data
 
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand(
-                @"SELECT Id,
-                         Entidad,
-                         Servicio,
-                         Importe,
-                         CodigoConceptoDescuento,
-                         Habilitado
-                  FROM CatalogoServiciosCuad
-                  WHERE Habilitado = 1;",
+                @"SELECT 
+                         m.Mut_Nombre AS Entidad,
+                         mc.Muc_Nombre AS Servicio,
+                         mc.Muc_Importe AS Importe
+                  FROM Mutual m
+                  INNER JOIN Mutual_Catalogo mc
+                      ON m.Mut_Id = mc.Mut_Id
+                  WHERE m.Mut_Alta = 'S'
+                    AND mc.Muc_Vigente = 1;",
                 connection);
             using var reader = command.ExecuteReader();
+            var idSecuencial = 1;
 
             while (reader.Read())
             {
                 resultado.Add(new CatalogoServicioRef
                 {
-                    Id = reader.GetInt32(0),
-                    Entidad = reader.GetString(1),
-                    Servicio = reader.GetString(2),
-                    Importe = reader.GetDecimal(3),
-                    CodigoConceptoDescuento = reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                    Habilitado = !reader.IsDBNull(5) && reader.GetBoolean(5)
+                    Id = idSecuencial++,
+                    Entidad = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                    Servicio = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Importe = reader.IsDBNull(2) ? 0m : reader.GetDecimal(2),
+                    CodigoConceptoDescuento = null,
+                    Habilitado = true
                 });
             }
 
