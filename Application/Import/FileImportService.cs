@@ -605,6 +605,12 @@ namespace Implementador.Application.Import
 
             if (texto.Length == 0)
             {
+                if (config.Requerida)
+                {
+                    error = "el campo es requerido y se encuentra vacio";
+                    return false;
+                }
+
                 return true;
             }
 
