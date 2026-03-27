@@ -50,7 +50,7 @@ public sealed class FileSelectionCoordinator
         var item = GetFileItem(key);
         var dialog = new OpenFileDialog
         {
-            Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
+            Filter = "Archivos soportados (*.xls;*.xlsx;*.csv;*.txt)|*.xls;*.xlsx;*.csv;*.txt|Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt",
             Multiselect = item.IsMultiple
         };
 

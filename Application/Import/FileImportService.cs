@@ -270,10 +270,7 @@ namespace Implementador.Application.Import
                 yield break;
             }
 
-            foreach (var line in File.ReadLines(filePath))
-            {
-                yield return line;
-            }
+            throw new NotSupportedException($"El tipo de archivo '{extension}' no está soportado. Use .csv, .txt, .xls o .xlsx.");
         }
 
         private List<Dictionary<string, string>>? LoadFile(string logicalName, string? filePath, IAppLogger log, IProgress<int>? progress)
