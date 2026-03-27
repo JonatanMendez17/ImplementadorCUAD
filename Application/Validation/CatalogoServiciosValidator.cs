@@ -30,27 +30,27 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
 
                 if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
                 {
-                    erroresFila.Add("La entidad se encuentra vacia.");
+                    erroresFila.Add("El campo (Entidad) se encuentra vacio.");
                     return erroresFila;
                 }
 
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCatalogo))
                 {
-                    erroresFila.Add($"servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
+                    erroresFila.Add($"El campo (Servicio) '{servicio}' no existe en la base para la entidad '{entidad}'.");
                     return erroresFila;
                 }
 
                 if (!ValueParsers.TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                 {
-                    erroresFila.Add($"El importe '{importeTexto}' es invalido.");
+                    erroresFila.Add($"El campo (Importe) '{importeTexto}' no es un valor valido.");
                     return erroresFila;
                 }
 
                 var diferencia = Math.Abs(importeArchivo - refCatalogo.Importe);
                 if (diferencia > 0.01m)
                 {
-                    erroresFila.Add($"El importe '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
+                    erroresFila.Add($"El campo (Importe) '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
                 }
 
                 return erroresFila;

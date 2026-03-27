@@ -37,21 +37,21 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
+                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
             {
-                erroresFila.Add($"El codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos detalle.");
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
             }
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add("La date de vencimiento es invalida.");
+                erroresFila.Add("El campo (Fecha Vencimiento) no es una fecha valida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add("La date de vencimiento no puede ser hoy o anterior.");
+                erroresFila.Add("El campo (Fecha Vencimiento) no puede ser hoy o anterior.");
             }
 
             return erroresFila;

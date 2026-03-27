@@ -275,9 +275,6 @@ namespace Implementador.Data
         {
             var values = string.Join(", ", Enumerable.Range(0, count).Select(i => $"(@EmpCod{i}, @PerNroDoc{i})"));
             return $@"
-                WITH src (EmpCod, PerNroDoc) AS (
-                    VALUES {values}
-                )
                 SELECT
                     src.EmpCod,
                     src.PerNroDoc,
@@ -288,7 +285,7 @@ namespace Implementador.Data
                         WHERE e.Emp_Cod = src.EmpCod
                           AND p.Per_NroDoc = src.PerNroDoc
                     ) AS EmrId
-                FROM src;";
+                FROM (VALUES {values}) AS src(EmpCod, PerNroDoc);";
         }
 
         public List<CatalogoServicioRef> GetCatalogoServiciosRef()

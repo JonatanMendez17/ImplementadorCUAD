@@ -129,7 +129,7 @@ namespace Implementador.Application.Import
             }
             catch (DbValidationException ex)
             {
-                log.Error($"Validación detenida por error de base en padrón. {ex.Message}");
+                log.Error($"Validación detenida por error de base en padrón. {ex.Message} → {ex.InnerException?.Message}");
                 result.HasLoadedData = false;
                 return result;
             }
@@ -501,7 +501,7 @@ namespace Implementador.Application.Import
 
                     if (!ValidateGeneralRules(value, config, out var error))
                     {
-                        erroresFila.Add($"columna '{config.Clave}': {error}");
+                        erroresFila.Add($"El campo ({config.Clave}) {error}.");
                     }
 
                     row[config.Clave] = value;
@@ -607,7 +607,7 @@ namespace Implementador.Application.Import
             {
                 if (config.Requerida)
                 {
-                    error = "el campo es requerido y se encuentra vacio";
+                    error = "se encuentra vacio";
                     return false;
                 }
 
@@ -616,7 +616,7 @@ namespace Implementador.Application.Import
 
             if (texto.Length > config.LargoMaximo)
             {
-                error = $"supera el largo maximo permitido ({config.LargoMaximo})";
+                error = $"excede el largo maximo permitido ({config.LargoMaximo})";
                 return false;
             }
 
@@ -631,7 +631,14 @@ namespace Implementador.Application.Import
                 case "int":
                     if (!int.TryParse(texto, NumberStyles.None, CultureInfo.InvariantCulture, out var numero))
                     {
-                        error = "debe ser un numero entero sin letras";
+                        var soloDigitos = texto.All(char.IsDigit);
+                        var esNotacionCientifica = texto.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
+                        if (esNotacionCientifica || (soloDigitos && texto.Length > 18))
+                            error = "excede el limite de digitos permitidos";
+                        else if (texto.Any(char.IsLetter))
+                            error = "no puede contener letras";
+                        else
+                            error = "no es un numero valido";
                         return false;
                     }
 
@@ -646,7 +653,7 @@ namespace Implementador.Application.Import
                 case "decimal":
                     if (!ValueParsers.TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "debe ser un value de dinero valido";
+                        error = "no es un valor de dinero valido";
                         return false;
                     }
 
@@ -655,7 +662,16 @@ namespace Implementador.Application.Import
                 case "date":
                     if (!ValueParsers.TryParseDateFlexible(texto, out _))
                     {
-                        error = "debe ser una date valida";
+                        error = "no es una fecha valida";
+                        return false;
+                    }
+
+                    return true;
+
+                case "alpha":
+                    if (texto.Any(char.IsDigit))
+                    {
+                        error = "no puede contener digitos";
                         return false;
                     }
 

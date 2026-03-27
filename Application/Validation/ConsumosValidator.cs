@@ -42,12 +42,12 @@ public sealed class ConsumosValidator : RowValidatorBase
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
+                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
             if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
             {
-                erroresFila.Add($"El nro socio '{nroSocio}' no existe o no corresponde al padron.");
+                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
             }
             else
             {
@@ -56,22 +56,22 @@ public sealed class ConsumosValidator : RowValidatorBase
 
                 if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
                 {
-                    erroresFila.Add($"El CUIT no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
                 }
 
                 if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
                 {
-                    erroresFila.Add($"El Beneficio no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
                 }
             }
 
             if (string.IsNullOrWhiteSpace(codigoConsumo))
             {
-                erroresFila.Add("El campo 'codigo consumo' se encuentra vacio.");
+                erroresFila.Add("El campo (Codigo Consumo) se encuentra vacio.");
             }
             else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
             {
-                erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido.");
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
             }
 
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(conceptoDescuentoText) &&
@@ -80,7 +80,7 @@ public sealed class ConsumosValidator : RowValidatorBase
                 var keyConcepto = $"{entidad.Trim()}|{conceptoDescuentoText.Trim()}";
                 if (!conceptosDescuentoVigentes.Contains(keyConcepto))
                 {
-                    erroresFila.Add($"El concepto de descuento '{conceptoDescuentoText}' no existe como código de descuento vigente en la base para la entidad '{entidad?.Trim()}'.");
+                    erroresFila.Add($"El campo (Concepto Descuento) '{conceptoDescuentoText}' no existe como código de descuento vigente en la base para la entidad '{entidad?.Trim()}'.");
                 }
             }
 
