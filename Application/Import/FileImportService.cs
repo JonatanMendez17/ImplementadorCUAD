@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using Implementador.Infrastructure;
 using Implementador.Models;
-using Implementador.Data;
 using Implementador.Application.Configuration;
 using Implementador.Application.Validation;
 using Implementador.Application.Validation.Common;
@@ -522,8 +521,15 @@ namespace Implementador.Application.Import
                 }
             }
 
-            log.Info($"{logicalName}: Validaciones realizadas correctamente.");
-            log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+            if (totalFilasDatos == 0)
+            {
+                log.Warn($"{logicalName}: el archivo no contiene filas de datos (solo encabezados). No se cargaron registros.");
+            }
+            else
+            {
+                log.Info($"{logicalName}: Validaciones realizadas correctamente.");
+                log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+            }
             return registros;
         }
 
