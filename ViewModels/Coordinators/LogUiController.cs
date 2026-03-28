@@ -52,6 +52,11 @@ internal sealed class LogUiController
         WriteToILogger(message, LogSeverity.Error);
     }
 
+    public void LogSeparator()
+    {
+        AddLogEntry(MainViewModel.LogEntry.CreateSeparator());
+    }
+
     public void LogRaw(string message)
     {
         AddLogEntry(new MainViewModel.LogEntry(null, LogSeverity.Information, message));

@@ -14,6 +14,7 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
             return;
         }
 
+        log.Separator();
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var catalogoPorEntidadServicio = safeSnapshot.CatalogoPorEntidadServicio;
 

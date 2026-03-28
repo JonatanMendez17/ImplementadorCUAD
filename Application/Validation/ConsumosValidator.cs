@@ -16,6 +16,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             return;
         }
 
+        log.Separator();
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var entidadesRef = safeSnapshot.EntidadesRef;
         var conceptosDescuentoVigentes = safeSnapshot.ConceptosDescuentoVigentes;

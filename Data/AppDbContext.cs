@@ -77,7 +77,7 @@ namespace Implementador.Data
                 {
                     Id = mutId,
                     EntId = mutId,
-                    Nombre = reader.IsDBNull(1) ? null : reader.GetString(1)
+                    Nombre = reader.IsDBNull(1) ? null : reader.GetString(1).Trim()
                 });
             }
 

@@ -22,6 +22,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             return;
         }
 
+        log.Separator();
         var categoriasValidasCodigo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var categoriasValidasNombre = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

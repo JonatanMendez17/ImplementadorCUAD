@@ -157,7 +157,8 @@ namespace Implementador.ViewModels
             _appLogger = new AppLoggerAdapter(
                 _logUiController.LogInformation,
                 _logUiController.LogWarning,
-                _logUiController.LogError);
+                _logUiController.LogError,
+                _logUiController.LogSeparator);
             var workflowService = new MainWorkflowService(fileImportService, generalValidationService, implementationService, _dbContextFactory);
             _workflowFacade = new MainWorkflowFacade(workflowService);
             _logUiController.LogRaw("Esperando carga de archivos para validacion...");
@@ -701,6 +702,10 @@ namespace Implementador.ViewModels
                 Message = $"{Prefix} {messageBody}";
             }
 
+            public static LogEntry CreateSeparator() =>
+                new(null, LogSeverity.Information, string.Empty) { IsSeparator = true };
+
+            public bool IsSeparator { get; private init; }
             public string? Timestamp { get; }
             public LogSeverity Severity { get; }
             public string Prefix => GetPrefix(Severity);
@@ -709,6 +714,8 @@ namespace Implementador.ViewModels
 
             public string ToExportString()
             {
+                if (IsSeparator)
+                    return new string('─', 60);
                 return string.IsNullOrEmpty(Timestamp)
                     ? Message
                     : $"{Timestamp} - {Message}";
