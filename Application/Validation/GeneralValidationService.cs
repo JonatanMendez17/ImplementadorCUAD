@@ -25,14 +25,12 @@ namespace Implementador.Application.Validation
             if (entidades.Count == 0)
             {
                 log.Error("No se encontro el value de 'Entidad' en los archivos cargados.");
-                _logger?.LogWarning("No se encontro el value de Entidad en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
                 log.Error($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
-                _logger?.LogWarning("La entidad no coincide entre archivos. Valores detectados: {Entidades}", string.Join(", ", entidades));
                 return false;
             }
 
@@ -45,7 +43,6 @@ namespace Implementador.Application.Validation
             if (string.IsNullOrWhiteSpace(targetConnectionString))
             {
                 log.Error($"No se encontró base de data para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
-                _logger?.LogWarning("No se encontro base de data para empleador {Empleador}.", empleador?.Nombre ?? "seleccionado");
                 return false;
             }
             using var db = _dbContextFactory.Create(targetConnectionString);
@@ -54,7 +51,6 @@ namespace Implementador.Application.Validation
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
                 log.Warn($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
-                _logger?.LogWarning("Ya existe informacion cargada para entidad {Entidad} en empleador {Empleador}.", entidad, nombreEmpleador);
                 return false;
             }
 

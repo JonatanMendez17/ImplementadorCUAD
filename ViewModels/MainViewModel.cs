@@ -145,7 +145,7 @@ namespace Implementador.ViewModels
             _logger = logger;
             _dbContextFactory = new AppDbContextFactory();
             var loggerFactory = App.LoggerFactory;
-            var fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
+            var fileImportService = new FileImportService(_dbContextFactory);
             var generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
             var implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
             UiLogStream.LogReceived += OnUiLogReceived;

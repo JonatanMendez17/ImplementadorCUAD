@@ -14,10 +14,9 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace Implementador.Application.Import
 {
-    public class FileImportService(IAppDbContextFactory dbContextFactory, ILogger<FileImportService>? logger = null)
+    public class FileImportService(IAppDbContextFactory dbContextFactory)
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
-        private readonly ILogger<FileImportService>? _logger = logger;
     private const DbErrorPolicy ValidationDbErrorPolicy = DbErrorPolicy.AbortValidation;
 
         public ImplementationValidationResult ValidateAndLoadFiles(ImplementationFileSelection selection, IAppLogger log, IProgress<int>? progress = null)
@@ -89,8 +88,7 @@ namespace Implementador.Application.Import
 
             if (!result.HasLoadedData)
             {
-                log.Error("No se pudo cargar ningun archivo.");
-                _logger?.LogWarning("No se pudo cargar ningun archivo.");
+                log.Error("No se ha cargado ningún archivo para validar.");
             }
 
             return result;
@@ -149,7 +147,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"No se pudo validar estructura de tablas para archivos opcionales. {ex.Message}");
-                _logger?.LogError(ex, "No se pudo validar estructura de tablas para archivos opcionales.");
             }
 
             result.HasLoadedData =
@@ -172,7 +169,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"No se pudo cargar datos de referencia para validación. {ex.Message}");
-                _logger?.LogError(ex, "No se pudo cargar datos de referencia para validación.");
                 loaded = false;
                 return ValidationReferenceData.Empty;
             }
@@ -336,7 +332,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"Error al cargar {logicalName}: {ex.Message}");
-                _logger?.LogError(ex, "Error al cargar {LogicalName}", logicalName);
                 return null;
             }
         }
