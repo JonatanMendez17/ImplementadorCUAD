@@ -496,7 +496,7 @@ namespace Implementador.ViewModels
 
         private bool CanClearEntityData(object? parameter)
         {
-            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !IsProcessing;
+            return HasEntidadSeleccionadaReal() && !IsProcessing;
         }
 
         private void ClearData(object? parameter)
