@@ -518,12 +518,11 @@ namespace Implementador.Application.Import
 
             if (totalFilasDatos == 0)
             {
-                log.Warn($"{logicalName}: el archivo se encuentra vacio. No se validaron registros.");
+                log.Warn($"{logicalName}: el archivo se encuentra vacio. No se cargaron registros.");
             }
-            else
+            else if (filasRechazadas > 0)
             {
-                log.Info($"{logicalName}: Validaciones realizadas correctamente.");
-                log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+                log.Warn($"{logicalName}: {filasRechazadas} de {totalFilasDatos} filas rechazadas por formato o tipo de dato inválido.");
             }
             return registros;
         }

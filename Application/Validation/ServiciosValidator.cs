@@ -84,9 +84,9 @@ public sealed class ServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validacion Consumos Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info($"Consumos Servicios: {serviciosFiltrados.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+        else
+            log.Info($"Consumos Servicios: {serviciosFiltrados.Count} filas listas para implementar.");
 
         result.DatosServiciosValidados = serviciosFiltrados;
     }

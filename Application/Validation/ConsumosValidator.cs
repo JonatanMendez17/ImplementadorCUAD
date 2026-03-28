@@ -1,6 +1,5 @@
 using Implementador.Models;
 using Implementador.Infrastructure;
-using Implementador.Data;
 using Implementador.Application.Validation.Common;
 using Implementador.Application.Validation.Core;
 
@@ -105,9 +104,9 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             out var rechazadas);
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validacion Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info($"Consumos: {consumosFiltrados.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+        else
+            log.Info($"Consumos: {consumosFiltrados.Count} filas listas para implementar.");
 
         result.DatosConsumosValidados = consumosFiltrados;
     }

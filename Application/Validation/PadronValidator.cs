@@ -181,9 +181,9 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             out var rechazadas);
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info($"Padron Socios: {padronFiltrado.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+        else
+            log.Info($"Padron Socios: {padronFiltrado.Count} filas listas para implementar.");
 
         result.DatosPadronValidados = padronFiltrado;
     }
