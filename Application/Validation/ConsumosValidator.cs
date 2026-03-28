@@ -104,9 +104,8 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.Consumos, consumosFiltrados.Count, rechazadas));
-        else
-            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.Consumos, consumosFiltrados.Count));
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.Consumos, rechazadas, rechazadas + consumosFiltrados.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.Consumos, consumosFiltrados.Count));
 
         result.DatosConsumosValidados = consumosFiltrados;
     }

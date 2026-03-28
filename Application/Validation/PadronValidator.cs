@@ -181,9 +181,8 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.PadronSocios, padronFiltrado.Count, rechazadas));
-        else
-            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.PadronSocios, padronFiltrado.Count));
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.PadronSocios, rechazadas, rechazadas + padronFiltrado.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.PadronSocios, padronFiltrado.Count));
 
         result.DatosPadronValidados = padronFiltrado;
     }

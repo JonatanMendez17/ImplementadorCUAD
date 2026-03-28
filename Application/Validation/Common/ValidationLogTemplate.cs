@@ -45,9 +45,9 @@ public static class ValidationLog
         => $"{archivo}: {rechazadas}/{total} filas rechazadas por formato o tipo de dato invalido.";
 
     // ── Resultado final de validación de negocio ──────────────────────────
+    public static string ReglaRechazadas(string archivo, int rechazadas, int total)
+        => $"{archivo}: {rechazadas}/{total} filas rechazadas por reglas de negocio.";
+
     public static string ListasParaImplementar(string archivo, int listas)
         => $"{archivo}: {listas} filas listas para implementar.";
-
-    public static string ListasParaImplementarConRechazadas(string archivo, int listas, int rechazadas)
-        => $"{archivo}: {listas} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).";
 }

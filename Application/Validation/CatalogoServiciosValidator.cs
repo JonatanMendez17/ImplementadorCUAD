@@ -52,9 +52,8 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.CatalogoServicios, filtrado.Count, rechazadas));
-        else
-            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.CatalogoServicios, filtrado.Count));
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.CatalogoServicios, rechazadas, rechazadas + filtrado.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.CatalogoServicios, filtrado.Count));
 
         result.DatosCatalogoServiciosValidados = filtrado;
     }

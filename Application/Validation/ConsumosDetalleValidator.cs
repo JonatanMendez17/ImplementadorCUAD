@@ -174,9 +174,8 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         }
 
         if (rechazadas > 0)
-            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count, rechazadas));
-        else
-            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count));
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.ConsumosDetalle, rechazadas, rechazadas + detalleFiltrado.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count));
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;
     }

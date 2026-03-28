@@ -84,9 +84,8 @@ public sealed class ServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count, rechazadas));
-        else
-            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count));
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.ConsumosServicios, rechazadas, rechazadas + serviciosFiltrados.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count));
 
         result.DatosServiciosValidados = serviciosFiltrados;
     }
