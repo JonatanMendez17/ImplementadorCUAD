@@ -444,7 +444,7 @@ namespace Implementador.ViewModels
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await _workflowFacade.CopyToDatabaseAsync(
+                var insertados = await _workflowFacade.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     _appLogger,
@@ -457,7 +457,15 @@ namespace Implementador.ViewModels
                     : $"{(int)duracion.TotalMinutes} min {duracion.Seconds}.{duracion.Milliseconds:D3} seg";
 
                 ImplementationTime = tiempoTexto;
-                DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                if (insertados > 0)
+                {
+                    DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    DialogService.Show("No se insertaron registros. Los archivos cargados no contienen datos válidos para implementar.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (SqlException ex)
             {

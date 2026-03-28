@@ -67,7 +67,7 @@ namespace Implementador.Application.Workflows
             return new ValidationOutcome(validationResult, sinDatosPrevios);
         }
 
-        public Task CopyToDatabaseAsync(
+        public Task<int> CopyToDatabaseAsync(
             ImplementationValidationResult validationResult,
             ImplementationFileSelection selection,
             IAppLogger log,

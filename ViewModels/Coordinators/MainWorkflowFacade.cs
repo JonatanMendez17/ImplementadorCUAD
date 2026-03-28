@@ -28,7 +28,7 @@ internal sealed class MainWorkflowFacade
             progress);
     }
 
-    public Task CopyToDatabaseAsync(
+    public Task<int> CopyToDatabaseAsync(
         ImplementationValidationResult validationResult,
         ImplementationFileSelection selection,
         IAppLogger log,

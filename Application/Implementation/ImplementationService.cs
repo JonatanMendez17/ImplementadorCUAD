@@ -8,13 +8,13 @@ namespace Implementador.Application.Implementation
         private readonly ImplementationMapperService _mapperService = mapperService;
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public async Task CopyToDatabaseAsync(ImplementationValidationResult validationResult, ImplementationFileSelection selection, IAppLogger log, Action<int> reportProgress)
+        public async Task<int> CopyToDatabaseAsync(ImplementationValidationResult validationResult, ImplementationFileSelection selection, IAppLogger log, Action<int> reportProgress)
         {
             if (string.IsNullOrWhiteSpace(selection.TargetConnectionString))
             {
                 log.Error("No se encontró base de data para el empleador seleccionado.");
                 reportProgress(100);
-                return;
+                return 0;
             }
             using var db = _dbContextFactory.Create(selection.TargetConnectionString);
 
@@ -43,7 +43,7 @@ namespace Implementador.Application.Implementation
             {
                 reportProgress(100);
                 log.Warn("No hay registros validos para implementar en esta ejecucion.");
-                return;
+                return 0;
             }
 
             var insertadosGlobal = 0;
@@ -83,7 +83,8 @@ namespace Implementador.Application.Implementation
                 log.Warn("No hay registros validos para insertar en base de data.");
             }
 
-            if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)
+            var totalInsertados = insertadosPadron + insertadosConsumosDetalle + insertadosConsumos;
+            if (totalInsertados > 0)
             {
                 log.Info($"Resumen implementacion: Importar_Padron_socios={insertadosPadron}, Importar_Consumos_Cab={insertadosConsumos}, Importar_Consumo_Det={insertadosConsumosDetalle}.");
             }
@@ -91,6 +92,8 @@ namespace Implementador.Application.Implementation
             {
                 log.Warn("Resumen implementacion: no se insertaron registros en la base.");
             }
+
+            return totalInsertados;
         }
     }
 }
