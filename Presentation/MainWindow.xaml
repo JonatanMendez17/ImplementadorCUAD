@@ -321,34 +321,60 @@
                             <ItemsControl ItemsSource="{Binding Logs}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                            <TextBlock FontSize="14" FontFamily="Consolas" TextWrapping="NoWrap" VerticalAlignment="Center">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="{Binding Prefix}" />
-                                                        <Setter Property="Foreground" Value="{StaticResource LogInfoBrush}" />
+                                        <Grid>
+                                            <!-- Separador visual entre secciones de archivo -->
+                                            <Rectangle Height="1" Fill="#2D3748" Margin="0,5,0,5">
+                                                <Rectangle.Style>
+                                                    <Style TargetType="Rectangle">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Severity}" Value="Error">
-                                                                <Setter Property="Foreground" Value="{StaticResource LogErrorBrush}" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Severity}" Value="Warning">
-                                                                <Setter Property="Foreground" Value="{StaticResource LogWarnBrush}" />
+                                                            <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBox Text="{Binding MessageBody, Mode=OneWay}"
-                                                     Foreground="#CBD5E1"
-                                                     FontSize="14"
-                                                     FontFamily="Consolas"
-                                                     Background="Transparent"
-                                                     BorderThickness="0"
-                                                     IsReadOnly="True"
-                                                     IsReadOnlyCaretVisible="False"
-                                                     Padding="4,0,0,0"
-                                                     VerticalAlignment="Center" />
-                                        </StackPanel>
+                                                </Rectangle.Style>
+                                            </Rectangle>
+                                            <!-- Línea de log normal -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock FontSize="14" FontFamily="Consolas" TextWrapping="NoWrap" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Prefix}" />
+                                                            <Setter Property="Foreground" Value="{StaticResource LogInfoBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="Error">
+                                                                    <Setter Property="Foreground" Value="{StaticResource LogErrorBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                                                                    <Setter Property="Foreground" Value="{StaticResource LogWarnBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding MessageBody, Mode=OneWay}"
+                                                         Foreground="#CBD5E1"
+                                                         FontSize="14"
+                                                         FontFamily="Consolas"
+                                                         Background="Transparent"
+                                                         BorderThickness="0"
+                                                         IsReadOnly="True"
+                                                         IsReadOnlyCaretVisible="False"
+                                                         Padding="4,0,0,0"
+                                                         VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

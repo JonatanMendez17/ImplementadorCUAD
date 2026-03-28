@@ -24,7 +24,7 @@ namespace Implementador.Application.Validation
 
             if (entidades.Count == 0)
             {
-                log.Error("No se encontro el value de 'Entidad' en los archivos cargados.");
+                log.Error("No quedaron registros validos en los archivos cargados luego de la validacion. Verifique los errores reportados anteriormente en el log.");
                 return false;
             }
 

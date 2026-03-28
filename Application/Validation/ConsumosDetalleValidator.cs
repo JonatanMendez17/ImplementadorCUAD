@@ -15,6 +15,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             return;
         }
 
+        log.Separator();
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var entidadesRef = safeSnapshot.EntidadesRef;
 

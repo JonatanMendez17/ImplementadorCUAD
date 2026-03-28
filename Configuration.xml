@@ -77,14 +77,14 @@
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
         <Alias>Nro Socio</Alias>
       </Columna>
-      <Columna nombre="CUIT" tipo="string" largoMaximo="11">
+      <!--<Columna nombre="CUIT" tipo="string" largoMaximo="11">
          para configuracion de columna 
         <Alias>CUIT</Alias>
-      </Columna>
-      <Columna nombre="Beneficio" tipo="string" largoMaximo="20">
+      </Columna>-->
+      <!--<Columna nombre="Beneficio" tipo="string" largoMaximo="20">
          para configuracion de columna 
         <Alias>Beneficio</Alias>
-      </Columna>
+      </Columna>-->
       <Columna nombre="Código Consumo" clave="Codigo Consumo" tipo="string" largoMaximo="20">
         <Alias>Código Consumo</Alias>
         <Alias>Código</Alias>
@@ -97,9 +97,9 @@
       <Columna nombre="Monto Deuda" tipo="decimal" largoMaximo="15">
         <Alias>Monto Deuda</Alias>
       </Columna>
-      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
+      <!--<Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
         <Alias>Concepto Descuento</Alias>
-      </Columna>
+      </Columna>-->
     </Columnas>
   </Archivo>
 
