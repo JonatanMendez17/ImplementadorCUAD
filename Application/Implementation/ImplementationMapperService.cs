@@ -66,7 +66,7 @@ namespace Implementador.Application.Implementation
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"Error mapeando row de padrón: {ex.Message}");
+                    log.Error($"Error mapeando fila de padrón: {ex.Message}");
                 }
             }
 
@@ -120,7 +120,7 @@ namespace Implementador.Application.Implementation
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"Error mapeando row de consumos: {ex.Message}");
+                    log.Error($"Error mapeando fila de consumos: {ex.Message}");
                 }
             }
 
@@ -164,7 +164,7 @@ namespace Implementador.Application.Implementation
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"Error mapeando row de consumos detalle: {ex.Message}");
+                    log.Error($"Error mapeando fila de consumos detalle: {ex.Message}");
                 }
             }
 

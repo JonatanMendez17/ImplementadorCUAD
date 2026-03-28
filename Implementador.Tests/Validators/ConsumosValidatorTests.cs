@@ -1,15 +1,29 @@
 using Implementador.Application.Validation;
 using Implementador.Application.Validation.Core;
+using Implementador.Data;
+using Implementador.Infrastructure;
 using Implementador.Models;
 using Implementador.Tests.Helpers;
+using Moq;
 using Xunit;
 
 namespace Implementador.Tests.Validators;
 
 public class ConsumosValidatorTests
 {
-    private readonly ConsumosValidator _sut = new();
+    private readonly Mock<IAppDbContextFactory> _factoryMock = new();
+    private readonly Mock<IAppDbContext> _dbMock = new();
+    private readonly ConsumosValidator _sut;
     private readonly FakeLogger _log = new();
+
+    public ConsumosValidatorTests()
+    {
+        _factoryMock.Setup(f => f.Create()).Returns(_dbMock.Object);
+        _factoryMock.Setup(f => f.Create(It.IsAny<string>())).Returns(_dbMock.Object);
+        _dbMock.Setup(d => d.GetCodigosConsumoExistentes(It.IsAny<string>()))
+               .Returns(new HashSet<long>());
+        _sut = new ConsumosValidator(_factoryMock.Object);
+    }
 
     private static Dictionary<string, string> Fila(params (string key, string value)[] pares) =>
         pares.ToDictionary(p => p.key, p => p.value);

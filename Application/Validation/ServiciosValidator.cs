@@ -30,7 +30,7 @@ public sealed class ServiciosValidator : RowValidatorBase
 
         var codigosServiciosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var serviciosFiltrados = FilterValidRows(
-            "Consumos Servicios",
+            ArchivoNombre.ConsumosServicios,
             result.DatosServiciosValidados,
             log,
             (row, rowNumber) =>
@@ -43,14 +43,14 @@ public sealed class ServiciosValidator : RowValidatorBase
             var beneficioServicio = RowValueReader.GetFirstValue(row, "Nro Beneficio", "Beneficio");
             var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
 
-            if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
+            if (!entidadesRef.Contains(entidad!.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
+                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
+            if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
             {
-                erroresFila.Add($"El socio '{nroSocio}' no existe o no corresponde al padron socios.");
+                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
             }
             else
             {
@@ -59,31 +59,24 @@ public sealed class ServiciosValidator : RowValidatorBase
 
                 if (!ValueParsers.EqualsDigitsOnly(cuitServicio, cuitPadron))
                 {
-                    erroresFila.Add($"El CUIT no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
                 }
 
                 if (!ValueParsers.EqualsTrimmed(beneficioServicio, beneficioPadron))
                 {
-                    erroresFila.Add($"El Beneficio no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(codigoConsumo))
+            var codigoNormalizado = codigoConsumo!.Trim();
+            if (!codigosServiciosVistos.Add(codigoNormalizado))
             {
-                erroresFila.Add("EL campo 'codigo consumo' se encuentra vacio.");
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
             }
-            else
-            {
-                var codigoNormalizado = codigoConsumo.Trim();
-                if (!codigosServiciosVistos.Add(codigoNormalizado))
-                {
-                    erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido en Consumos Servicios.");
-                }
 
-                if (codigosConsumos.Contains(codigoNormalizado))
-                {
-                    erroresFila.Add($"El codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
-                }
+            if (codigosConsumos.Contains(codigoNormalizado))
+            {
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en archivo Consumos.");
             }
 
             return erroresFila;
@@ -91,9 +84,8 @@ public sealed class ServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validacion Consumos Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.ConsumosServicios, rechazadas, rechazadas + serviciosFiltrados.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count));
 
         result.DatosServiciosValidados = serviciosFiltrados;
     }

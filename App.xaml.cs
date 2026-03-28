@@ -130,7 +130,10 @@ namespace Implementador
             // No hay configuración válida de la base o la conexión falló: pedir al usuario el connection string.
             var configWindow = new ConnectionWindow
             {
-                Owner = mainWindow
+                Owner = mainWindow,
+                WarningMessage = hasInitialConfig
+                    ? "No se pudo establecer la conexión configurada. Ingrese una nueva conexión."
+                    : null
             };
             var result = configWindow.ShowDialog();
 

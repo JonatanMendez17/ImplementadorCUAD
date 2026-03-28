@@ -275,9 +275,6 @@ namespace Implementador.Data
         {
             var values = string.Join(", ", Enumerable.Range(0, count).Select(i => $"(@EmpCod{i}, @PerNroDoc{i})"));
             return $@"
-                WITH src (EmpCod, PerNroDoc) AS (
-                    VALUES {values}
-                )
                 SELECT
                     src.EmpCod,
                     src.PerNroDoc,
@@ -288,7 +285,7 @@ namespace Implementador.Data
                         WHERE e.Emp_Cod = src.EmpCod
                           AND p.Per_NroDoc = src.PerNroDoc
                     ) AS EmrId
-                FROM src;";
+                FROM (VALUES {values}) AS src(EmpCod, PerNroDoc);";
         }
 
         public List<CatalogoServicioRef> GetCatalogoServiciosRef()
@@ -475,6 +472,24 @@ namespace Implementador.Data
             }
         }
 
+
+        public HashSet<long> GetCodigosConsumoExistentes(string entidad)
+        {
+            var resultado = new HashSet<long>();
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT Icc_Codigo_Consumo
+                  FROM Importar_Consumo_Cab
+                  WHERE Icc_Entidad = @Entidad;",
+                connection);
+            command.Parameters.AddWithValue("@Entidad", entidad);
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                resultado.Add(reader.GetInt64(0));
+            }
+            return resultado;
+        }
 
         public bool ExistsImportedDataForEntidad(string entidad)
         {
