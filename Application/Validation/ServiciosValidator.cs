@@ -30,7 +30,7 @@ public sealed class ServiciosValidator : RowValidatorBase
 
         var codigosServiciosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var serviciosFiltrados = FilterValidRows(
-            "Consumos Servicios",
+            ArchivoNombre.ConsumosServicios,
             result.DatosServiciosValidados,
             log,
             (row, rowNumber) =>
@@ -84,9 +84,9 @@ public sealed class ServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info($"Consumos Servicios: {serviciosFiltrados.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count, rechazadas));
         else
-            log.Info($"Consumos Servicios: {serviciosFiltrados.Count} filas listas para implementar.");
+            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosServicios, serviciosFiltrados.Count));
 
         result.DatosServiciosValidados = serviciosFiltrados;
     }

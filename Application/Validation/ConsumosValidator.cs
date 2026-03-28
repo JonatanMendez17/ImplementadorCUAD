@@ -38,7 +38,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
         var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var consumosFiltrados = FilterValidRows(
-            "Consumos",
+            ArchivoNombre.Consumos,
             result.DatosConsumosValidados,
             log,
             (row, rowNumber) =>
@@ -104,9 +104,9 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info($"Consumos: {consumosFiltrados.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.Consumos, consumosFiltrados.Count, rechazadas));
         else
-            log.Info($"Consumos: {consumosFiltrados.Count} filas listas para implementar.");
+            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.Consumos, consumosFiltrados.Count));
 
         result.DatosConsumosValidados = consumosFiltrados;
     }

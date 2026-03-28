@@ -18,7 +18,7 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
         var catalogoPorEntidadServicio = safeSnapshot.CatalogoPorEntidadServicio;
 
         var filtrado = FilterValidRows(
-            "Catalogo Servicios",
+            ArchivoNombre.CatalogoServicios,
             result.DatosCatalogoServiciosValidados,
             log,
             (row, rowNumber) =>
@@ -52,9 +52,9 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info($"Catalogo Servicios: {filtrado.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.CatalogoServicios, filtrado.Count, rechazadas));
         else
-            log.Info($"Catalogo Servicios: {filtrado.Count} filas listas para implementar.");
+            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.CatalogoServicios, filtrado.Count));
 
         result.DatosCatalogoServiciosValidados = filtrado;
     }

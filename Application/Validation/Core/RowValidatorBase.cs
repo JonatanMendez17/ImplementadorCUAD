@@ -1,4 +1,5 @@
 using Implementador.Infrastructure;
+using Implementador.Application.Validation.Common;
 
 namespace Implementador.Application.Validation.Core;
 
@@ -27,7 +28,7 @@ public abstract class RowValidatorBase
             }
 
             rejected++;
-            log.Warn($"{scope} fila {rowNumber}: {string.Join(" | ", errors)}");
+            log.Warn(ValidationLog.FilaError(scope, rowNumber, string.Join(" | ", errors)));
         }
 
         return accepted;

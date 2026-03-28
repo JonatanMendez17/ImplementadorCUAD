@@ -30,7 +30,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         }
 
         var detalleFiltrado = FilterValidRows(
-            "Consumos Detalle",
+            ArchivoNombre.ConsumosDetalle,
             result.DatosConsumosDetalleValidados,
             log,
             (row, rowNumber) =>
@@ -174,9 +174,9 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         }
 
         if (rechazadas > 0)
-            log.Info($"Consumos Detalle: {detalleFiltrado.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count, rechazadas));
         else
-            log.Info($"Consumos Detalle: {detalleFiltrado.Count} filas listas para implementar.");
+            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count));
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;
     }

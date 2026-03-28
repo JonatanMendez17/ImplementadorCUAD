@@ -504,7 +504,7 @@ namespace Implementador.Application.Import
                 }
                 else
                 {
-                    log.Warn($"{logicalName} fila {filaNumero}: {string.Join(" | ", erroresFila)}");
+                    log.Warn(ValidationLog.FilaError(ArchivoNombre.FromKey(logicalName), filaNumero, string.Join(" | ", erroresFila)));
                     filasRechazadas++;
                 }
 
@@ -516,13 +516,14 @@ namespace Implementador.Application.Import
                 }
             }
 
+            var displayName = ArchivoNombre.FromKey(logicalName);
             if (totalFilasDatos == 0)
             {
-                log.Warn($"{logicalName}: el archivo se encuentra vacio. No se cargaron registros.");
+                log.Warn(ValidationLog.ArchivoVacio(displayName));
             }
             else if (filasRechazadas > 0)
             {
-                log.Warn($"{logicalName}: {filasRechazadas} de {totalFilasDatos} filas rechazadas por formato o tipo de dato inválido.");
+                log.Warn(ValidationLog.FormatoRechazadas(displayName, filasRechazadas, totalFilasDatos));
             }
             return registros;
         }

@@ -70,7 +70,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             dbErrorPolicy);
 
         var padronFiltrado = FilterValidRows(
-            "Padron",
+            ArchivoNombre.PadronSocios,
             result.DatosPadronValidados,
             log,
             (row, rowNumber) =>
@@ -181,9 +181,9 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             out var rechazadas);
 
         if (rechazadas > 0)
-            log.Info($"Padron Socios: {padronFiltrado.Count} filas listas para implementar ({rechazadas} rechazadas por reglas de negocio).");
+            log.Info(ValidationLog.ListasParaImplementarConRechazadas(ArchivoNombre.PadronSocios, padronFiltrado.Count, rechazadas));
         else
-            log.Info($"Padron Socios: {padronFiltrado.Count} filas listas para implementar.");
+            log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.PadronSocios, padronFiltrado.Count));
 
         result.DatosPadronValidados = padronFiltrado;
     }
