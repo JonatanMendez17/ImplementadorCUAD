@@ -18,7 +18,7 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
         var catalogoPorEntidadServicio = safeSnapshot.CatalogoPorEntidadServicio;
 
         var filtrado = FilterValidRows(
-            "Catalogo Servicios",
+            ArchivoNombre.CatalogoServicios,
             result.DatosCatalogoServiciosValidados,
             log,
             (row, rowNumber) =>
@@ -28,29 +28,23 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
                 var servicio = RowValueReader.GetFirstValue(row, "Servicio");
                 var importeTexto = RowValueReader.GetFirstValue(row, "Importe");
 
-                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
-                {
-                    erroresFila.Add("La entidad se encuentra vacia.");
-                    return erroresFila;
-                }
-
-                var clave = $"{entidad.Trim()}|{servicio.Trim()}";
+                var clave = $"{entidad!.Trim()}|{servicio!.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCatalogo))
                 {
-                    erroresFila.Add($"servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
+                    erroresFila.Add($"El campo (Servicio) '{servicio}' no existe en la base para la entidad '{entidad}'.");
                     return erroresFila;
                 }
 
                 if (!ValueParsers.TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                 {
-                    erroresFila.Add($"El importe '{importeTexto}' es invalido.");
+                    erroresFila.Add($"El campo (Importe) '{importeTexto}' no es un valor valido.");
                     return erroresFila;
                 }
 
                 var diferencia = Math.Abs(importeArchivo - refCatalogo.Importe);
                 if (diferencia > 0.01m)
                 {
-                    erroresFila.Add($"El importe '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
+                    erroresFila.Add($"El campo (Importe) '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
                 }
 
                 return erroresFila;
@@ -58,9 +52,8 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
             out var rechazadas);
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validaciones Catalogo Servicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.CatalogoServicios, rechazadas, rechazadas + filtrado.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.CatalogoServicios, filtrado.Count));
 
         result.DatosCatalogoServiciosValidados = filtrado;
     }

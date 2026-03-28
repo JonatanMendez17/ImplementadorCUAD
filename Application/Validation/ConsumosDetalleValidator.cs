@@ -23,8 +23,14 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+        var consumosDisponible = consumosPorCodigo.Count > 0;
+        if (!consumosDisponible)
+        {
+            log.Warn("Consumos Detalle: no se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
+        }
+
         var detalleFiltrado = FilterValidRows(
-            "Consumos Detalle",
+            ArchivoNombre.ConsumosDetalle,
             result.DatosConsumosDetalleValidados,
             log,
             (row, rowNumber) =>
@@ -35,23 +41,23 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
             var fechaVencimientoText = RowValueReader.GetFirstValue(row, "Fecha Vencimiento");
 
-            if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
+            if (!entidadesRef.Contains(entidad!.Trim()))
             {
-                erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
+                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
+            if (consumosDisponible && !consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
             {
-                erroresFila.Add($"El codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos detalle.");
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
             }
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add("La date de vencimiento es invalida.");
+                erroresFila.Add("El campo (Fecha Vencimiento) no es una fecha valida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add("La date de vencimiento no puede ser hoy o anterior.");
+                erroresFila.Add("El campo (Fecha Vencimiento) no puede ser hoy o anterior.");
             }
 
             return erroresFila;
@@ -119,7 +125,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             if (!parseOk)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log.Warn($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una row con 'Monto' o 'Nro Cuota' inválidos.");
+                log.Warn($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una fila con 'Monto' o 'Nro Cuota' inválidos.");
                 continue;
             }
 
@@ -168,9 +174,8 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         }
 
         if (rechazadas > 0)
-        {
-            log.Info($"Resumen validacion Consumos Detalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
-        }
+            log.Info(ValidationLog.ReglaRechazadas(ArchivoNombre.ConsumosDetalle, rechazadas, rechazadas + detalleFiltrado.Count));
+        log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.ConsumosDetalle, detalleFiltrado.Count));
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;
     }

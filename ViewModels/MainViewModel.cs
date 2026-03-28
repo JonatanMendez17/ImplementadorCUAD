@@ -52,12 +52,12 @@ namespace Implementador.ViewModels
         private readonly AsyncRelayCommand _clearDataCommandImpl;
 
         // Keys de tipos de archivo soportados por la pantalla.
-        private const string FileCategorias = "Categorias";
-        private const string FilePadron = "Padron";
-        private const string FileConsumos = "Consumos";
-        private const string FileConsumosDetalle = "ConsumosDetalle";
-        private const string FileServicios = "Servicios";
-        private const string FileCatalogoServicios = "CatalogoServicios";
+        internal const string FileCategorias = "Categorias";
+        internal const string FilePadron = "Padron";
+        internal const string FileConsumos = "Consumos";
+        internal const string FileConsumosDetalle = "ConsumosDetalle";
+        internal const string FileServicios = "Servicios";
+        internal const string FileCatalogoServicios = "CatalogoServicios";
         #endregion
 
         #region Bindable Properties
@@ -70,6 +70,7 @@ namespace Implementador.ViewModels
                 if (SetProperty(ref _empleadorSeleccionado, value))
                 {
                     InvalidateValidationState("Se actualizo el empleador seleccionado. Se reinicio el estado de validacion.");
+                    RefreshCommandStates();
                 }
             }
         }
@@ -145,7 +146,7 @@ namespace Implementador.ViewModels
             _logger = logger;
             _dbContextFactory = new AppDbContextFactory();
             var loggerFactory = App.LoggerFactory;
-            var fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
+            var fileImportService = new FileImportService(_dbContextFactory);
             var generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
             var implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
             UiLogStream.LogReceived += OnUiLogReceived;
@@ -176,20 +177,13 @@ namespace Implementador.ViewModels
             };
 
             FileInputs = new ObservableCollection<FileInputItemViewModel>();
-            RegisterFileItem(new FileInputItemViewModel(FileCategorias, "Categorias Socios", false));
-            RegisterFileItem(new FileInputItemViewModel(FilePadron, "Padron Socios", false));
-            RegisterFileItem(new FileInputItemViewModel(FileConsumos, "Consumos", false));
+            RegisterFileItem(new FileInputItemViewModel(FileCategorias, "Categorias Socios", true));
+            RegisterFileItem(new FileInputItemViewModel(FilePadron, "Padron Socios", true));
+            RegisterFileItem(new FileInputItemViewModel(FileConsumos, "Consumos", true));
             RegisterFileItem(new FileInputItemViewModel(FileConsumosDetalle, "Consumos Detalle", true));
-            RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", false));
-            RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", false));
-            _fileSelectionCoordinator = new FileSelectionCoordinator(
-                _fileItemsByKey,
-                FileCategorias,
-                FilePadron,
-                FileConsumos,
-                FileConsumosDetalle,
-                FileServicios,
-                FileCatalogoServicios);
+            RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", true));
+            RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", true));
+            _fileSelectionCoordinator = new FileSelectionCoordinator(_fileItemsByKey);
 
             _selectFileCommandImpl = AsyncRelayCommand.Create(SelectFileFromParameter);
             _clearFileCommandImpl = AsyncRelayCommand.Create(ClearFileFromParameter);
@@ -441,7 +435,7 @@ namespace Implementador.ViewModels
                     return;
                 }
 
-                _logUiController.LogWarning("El usuario confirmo implementar con validaciones pendientes.");
+                _logUiController.LogWarning("El usuario confirmo implementar sin realizar las validaciones.");
             }
 
             IsProcessing = true;
@@ -451,7 +445,7 @@ namespace Implementador.ViewModels
             var cronometro = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                await _workflowFacade.CopyToDatabaseAsync(
+                var insertados = await _workflowFacade.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
                     _appLogger,
@@ -464,7 +458,15 @@ namespace Implementador.ViewModels
                     : $"{(int)duracion.TotalMinutes} min {duracion.Seconds}.{duracion.Milliseconds:D3} seg";
 
                 ImplementationTime = tiempoTexto;
-                DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                if (insertados > 0)
+                {
+                    DialogService.Show("Datos implementados correctamente.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    DialogService.Show("No se insertaron registros. Los archivos cargados no contienen datos válidos para implementar.", "Implementación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (SqlException ex)
             {
@@ -494,7 +496,7 @@ namespace Implementador.ViewModels
 
         private bool CanClearEntityData(object? parameter)
         {
-            return HasEntidadSeleccionadaReal() && HasEmpleadorSeleccionadoReal() && !IsProcessing;
+            return HasEntidadSeleccionadaReal() && !IsProcessing;
         }
 
         private void ClearData(object? parameter)
@@ -553,13 +555,20 @@ namespace Implementador.ViewModels
                 if (totalEliminado == 0)
                 {
                     _logUiController.LogWarning("No se encontraron registros para eliminar con la entidad seleccionada.");
+                    DialogService.Show(
+                        $"No se encontraron registros de la entidad '{entidadNombre}' para eliminar en la base de data.",
+                        "Limpieza entidad",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                 }
-
-                DialogService.Show(
-                    $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de data",
-                    "Limpieza entidad",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                else
+                {
+                    DialogService.Show(
+                        $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de data.",
+                        "Limpieza entidad",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
 
                 ValidationCompleted = false;
                 Progress = 0;

@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using Implementador.Infrastructure;
 using Implementador.Models;
-using Implementador.Data;
 using Implementador.Application.Configuration;
 using Implementador.Application.Validation;
 using Implementador.Application.Validation.Common;
@@ -15,92 +14,41 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace Implementador.Application.Import
 {
-    public class FileImportService(IAppDbContextFactory dbContextFactory, ILogger<FileImportService>? logger = null)
+    public class FileImportService(IAppDbContextFactory dbContextFactory)
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
-        private readonly ILogger<FileImportService>? _logger = logger;
     private const DbErrorPolicy ValidationDbErrorPolicy = DbErrorPolicy.AbortValidation;
 
         public ImplementationValidationResult ValidateAndLoadFiles(ImplementationFileSelection selection, IAppLogger log, IProgress<int>? progress = null)
         {
             var result = new ImplementationValidationResult();
 
-            // Los nombres lógicos que se pasan a LoadFile deben coincidir
+            // Los nombres lógicos que se pasan a LoadFiles deben coincidir
             // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuration.xml.
-            var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
-                ? null
-                : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);
+            var datosCategorias    = LoadFiles("Categorias",      selection.ArchivosCategorias,      log, progress);
+            var datosPadron        = LoadFiles("Padron",          selection.ArchivosPadron,          log, progress);
+            var datosConsumos      = LoadFiles("Consumos",        selection.ArchivosConsumos,        log, progress);
+            var datosConsumosDetalle = LoadFiles("ConsumosDetalle", selection.ArchivosConsumosDetalle, log, progress);
+            var datosCatalogoServicios = LoadFiles("CatalogoServicios", selection.ArchivosCatalogoServicios, log, progress);
+            var datosServicios     = LoadFiles("Servicios",       selection.ArchivosServicios,       log, progress);
 
-            var datosPadron = string.IsNullOrWhiteSpace(selection.ArchivoPadron)
-                ? null
-                : LoadFile("Padron", selection.ArchivoPadron, log, progress);
+            if (datosPadron != null)        { result.DatosPadronValidados             = datosPadron;            result.HasLoadedData = true; }
+            if (datosCategorias != null)    { result.DatosCategoriasValidadas         = datosCategorias;        result.HasLoadedData = true; }
+            if (datosConsumos != null)      { result.DatosConsumosValidados           = datosConsumos;          result.HasLoadedData = true; }
+            if (datosConsumosDetalle != null) { result.DatosConsumosDetalleValidados  = datosConsumosDetalle;   result.HasLoadedData = true; }
+            if (datosCatalogoServicios != null) { result.DatosCatalogoServiciosValidados = datosCatalogoServicios; result.HasLoadedData = true; }
+            if (datosServicios != null)     { result.DatosServiciosValidados          = datosServicios;         result.HasLoadedData = true; }
 
-            var datosConsumos = string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
-                ? null
-                : LoadFile("Consumos", selection.ArchivoConsumos, log, progress);
-
-            List<Dictionary<string, string>>? datosConsumosDetalle = null;
-            var archivosConsumosDetalle = selection.ArchivosConsumosDetalle;
-            if (archivosConsumosDetalle != null && archivosConsumosDetalle.Count > 0)
+            if (!string.IsNullOrWhiteSpace(selection.EntidadEsperada) && result.HasLoadedData)
             {
-                datosConsumosDetalle = new List<Dictionary<string, string>>();
-                var n = archivosConsumosDetalle.Count;
-                for (var i = 0; i < n; i++)
+                var entidadDetectada = DetectarEntidadEnArchivos(result);
+                if (!string.IsNullOrWhiteSpace(entidadDetectada) &&
+                    !string.Equals(entidadDetectada, selection.EntidadEsperada.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    var ruta = archivosConsumosDetalle[i];
-                    if (string.IsNullOrWhiteSpace(ruta)) continue;
-                    if (n > 1)
-                        log.Info($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
-                    var data = LoadFile("ConsumosDetalle", ruta, log, progress);
-                    if (data != null && data.Count > 0)
-                        datosConsumosDetalle.AddRange(data);
+                    log.Error($"La entidad en los archivos ('{entidadDetectada}') no coincide con la entidad seleccionada ('{selection.EntidadEsperada}').");
+                    result.HasLoadedData = false;
+                    return result;
                 }
-                if (datosConsumosDetalle.Count == 0)
-                    datosConsumosDetalle = null;
-            }
-
-            var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
-                ? null
-                : LoadFile("Servicios", selection.ArchivoServicios, log, progress);
-
-            var datosCatalogoServicios = string.IsNullOrWhiteSpace(selection.ArchivoCatalogoServicios)
-                ? null
-                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log, progress);
-
-            if (datosPadron != null)
-            {
-                result.DatosPadronValidados = datosPadron;
-                result.HasLoadedData = true;
-            }
-
-            if (datosCategorias != null)
-            {
-                result.DatosCategoriasValidadas = datosCategorias;
-                result.HasLoadedData = true;
-            }
-
-            if (datosConsumos != null)
-            {
-                result.DatosConsumosValidados = datosConsumos;
-                result.HasLoadedData = true;
-            }
-
-            if (datosConsumosDetalle != null)
-            {
-                result.DatosConsumosDetalleValidados = datosConsumosDetalle;
-                result.HasLoadedData = true;
-            }
-
-            if (datosCatalogoServicios != null)
-            {
-                result.DatosCatalogoServiciosValidados = datosCatalogoServicios;
-                result.HasLoadedData = true;
-            }
-
-            if (datosServicios != null)
-            {
-                result.DatosServiciosValidados = datosServicios;
-                result.HasLoadedData = true;
             }
 
             ValidateOptionalServiceFilesAgainstSchema(result, log);
@@ -118,7 +66,7 @@ namespace Implementador.Application.Import
                 return result;
             }
             var padronValidator = new PadronValidator(_dbContextFactory);
-            var consumosValidator = new ConsumosValidator();
+            var consumosValidator = new ConsumosValidator(_dbContextFactory);
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
@@ -129,22 +77,47 @@ namespace Implementador.Application.Import
             }
             catch (DbValidationException ex)
             {
-                log.Error($"Validación detenida por error de base en padrón. {ex.Message}");
+                log.Error($"Validación detenida por error de base en padrón. {ex.Message} → {ex.InnerException?.Message}");
                 result.HasLoadedData = false;
                 return result;
             }
-            consumosValidator.Apply(result, log, snapshot);
+            consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
             serviciosValidator.Apply(result, log, snapshot);
             catalogoServiciosValidator.Apply(result, log, snapshot);
 
             if (!result.HasLoadedData)
             {
-                log.Error("No se pudo cargar ningun archivo.");
-                _logger?.LogWarning("No se pudo cargar ningun archivo.");
+                log.Error("No se ha cargado ningún archivo para validar.");
             }
 
             return result;
+        }
+
+        private static string? DetectarEntidadEnArchivos(ImplementationValidationResult result)
+        {
+            var datasets = new[]
+            {
+                result.DatosPadronValidados,
+                result.DatosCategoriasValidadas,
+                result.DatosConsumosValidados,
+                result.DatosConsumosDetalleValidados,
+                result.DatosCatalogoServiciosValidados,
+                result.DatosServiciosValidados,
+            };
+
+            foreach (var dataset in datasets)
+            {
+                var primera = dataset.FirstOrDefault();
+                if (primera != null &&
+                    primera.TryGetValue("Entidad", out var entidad) &&
+                    !string.IsNullOrWhiteSpace(entidad))
+                {
+                    return entidad.Trim();
+                }
+            }
+
+            return null;
         }
 
         private void ValidateOptionalServiceFilesAgainstSchema(ImplementationValidationResult result, IAppLogger log)
@@ -174,7 +147,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"No se pudo validar estructura de tablas para archivos opcionales. {ex.Message}");
-                _logger?.LogError(ex, "No se pudo validar estructura de tablas para archivos opcionales.");
             }
 
             result.HasLoadedData =
@@ -197,7 +169,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"No se pudo cargar datos de referencia para validación. {ex.Message}");
-                _logger?.LogError(ex, "No se pudo cargar datos de referencia para validación.");
                 loaded = false;
                 return ValidationReferenceData.Empty;
             }
@@ -270,10 +241,28 @@ namespace Implementador.Application.Import
                 yield break;
             }
 
-            foreach (var line in File.ReadLines(filePath))
+            throw new NotSupportedException($"El tipo de archivo '{extension}' no está soportado. Use .csv, .txt, .xls o .xlsx.");
+        }
+
+        private List<Dictionary<string, string>>? LoadFiles(string logicalName, IReadOnlyList<string>? rutas, IAppLogger log, IProgress<int>? progress)
+        {
+            if (rutas == null || rutas.Count == 0)
+                return null;
+
+            var result = new List<Dictionary<string, string>>();
+            var n = rutas.Count;
+            for (var i = 0; i < n; i++)
             {
-                yield return line;
+                var ruta = rutas[i];
+                if (string.IsNullOrWhiteSpace(ruta)) continue;
+                if (n > 1)
+                    log.Info($"{logicalName}: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                var data = LoadFile(logicalName, ruta, log, progress);
+                if (data != null && data.Count > 0)
+                    result.AddRange(data);
             }
+
+            return result.Count > 0 ? result : null;
         }
 
         private List<Dictionary<string, string>>? LoadFile(string logicalName, string? filePath, IAppLogger log, IProgress<int>? progress)
@@ -343,7 +332,6 @@ namespace Implementador.Application.Import
             catch (Exception ex)
             {
                 log.Error($"Error al cargar {logicalName}: {ex.Message}");
-                _logger?.LogError(ex, "Error al cargar {LogicalName}", logicalName);
                 return null;
             }
         }
@@ -475,7 +463,6 @@ namespace Implementador.Application.Import
             IProgress<int>? progress)
         {
             var registros = new List<Dictionary<string, string>>();
-            var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var filasAceptadas = 0;
             var filasRechazadas = 0;
             var totalFilasDatos = 0;
@@ -504,29 +491,20 @@ namespace Implementador.Application.Import
 
                     if (!ValidateGeneralRules(value, config, out var error))
                     {
-                        erroresFila.Add($"columna '{config.Clave}': {error}");
+                        erroresFila.Add($"El campo ({config.Clave}) {error}.");
                     }
 
                     row[config.Clave] = value;
                 }
 
-                var filaEsValida = erroresFila.Count == 0;
-
-                if (filaEsValida)
+                if (erroresFila.Count == 0)
                 {
-                    if (ValidateSpecificUniqueness(logicalName, filaNumero, row, uniqueKeys, log))
-                    {
-                        registros.Add(row);
-                        filasAceptadas++;
-                    }
-                    else
-                    {
-                        filasRechazadas++;
-                    }
+                    registros.Add(row);
+                    filasAceptadas++;
                 }
                 else
                 {
-                    log.Warn($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
+                    log.Warn(ValidationLog.FilaError(ArchivoNombre.FromKey(logicalName), filaNumero, string.Join(" | ", erroresFila)));
                     filasRechazadas++;
                 }
 
@@ -538,8 +516,15 @@ namespace Implementador.Application.Import
                 }
             }
 
-            log.Info($"{logicalName}: Validaciones realizadas correctamente.");
-            log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+            var displayName = ArchivoNombre.FromKey(logicalName);
+            if (totalFilasDatos == 0)
+            {
+                log.Warn(ValidationLog.ArchivoVacio(displayName));
+            }
+            else if (filasRechazadas > 0)
+            {
+                log.Warn(ValidationLog.FormatoRechazadas(displayName, filasRechazadas, totalFilasDatos));
+            }
             return registros;
         }
 
@@ -608,12 +593,18 @@ namespace Implementador.Application.Import
 
             if (texto.Length == 0)
             {
+                if (config.Requerida)
+                {
+                    error = "se encuentra vacio";
+                    return false;
+                }
+
                 return true;
             }
 
             if (texto.Length > config.LargoMaximo)
             {
-                error = $"supera el largo maximo permitido ({config.LargoMaximo})";
+                error = $"excede el largo maximo permitido ({config.LargoMaximo})";
                 return false;
             }
 
@@ -628,7 +619,14 @@ namespace Implementador.Application.Import
                 case "int":
                     if (!int.TryParse(texto, NumberStyles.None, CultureInfo.InvariantCulture, out var numero))
                     {
-                        error = "debe ser un numero entero sin letras";
+                        var soloDigitos = texto.All(char.IsDigit);
+                        var esNotacionCientifica = texto.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
+                        if (esNotacionCientifica || (soloDigitos && texto.Length > 18))
+                            error = "excede el limite de digitos permitidos";
+                        else if (texto.Any(char.IsLetter))
+                            error = "no puede contener letras";
+                        else
+                            error = "no es un numero valido";
                         return false;
                     }
 
@@ -643,7 +641,7 @@ namespace Implementador.Application.Import
                 case "decimal":
                     if (!ValueParsers.TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "debe ser un value de dinero valido";
+                        error = "no es un valor de dinero valido";
                         return false;
                     }
 
@@ -652,7 +650,16 @@ namespace Implementador.Application.Import
                 case "date":
                     if (!ValueParsers.TryParseDateFlexible(texto, out _))
                     {
-                        error = "debe ser una date valida";
+                        error = "no es una fecha valida";
+                        return false;
+                    }
+
+                    return true;
+
+                case "alpha":
+                    if (texto.Any(char.IsDigit))
+                    {
+                        error = "no puede contener digitos";
                         return false;
                     }
 
@@ -672,48 +679,6 @@ namespace Implementador.Application.Import
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
-        private static bool ValidateSpecificUniqueness(string logicalName, int rowNumber, Dictionary<string, string> row, HashSet<string> uniqueKeys, IAppLogger log)
-        {
-            if (logicalName.Equals("Padron", StringComparison.OrdinalIgnoreCase))
-            {
-                var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio");
-                if (string.IsNullOrWhiteSpace(nroSocio))
-                {
-                    log.Warn($"Padron row {rowNumber}: 'Nro Socio' vacio.");
-                    return false;
-                }
-
-                var clave = $"PADRON::{nroSocio.Trim()}";
-                if (!uniqueKeys.Add(clave))
-                {
-                    log.Warn($"Padron row {rowNumber}: numero de socio '{nroSocio}' repetido.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            if (logicalName.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
-            {
-                var nroConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
-                if (string.IsNullOrWhiteSpace(nroConsumo))
-                {
-                    log.Warn($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
-                    return false;
-                }
-
-                var clave = $"CONSUMOS::{nroConsumo.Trim()}";
-                if (!uniqueKeys.Add(clave))
-                {
-                    log.Warn($"Consumos row {rowNumber}: nro de consumo '{nroConsumo}' repetido.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            return true;
-        }
 
     }
 }

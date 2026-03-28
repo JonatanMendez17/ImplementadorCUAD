@@ -29,6 +29,8 @@ public interface IAppDbContext : IDisposable
 
     Task<int> InsertImportarConsumoCabAsync(IReadOnlyList<ImportarConsumoCab> registros, IProgress<int>? progress = null);
 
+    HashSet<long> GetCodigosConsumoExistentes(string entidad);
+
     bool ExistsImportedDataForEntidad(string entidad);
 
     (int Padron, int ConsumoCab, int ConsumoDet) DeleteImportedDataForEntidad(string entidadNombre, int entidadId);
