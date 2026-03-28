@@ -52,12 +52,12 @@ namespace Implementador.ViewModels
         private readonly AsyncRelayCommand _clearDataCommandImpl;
 
         // Keys de tipos de archivo soportados por la pantalla.
-        private const string FileCategorias = "Categorias";
-        private const string FilePadron = "Padron";
-        private const string FileConsumos = "Consumos";
-        private const string FileConsumosDetalle = "ConsumosDetalle";
-        private const string FileServicios = "Servicios";
-        private const string FileCatalogoServicios = "CatalogoServicios";
+        internal const string FileCategorias = "Categorias";
+        internal const string FilePadron = "Padron";
+        internal const string FileConsumos = "Consumos";
+        internal const string FileConsumosDetalle = "ConsumosDetalle";
+        internal const string FileServicios = "Servicios";
+        internal const string FileCatalogoServicios = "CatalogoServicios";
         #endregion
 
         #region Bindable Properties
@@ -176,20 +176,13 @@ namespace Implementador.ViewModels
             };
 
             FileInputs = new ObservableCollection<FileInputItemViewModel>();
-            RegisterFileItem(new FileInputItemViewModel(FileCategorias, "Categorias Socios", false));
-            RegisterFileItem(new FileInputItemViewModel(FilePadron, "Padron Socios", false));
-            RegisterFileItem(new FileInputItemViewModel(FileConsumos, "Consumos", false));
+            RegisterFileItem(new FileInputItemViewModel(FileCategorias, "Categorias Socios", true));
+            RegisterFileItem(new FileInputItemViewModel(FilePadron, "Padron Socios", true));
+            RegisterFileItem(new FileInputItemViewModel(FileConsumos, "Consumos", true));
             RegisterFileItem(new FileInputItemViewModel(FileConsumosDetalle, "Consumos Detalle", true));
-            RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", false));
-            RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", false));
-            _fileSelectionCoordinator = new FileSelectionCoordinator(
-                _fileItemsByKey,
-                FileCategorias,
-                FilePadron,
-                FileConsumos,
-                FileConsumosDetalle,
-                FileServicios,
-                FileCatalogoServicios);
+            RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", true));
+            RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", true));
+            _fileSelectionCoordinator = new FileSelectionCoordinator(_fileItemsByKey);
 
             _selectFileCommandImpl = AsyncRelayCommand.Create(SelectFileFromParameter);
             _clearFileCommandImpl = AsyncRelayCommand.Create(ClearFileFromParameter);
@@ -441,7 +434,7 @@ namespace Implementador.ViewModels
                     return;
                 }
 
-                _logUiController.LogWarning("El usuario confirmo implementar con validaciones pendientes.");
+                _logUiController.LogWarning("El usuario confirmo implementar sin realizar las validaciones.");
             }
 
             IsProcessing = true;

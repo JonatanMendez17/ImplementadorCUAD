@@ -367,7 +367,7 @@
                                 Margin="0,0,8,0" />
                         <Button Grid.Column="1"
                                 Style="{StaticResource OutlineButtonStyle}"
-                                Content="Reiniciar&#xD;&#xA;"
+                                Content="Reiniciar Panel"
                                 Command="{Binding ClearUiCommand}"
                                 Margin="8,0,0,0" />
                     </Grid>

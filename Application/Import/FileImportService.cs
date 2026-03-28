@@ -25,83 +25,21 @@ namespace Implementador.Application.Import
         {
             var result = new ImplementationValidationResult();
 
-            // Los nombres lógicos que se pasan a LoadFile deben coincidir
+            // Los nombres lógicos que se pasan a LoadFiles deben coincidir
             // con el atributo nombre de los nodos <Archivo nombre="..."> en Configuration.xml.
-            var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
-                ? null
-                : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);
+            var datosCategorias    = LoadFiles("Categorias",      selection.ArchivosCategorias,      log, progress);
+            var datosPadron        = LoadFiles("Padron",          selection.ArchivosPadron,          log, progress);
+            var datosConsumos      = LoadFiles("Consumos",        selection.ArchivosConsumos,        log, progress);
+            var datosConsumosDetalle = LoadFiles("ConsumosDetalle", selection.ArchivosConsumosDetalle, log, progress);
+            var datosCatalogoServicios = LoadFiles("CatalogoServicios", selection.ArchivosCatalogoServicios, log, progress);
+            var datosServicios     = LoadFiles("Servicios",       selection.ArchivosServicios,       log, progress);
 
-            var datosPadron = string.IsNullOrWhiteSpace(selection.ArchivoPadron)
-                ? null
-                : LoadFile("Padron", selection.ArchivoPadron, log, progress);
-
-            var datosConsumos = string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
-                ? null
-                : LoadFile("Consumos", selection.ArchivoConsumos, log, progress);
-
-            List<Dictionary<string, string>>? datosConsumosDetalle = null;
-            var archivosConsumosDetalle = selection.ArchivosConsumosDetalle;
-            if (archivosConsumosDetalle != null && archivosConsumosDetalle.Count > 0)
-            {
-                datosConsumosDetalle = new List<Dictionary<string, string>>();
-                var n = archivosConsumosDetalle.Count;
-                for (var i = 0; i < n; i++)
-                {
-                    var ruta = archivosConsumosDetalle[i];
-                    if (string.IsNullOrWhiteSpace(ruta)) continue;
-                    if (n > 1)
-                        log.Info($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
-                    var data = LoadFile("ConsumosDetalle", ruta, log, progress);
-                    if (data != null && data.Count > 0)
-                        datosConsumosDetalle.AddRange(data);
-                }
-                if (datosConsumosDetalle.Count == 0)
-                    datosConsumosDetalle = null;
-            }
-
-            var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
-                ? null
-                : LoadFile("Servicios", selection.ArchivoServicios, log, progress);
-
-            var datosCatalogoServicios = string.IsNullOrWhiteSpace(selection.ArchivoCatalogoServicios)
-                ? null
-                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log, progress);
-
-            if (datosPadron != null)
-            {
-                result.DatosPadronValidados = datosPadron;
-                result.HasLoadedData = true;
-            }
-
-            if (datosCategorias != null)
-            {
-                result.DatosCategoriasValidadas = datosCategorias;
-                result.HasLoadedData = true;
-            }
-
-            if (datosConsumos != null)
-            {
-                result.DatosConsumosValidados = datosConsumos;
-                result.HasLoadedData = true;
-            }
-
-            if (datosConsumosDetalle != null)
-            {
-                result.DatosConsumosDetalleValidados = datosConsumosDetalle;
-                result.HasLoadedData = true;
-            }
-
-            if (datosCatalogoServicios != null)
-            {
-                result.DatosCatalogoServiciosValidados = datosCatalogoServicios;
-                result.HasLoadedData = true;
-            }
-
-            if (datosServicios != null)
-            {
-                result.DatosServiciosValidados = datosServicios;
-                result.HasLoadedData = true;
-            }
+            if (datosPadron != null)        { result.DatosPadronValidados             = datosPadron;            result.HasLoadedData = true; }
+            if (datosCategorias != null)    { result.DatosCategoriasValidadas         = datosCategorias;        result.HasLoadedData = true; }
+            if (datosConsumos != null)      { result.DatosConsumosValidados           = datosConsumos;          result.HasLoadedData = true; }
+            if (datosConsumosDetalle != null) { result.DatosConsumosDetalleValidados  = datosConsumosDetalle;   result.HasLoadedData = true; }
+            if (datosCatalogoServicios != null) { result.DatosCatalogoServiciosValidados = datosCatalogoServicios; result.HasLoadedData = true; }
+            if (datosServicios != null)     { result.DatosServiciosValidados          = datosServicios;         result.HasLoadedData = true; }
 
             if (!string.IsNullOrWhiteSpace(selection.EntidadEsperada) && result.HasLoadedData)
             {
@@ -109,7 +47,7 @@ namespace Implementador.Application.Import
                 if (!string.IsNullOrWhiteSpace(entidadDetectada) &&
                     !string.Equals(entidadDetectada, selection.EntidadEsperada.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    log.Error($"La entidad en los archivos ('{entidadDetectada}') no coincide con la entidad seleccionada ('{selection.EntidadEsperada}'). Corrija la selección e intente nuevamente.");
+                    log.Error($"La entidad en los archivos ('{entidadDetectada}') no coincide con la entidad seleccionada ('{selection.EntidadEsperada}').");
                     result.HasLoadedData = false;
                     return result;
                 }
@@ -309,6 +247,27 @@ namespace Implementador.Application.Import
             }
 
             throw new NotSupportedException($"El tipo de archivo '{extension}' no está soportado. Use .csv, .txt, .xls o .xlsx.");
+        }
+
+        private List<Dictionary<string, string>>? LoadFiles(string logicalName, IReadOnlyList<string>? rutas, IAppLogger log, IProgress<int>? progress)
+        {
+            if (rutas == null || rutas.Count == 0)
+                return null;
+
+            var result = new List<Dictionary<string, string>>();
+            var n = rutas.Count;
+            for (var i = 0; i < n; i++)
+            {
+                var ruta = rutas[i];
+                if (string.IsNullOrWhiteSpace(ruta)) continue;
+                if (n > 1)
+                    log.Info($"{logicalName}: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                var data = LoadFile(logicalName, ruta, log, progress);
+                if (data != null && data.Count > 0)
+                    result.AddRange(data);
+            }
+
+            return result.Count > 0 ? result : null;
         }
 
         private List<Dictionary<string, string>>? LoadFile(string logicalName, string? filePath, IAppLogger log, IProgress<int>? progress)

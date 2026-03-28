@@ -22,7 +22,7 @@ namespace Implementador.Application.Implementation
             var insertadosConsumosDetalle = 0;
             var insertadosConsumos = 0;
 
-            var padronSocios = !string.IsNullOrWhiteSpace(selection.ArchivoPadron)
+            var padronSocios = (selection.ArchivosPadron?.Count ?? 0) > 0
                 ? _mapperService.MapPadronSocios(validationResult.DatosPadronValidados, log)
                 : new List<ImportarPadronSocio>();
 
@@ -30,7 +30,7 @@ namespace Implementador.Application.Implementation
                 ? _mapperService.MapConsumosDetalle(validationResult.DatosConsumosDetalleValidados, log)
                 : new List<ImportarConsumosDet>();
 
-            var consumosImportados = !string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
+            var consumosImportados = (selection.ArchivosConsumos?.Count ?? 0) > 0
                 ? _mapperService.MapConsumos(validationResult.DatosConsumosValidados, log)
                 : new List<ImportarConsumoCab>();
 
@@ -60,7 +60,7 @@ namespace Implementador.Application.Implementation
             {
                 insertadosPadron = await db.InsertPadronSocioAsync(padronSocios, progress).ConfigureAwait(false);
             }
-            else if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
+            else if ((selection.ArchivosPadron?.Count ?? 0) > 0)
             {
                 log.Warn("No hay registros validos de padron socios para insertar en base de data.");
             }
@@ -78,7 +78,7 @@ namespace Implementador.Application.Implementation
             {
                 insertadosConsumos = await db.InsertImportarConsumoCabAsync(consumosImportados, progress).ConfigureAwait(false);
             }
-            else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
+            else if ((selection.ArchivosConsumos?.Count ?? 0) > 0)
             {
                 log.Warn("No hay registros validos para insertar en base de data.");
             }

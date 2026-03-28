@@ -6,41 +6,22 @@ namespace Implementador.ViewModels.Coordinators;
 public sealed class FileSelectionCoordinator
 {
     private readonly Dictionary<string, FileInputItemViewModel> _fileItemsByKey;
-    private readonly string _fileCategorias;
-    private readonly string _filePadron;
-    private readonly string _fileConsumos;
-    private readonly string _fileConsumosDetalle;
-    private readonly string _fileServicios;
-    private readonly string _fileCatalogoServicios;
 
-    public FileSelectionCoordinator(
-        Dictionary<string, FileInputItemViewModel> fileItemsByKey,
-        string fileCategorias,
-        string filePadron,
-        string fileConsumos,
-        string fileConsumosDetalle,
-        string fileServicios,
-        string fileCatalogoServicios)
+    public FileSelectionCoordinator(Dictionary<string, FileInputItemViewModel> fileItemsByKey)
     {
         _fileItemsByKey = fileItemsByKey;
-        _fileCategorias = fileCategorias;
-        _filePadron = filePadron;
-        _fileConsumos = fileConsumos;
-        _fileConsumosDetalle = fileConsumosDetalle;
-        _fileServicios = fileServicios;
-        _fileCatalogoServicios = fileCatalogoServicios;
     }
 
     public ImplementationFileSelection BuildSelection(string? targetConnectionString)
     {
         return new ImplementationFileSelection
         {
-            ArchivoCategorias = GetSinglePath(_fileCategorias),
-            ArchivoPadron = GetSinglePath(_filePadron),
-            ArchivoConsumos = GetSinglePath(_fileConsumos),
-            ArchivosConsumosDetalle = GetPaths(_fileConsumosDetalle),
-            ArchivoServicios = GetSinglePath(_fileServicios),
-            ArchivoCatalogoServicios = GetSinglePath(_fileCatalogoServicios),
+            ArchivosCategorias = GetPaths(MainViewModel.FileCategorias),
+            ArchivosPadron = GetPaths(MainViewModel.FilePadron),
+            ArchivosConsumos = GetPaths(MainViewModel.FileConsumos),
+            ArchivosConsumosDetalle = GetPaths(MainViewModel.FileConsumosDetalle),
+            ArchivosServicios = GetPaths(MainViewModel.FileServicios),
+            ArchivosCatalogoServicios = GetPaths(MainViewModel.FileCatalogoServicios),
             TargetConnectionString = targetConnectionString
         };
     }
@@ -59,25 +40,12 @@ public sealed class FileSelectionCoordinator
             return;
         }
 
-        if (item.IsMultiple)
-        {
-            item.SetFromDialogSelection(dialog.FileNames);
-            return;
-        }
-
-        SetSingleFilePath(key, dialog.FileName);
+        item.SetFromDialogSelection(dialog.FileNames);
     }
 
     public void ClearFile(string key)
     {
-        var item = GetFileItem(key);
-        if (item.IsMultiple)
-        {
-            item.Clear();
-            return;
-        }
-
-        SetSingleFilePath(key, null);
+        GetFileItem(key).Clear();
     }
 
     public void ClearAllFileInputs()
@@ -88,28 +56,7 @@ public sealed class FileSelectionCoordinator
         }
     }
 
-    private FileInputItemViewModel GetFileItem(string key)
-    {
-        return _fileItemsByKey[key];
-    }
+    private FileInputItemViewModel GetFileItem(string key) => _fileItemsByKey[key];
 
-    private string? GetSinglePath(string key)
-    {
-        return GetFileItem(key).SinglePath;
-    }
-
-    private List<string> GetPaths(string key)
-    {
-        return GetFileItem(key).Paths.ToList();
-    }
-
-    private void SetSingleFilePath(string key, string? value)
-    {
-        var item = GetFileItem(key);
-        if (!item.IsMultiple)
-        {
-            item.SinglePath = value;
-        }
-    }
+    private List<string> GetPaths(string key) => GetFileItem(key).Paths.ToList();
 }
-
